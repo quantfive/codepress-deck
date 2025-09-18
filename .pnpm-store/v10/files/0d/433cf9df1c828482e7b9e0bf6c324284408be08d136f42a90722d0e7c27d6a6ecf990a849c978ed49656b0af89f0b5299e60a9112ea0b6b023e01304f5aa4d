@@ -1,0 +1,7 @@
+import React from "react";
+interface ImageGroupProps {
+    popoverContainer?: HTMLElement;
+}
+declare const ImageGroup: React.FC<ImageGroupProps>;
+export default ImageGroup;
+//# sourceMappingURL=ImageGroup.d.ts.map

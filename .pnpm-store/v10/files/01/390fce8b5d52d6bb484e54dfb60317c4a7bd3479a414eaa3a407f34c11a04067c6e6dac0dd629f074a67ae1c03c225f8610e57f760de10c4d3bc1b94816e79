@@ -1,0 +1,25 @@
+import { dsnToString as i } from "./index194.js";
+import { createEnvelope as s } from "./index198.js";
+function p(e) {
+  return [
+    {
+      type: "log",
+      item_count: e.length,
+      content_type: "application/vnd.sentry.items.log+json"
+    },
+    {
+      items: e
+    }
+  ];
+}
+function f(e, n, r, t) {
+  const o = {};
+  return n?.sdk && (o.sdk = {
+    name: n.sdk.name,
+    version: n.sdk.version
+  }), r && t && (o.dsn = i(t)), s(o, [p(e)]);
+}
+export {
+  p as createLogContainerEnvelopeItem,
+  f as createLogEnvelope
+};

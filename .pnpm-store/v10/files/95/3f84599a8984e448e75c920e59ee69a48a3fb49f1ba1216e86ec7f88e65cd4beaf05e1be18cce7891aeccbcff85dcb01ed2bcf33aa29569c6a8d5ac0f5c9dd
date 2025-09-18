@@ -1,0 +1,33 @@
+export declare enum DeploymentState {
+    UNSAVED = "unsaved",
+    COMMITTED = "committed",
+    DEPLOYMENT_STARTED = "deployment_started",
+    DEPLOYMENT_FAILED = "deployment_failed",
+    DEPLOYMENT_COMPLETED = "deployment_completed"
+}
+export declare function checkIsStaticDeployUrl(url: URL, repo?: string, branch?: string): boolean;
+export declare function checkIsDeploying(state: DeploymentState): state is DeploymentState.COMMITTED | DeploymentState.DEPLOYMENT_STARTED;
+export declare function deployColor(state: DeploymentState): string;
+export declare function deployStatusString(state: DeploymentState): "Deploying" | "Deployed" | "Failed" | "Unsaved";
+type ISODateString = string;
+export interface Branch {
+    name: string;
+    preview_url: string;
+    commit_date: ISODateString;
+    state: DeploymentState;
+}
+/**
+ * Sanitize a string for use as a GitHub branch name.
+ * - Removes invalid characters
+ * - Normalizes consecutive slashes
+ * - Ensures it doesn't end with .lock or a slash
+ */
+export declare function sanitizeBranchName(input: string): string;
+export declare const BRANCH_PREFIX = "codepress/";
+export declare function stripBranchPrefix(branchName: string): string;
+export declare function addBranchPrefix(branchName: string): string;
+export declare function checkHasBranchPrefix(branchName: string): boolean;
+export declare function checkIsEmptyBranchPrefix(branchName: string): branchName is "codepress/";
+export declare function checkIsOnCodepressBranch(branchName: string): boolean;
+export {};
+//# sourceMappingURL=deployment.d.ts.map

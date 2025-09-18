@@ -1,0 +1,5 @@
+export default function Editor({ demo, onToggleReady, }: {
+    demo?: boolean;
+    onToggleReady?: (toggleFn: () => void) => void;
+}): import("react/jsx-runtime").JSX.Element;
+//# sourceMappingURL=Editor.d.ts.map

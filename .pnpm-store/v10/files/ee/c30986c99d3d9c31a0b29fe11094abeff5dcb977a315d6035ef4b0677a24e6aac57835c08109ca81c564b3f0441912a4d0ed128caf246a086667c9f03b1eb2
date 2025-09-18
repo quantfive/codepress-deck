@@ -1,0 +1,6 @@
+declare const MenuBar: ({ onToggleEditing, isEditing }: {
+    onToggleEditing: () => void;
+    isEditing: boolean;
+}) => import("react/jsx-runtime").JSX.Element;
+export default MenuBar;
+//# sourceMappingURL=MenuBar.d.ts.map

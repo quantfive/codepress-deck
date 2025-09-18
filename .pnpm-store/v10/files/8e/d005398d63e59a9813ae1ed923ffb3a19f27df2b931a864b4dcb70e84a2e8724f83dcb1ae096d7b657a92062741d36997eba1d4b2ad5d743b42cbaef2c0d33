@@ -1,0 +1,4 @@
+const o = globalThis;
+export {
+  o as GLOBAL_OBJ
+};

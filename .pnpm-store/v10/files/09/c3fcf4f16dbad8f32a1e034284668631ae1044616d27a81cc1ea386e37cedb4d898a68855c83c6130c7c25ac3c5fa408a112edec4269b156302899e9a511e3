@@ -1,0 +1,535 @@
+import { logger as d } from "./index12.js";
+import x from "./index40.js";
+let _ = {};
+function F(t) {
+  if (!t.startsWith("rgb(") && !t.startsWith("rgba("))
+    return t;
+  const e = t.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+  if (!e)
+    return t;
+  const g = parseInt(e[1], 10), s = parseInt(e[2], 10), i = parseInt(e[3], 10), r = (u) => {
+    const n = u.toString(16);
+    return n.length === 1 ? "0" + n : n;
+  };
+  return `#${r(g)}${r(s)}${r(i)}`;
+}
+function R(t) {
+  d.debug("[Hover Fix] Getting non-hover computed styles for:", t), d.debug("[Hover Fix] Original element computed styles:", {
+    fontSize: window.getComputedStyle(t).fontSize,
+    padding: window.getComputedStyle(t).padding,
+    backgroundColor: window.getComputedStyle(t).backgroundColor
+  });
+  try {
+    const e = t.cloneNode(!0);
+    e.style.position = "fixed", e.style.top = "-9999px", e.style.left = "-9999px", e.style.visibility = "hidden", e.style.pointerEvents = "none", document.body.appendChild(e);
+    const g = window.getComputedStyle(e), s = {};
+    for (let i = 0; i < g.length; i++) {
+      const r = g[i];
+      s[r] = g.getPropertyValue(r);
+    }
+    return document.body.removeChild(e), d.debug(
+      "[Hover Fix] Successfully got non-hover styles using clone method"
+    ), d.debug("[Hover Fix] Clone computed styles:", {
+      fontSize: g.fontSize,
+      padding: g.padding,
+      backgroundColor: g.backgroundColor
+    }), d.debug("[Hover Fix] Copied styles sample:", {
+      fontSize: s.fontSize || s["font-size"],
+      padding: s.padding,
+      backgroundColor: s.backgroundColor || s["background-color"]
+    }), new Proxy(s, {
+      get(i, r) {
+        return r === "getPropertyValue" ? (u) => i[u] || "" : i[r];
+      }
+    });
+  } catch (e) {
+    return x.captureException(e), console.warn(
+      "[Hover Fix] Failed to get non-hover styles using clone, using regular computed style:",
+      e
+    ), window.getComputedStyle(t);
+  }
+}
+function T(t) {
+  const e = window.getComputedStyle(t), g = R(t), s = {}, i = (o) => {
+    if (!s[o]) {
+      const c = document.createElement(o);
+      document.body.appendChild(c), s[o] = window.getComputedStyle(c), document.body.removeChild(c);
+    }
+    return s[o];
+  }, r = (o) => {
+    if (t.style.getPropertyValue(o)) return !0;
+    const c = t.tagName.toLowerCase(), l = i(c).getPropertyValue(o).trim();
+    return e.getPropertyValue(o).trim() !== l;
+  }, u = (o) => {
+    const c = e.getPropertyValue(o);
+    if (!c) return "";
+    const l = c.trim();
+    return r(o) ? l : /^0([a-z%]+)?$/i.test(l) || /^(0([a-z%]+)?\s+){3}0([a-z%]+)?$/i.test(l) ? "" : l;
+  }, n = (o) => {
+    const c = e.getPropertyValue(o);
+    if (!c) return "";
+    if (r(o)) return c.trim();
+    const l = c.trim().toLowerCase();
+    return l === "none" || l.startsWith("0") && l.includes("none") || l.startsWith("0") ? "" : c;
+  }, a = (o) => u(o), f = (o) => n(o), p = (o) => u(o), C = (o) => {
+    try {
+      const l = t.style.getPropertyValue(o);
+      if (l)
+        return console.log(`Found inline ${o}:`, l), l;
+      const S = Array.from(document.styleSheets);
+      console.log(
+        `Searching ${S.length} stylesheets for ${o}`
+      );
+      let v = [];
+      for (const b of S)
+        try {
+          const $ = b.cssRules || b.rules;
+          if (!$) continue;
+          for (const m of Array.from($))
+            if (m instanceof CSSStyleRule)
+              try {
+                if (t.matches(m.selectorText)) {
+                  const w = m.style.getPropertyValue(o);
+                  w && (v.push({
+                    selector: m.selectorText,
+                    value: w,
+                    stylesheet: b.href || "inline"
+                  }), console.log(
+                    `Found matching rule: ${m.selectorText} -> ${o}: ${w}`
+                  ));
+                }
+              } catch {
+                continue;
+              }
+        } catch {
+          console.log("Skipped stylesheet due to CORS:", b.href);
+          continue;
+        }
+      if (console.log(
+        `Found ${v.length} matching rules for ${o}:`,
+        v
+      ), v.length > 0)
+        return v[v.length - 1].value;
+    } catch (l) {
+      console.warn(`Error getting authored value for ${o}:`, l);
+    }
+    const c = window.getComputedStyle(t).getPropertyValue(o) || "";
+    return console.log(`Fallback to computed ${o}:`, c), c;
+  }, y = (o) => {
+    const c = g.getPropertyValue(o);
+    return c === "rgba(0, 0, 0, 0)" ? "" : F(c);
+  };
+  d.debug("[Debug] Regular computed styles (for typography/spacing):", {
+    fontSize: e.fontSize,
+    padding: e.getPropertyValue("padding"),
+    fontFamily: e.fontFamily
+  }), d.debug("[Debug] Non-hover computed styles (for colors):", {
+    backgroundColor: g.getPropertyValue("background-color"),
+    color: g.getPropertyValue("color")
+  });
+  const h = {
+    element: t,
+    elementType: t.tagName.toLowerCase(),
+    availableSections: {
+      position: !0,
+      // Enable based on computed position? (static/relative/absolute/fixed)
+      transform: !0,
+      layout: !0,
+      appearance: !0,
+      typography: !0,
+      // Always relevant for most elements
+      background: !0,
+      color: !0,
+      image: t.tagName.toLowerCase() === "img"
+    },
+    position: e.position,
+    left: e.left,
+    top: e.top,
+    right: e.right,
+    bottom: e.bottom,
+    width: e.width,
+    height: e.height,
+    padding: a("padding"),
+    paddingTop: a("padding-top"),
+    paddingRight: a("padding-right"),
+    paddingBottom: a("padding-bottom"),
+    paddingLeft: a("padding-left"),
+    margin: a("margin"),
+    marginTop: a("margin-top"),
+    marginRight: a("margin-right"),
+    marginBottom: a("margin-bottom"),
+    marginLeft: a("margin-left"),
+    showAdvancedSpacing: !1,
+    // Default, user can toggle
+    rotation: 0,
+    opacity: parseFloat(e.opacity) * 100,
+    borderTop: f("border-top"),
+    borderRight: f("border-right"),
+    borderBottom: f("border-bottom"),
+    borderLeft: f("border-left"),
+    cornerRadius: p("border-radius"),
+    borderTopLeftRadius: p("border-top-left-radius"),
+    borderTopRightRadius: p("border-top-right-radius"),
+    borderBottomRightRadius: p("border-bottom-right-radius"),
+    borderBottomLeftRadius: p("border-bottom-left-radius"),
+    fontSize: e.fontSize,
+    lineHeight: e.lineHeight,
+    letterSpacing: e.letterSpacing,
+    fontFamily: e.fontFamily,
+    textAlign: e.textAlign,
+    fontWeight: e.fontWeight,
+    fontStyle: e.fontStyle,
+    textDecoration: e.textDecoration,
+    backgroundColor: y("background-color"),
+    backgroundImage: e.backgroundImage,
+    backgroundSize: e.backgroundSize,
+    backgroundPosition: e.backgroundPosition,
+    backgroundRepeat: e.backgroundRepeat,
+    imageSrc: t.tagName.toLowerCase() === "img" ? t.src : "",
+    imageAlt: t.tagName.toLowerCase() === "img" ? t.alt : "",
+    color: y("color"),
+    colorOpacity: 100,
+    text: t.innerText || t.textContent || "",
+    href: t.tagName.toLowerCase() === "a" ? t.href : "",
+    // Layout properties
+    display: e.display,
+    flexDirection: e.flexDirection,
+    flexWrap: e.flexWrap,
+    justifyContent: e.justifyContent,
+    alignItems: e.alignItems,
+    alignContent: e.alignContent,
+    justifyItems: e.getPropertyValue("justify-items") || "",
+    order: e.order,
+    alignSelf: e.alignSelf,
+    gridTemplateColumns: C("grid-template-columns"),
+    gridTemplateRows: C("grid-template-rows"),
+    gap: e.gap,
+    rowGap: e.rowGap,
+    columnGap: e.columnGap,
+    gridColumn: e.gridColumn,
+    gridRow: e.gridRow,
+    overflow: e.overflow,
+    overflowX: e.overflowX,
+    overflowY: e.overflowY,
+    // Extract hover styles from CSS rules
+    ...E(t)
+  };
+  return d.debug("[Debug] Final FormValues result:", {
+    fontSize: h.fontSize,
+    padding: h.padding,
+    backgroundColor: h.backgroundColor,
+    fontFamily: h.fontFamily
+  }), h;
+}
+function V(t) {
+  const e = {}, g = Array.from(t.classList);
+  d.debug("[Hover Debug] Parsing Tailwind classes:", g);
+  for (const s of g)
+    if (s.startsWith("hover:")) {
+      const i = s.substring(6);
+      if (d.debug(
+        `[Hover Debug] Found Tailwind hover class: ${s} -> ${i}`
+      ), i.startsWith("bg-[") && i.endsWith("]")) {
+        const r = i.slice(3, -1);
+        e["background-color"] = r, d.debug(`[Hover Debug] Extracted background-color: ${r}`);
+      } else if (i.startsWith("text-[") && i.endsWith("]")) {
+        const r = i.slice(5, -1);
+        e.color = r, d.debug(`[Hover Debug] Extracted color: ${r}`);
+      } else if (i.startsWith("bg-")) {
+        const r = I(i);
+        r && (e["background-color"] = r, d.debug(
+          `[Hover Debug] Extracted Tailwind bg color: ${r}`
+        ));
+      } else if (i.startsWith("text-")) {
+        const r = I(
+          i.replace("text-", "bg-")
+        );
+        r && (e.color = r, d.debug(
+          `[Hover Debug] Extracted Tailwind text color: ${r}`
+        ));
+      }
+    }
+  return e;
+}
+function I(t) {
+  return {
+    "bg-red-500": "#ef4444",
+    "bg-blue-500": "#3b82f6",
+    "bg-green-500": "#22c55e",
+    "bg-yellow-500": "#eab308",
+    "bg-purple-500": "#a855f7",
+    "bg-pink-500": "#ec4899",
+    "bg-indigo-500": "#6366f1",
+    "bg-gray-500": "#6b7280"
+    // Add more as needed
+  }[t] || null;
+}
+function k(t) {
+  const e = V(t);
+  d.debug("[Hover Debug] Tailwind hover styles:", e);
+  const g = A(t);
+  d.debug("[Hover Debug] CSS hover styles:", g);
+  const i = { ...{ ...e, ...g } };
+  for (const [r, u] of Object.entries(i))
+    if ((r === "background-color" || r === "color") && typeof u == "string") {
+      let n = u;
+      n.startsWith("[") && (n = n.substring(1)), n.endsWith("]") && (n = n.slice(0, -1)), n !== u && (d.debug(
+        `[Hover Debug] Final cleanup ${r}: ${u} -> ${n}`
+      ), i[r] = n);
+    }
+  return d.debug("[Hover Debug] Merged styles (after cleaning):", i), i;
+}
+function A(t) {
+  const e = {}, g = t.getAttribute("codepress-data-fp");
+  d.debug(
+    "[Hover Debug] Starting hover style extraction for element:",
+    t
+  ), d.debug("[Hover Debug] Element fpId:", g), d.debug("[Hover Debug] Element classes:", Array.from(t.classList)), d.debug("[Hover Debug] Element tag:", t.tagName.toLowerCase());
+  try {
+    const s = Array.from(document.styleSheets);
+    d.debug("[Hover Debug] Found stylesheets:", s.length);
+    for (let i = 0; i < s.length; i++) {
+      const r = s[i];
+      d.debug(
+        `[Hover Debug] Processing stylesheet ${i}:`,
+        r.href || "inline"
+      );
+      try {
+        const u = r.cssRules || r.rules;
+        if (!u) {
+          d.debug(`[Hover Debug] No rules in stylesheet ${i}`);
+          continue;
+        }
+        d.debug(`[Hover Debug] Stylesheet ${i} has ${u.length} rules`);
+        for (let n = 0; n < u.length; n++) {
+          const a = u[n];
+          if (a instanceof CSSStyleRule) {
+            const f = a.selectorText;
+            if (f.includes(":hover")) {
+              d.debug("[Hover Debug] Found hover rule:", f);
+              const p = N(t, f, g);
+              if (d.debug("[Hover Debug] Rule matches?", p), p) {
+                d.debug(
+                  "[Hover Debug] MATCH! Extracting styles from:",
+                  f
+                );
+                const C = a.style;
+                for (let y = 0; y < C.length; y++) {
+                  const h = C[y], o = C.getPropertyValue(h);
+                  if (o) {
+                    d.debug(
+                      `[Hover Debug] Found property: ${h} = ${o}`
+                    );
+                    let c = o;
+                    (h === "background-color" || h === "color") && (c.startsWith("[") && (c = c.substring(1)), c.endsWith("]") && (c = c.slice(0, -1)), d.debug(
+                      `[Hover Debug] Cleaned ${h}: ${o} -> ${c}`
+                    )), e[h] = c;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (u) {
+        x.captureException(u), console.warn(`[Hover Debug] Could not access stylesheet ${i}:`, u);
+      }
+    }
+  } catch (s) {
+    x.captureException(s), console.warn("[Hover Debug] Error extracting hover styles:", s);
+  }
+  return e;
+}
+function N(t, e, g) {
+  try {
+    const s = e.replace(/:hover/g, "").trim();
+    if (g && e.includes(`[codepress-data-fp="${g}"]`))
+      return !0;
+    if (t.matches && s)
+      try {
+        if (t.matches(s))
+          return !0;
+      } catch (n) {
+        x.captureException(n);
+      }
+    const i = Array.from(t.classList);
+    for (const n of i) {
+      if (n.startsWith("hover:")) {
+        const f = n.replace(/[\[\]#:]/g, "\\$&"), p = `.${f}:hover`;
+        if (e.includes(f) || e.includes(n))
+          return !0;
+      }
+      const a = `.${n}:hover`;
+      if (e.includes(a) || e === a)
+        return !0;
+    }
+    const u = `${t.tagName.toLowerCase()}:hover`;
+    if (e.includes(u) || e === u)
+      return !0;
+    if (t.id) {
+      const n = `#${t.id}:hover`;
+      if (e.includes(n) || e === n)
+        return !0;
+    }
+    return !1;
+  } catch (s) {
+    return x.captureException(s), !1;
+  }
+}
+function E(t) {
+  const e = k(t), g = {
+    hover_backgroundColor: "",
+    hover_color: "",
+    hover_colorOpacity: 100,
+    hover_fontSize: "",
+    hover_opacity: 100,
+    hover_cornerRadius: "",
+    hover_padding: "",
+    hover_paddingTop: "",
+    hover_paddingRight: "",
+    hover_paddingBottom: "",
+    hover_paddingLeft: "",
+    hover_margin: "",
+    hover_marginTop: "",
+    hover_marginRight: "",
+    hover_marginBottom: "",
+    hover_marginLeft: "",
+    hover_width: "",
+    hover_height: "",
+    hover_lineHeight: "",
+    hover_letterSpacing: "",
+    hover_textAlign: "left"
+  }, s = {
+    "background-color": "hover_backgroundColor",
+    color: "hover_color",
+    "font-size": "hover_fontSize",
+    opacity: "hover_opacity",
+    "border-radius": "hover_cornerRadius",
+    padding: "hover_padding",
+    "padding-top": "hover_paddingTop",
+    "padding-right": "hover_paddingRight",
+    "padding-bottom": "hover_paddingBottom",
+    "padding-left": "hover_paddingLeft",
+    margin: "hover_margin",
+    "margin-top": "hover_marginTop",
+    "margin-right": "hover_marginRight",
+    "margin-bottom": "hover_marginBottom",
+    "margin-left": "hover_marginLeft",
+    width: "hover_width",
+    height: "hover_height",
+    "line-height": "hover_lineHeight",
+    "letter-spacing": "hover_letterSpacing",
+    "text-align": "hover_textAlign"
+  };
+  for (const [i, r] of Object.entries(e)) {
+    const u = s[i];
+    u && r && (u === "hover_opacity" ? g.hover_opacity = Math.round(parseFloat(r) * 100) : u === "hover_colorOpacity" ? g.hover_colorOpacity = Math.round(parseFloat(r) * 100) : u in g && (g[u] = r));
+  }
+  return d.debug("[Hover Debug] Final extracted hover values:", g), g;
+}
+function W(t, e, g = !1) {
+  if (!t) return;
+  d.debug(
+    "[ContentScript] applyStylesToTarget: Target:",
+    t,
+    "Updates:",
+    JSON.parse(JSON.stringify(e))
+  );
+  const s = t.getAttribute("codepress-data-fp"), i = e._pseudoState || (e._isHoverState ? "hover" : null), r = e._baseProperty, u = t.getAttribute("codepress-data-fp") || t.tagName + Math.random();
+  if (i && r) {
+    const n = e[r];
+    let a = document.getElementById(
+      `codepress-${i}-${u}`
+    );
+    a || (a = document.createElement("style"), a.id = `codepress-${i}-${u}`, document.head.appendChild(a));
+    let f = D[r] ?? r.replace(/([A-Z])/g, "-$1").toLowerCase(), p = String(n);
+    if (r === "rotation")
+      p = `rotate(${n}deg)`, f = "transform";
+    else if (r === "opacity")
+      p = String(parseFloat(String(n)) / 100);
+    else if (r === "fontSize" && /^\d+(\.\d+)?$/.test(p))
+      p = `${p}px`;
+    else if (r === "colorOpacity") {
+      let y;
+      typeof e.color == "string" && e.color ? y = e.color : s && _[s]?.color ? y = String(_[s].color) : y = window.getComputedStyle(t).getPropertyValue("color");
+      const h = (l, S) => {
+        if (l = l.trim(), l.startsWith("#")) {
+          let m, w, H;
+          return l.length === 4 ? (m = parseInt(l[1] + l[1], 16), w = parseInt(l[2] + l[2], 16), H = parseInt(l[3] + l[3], 16)) : (m = parseInt(l.slice(1, 3), 16), w = parseInt(l.slice(3, 5), 16), H = parseInt(l.slice(5, 7), 16)), `rgba(${m}, ${w}, ${H}, ${S})`;
+        }
+        const v = l.match(
+          /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
+        );
+        if (v) {
+          const m = parseInt(v[1], 10), w = parseInt(v[2], 10), H = parseInt(v[3], 10);
+          return `rgba(${m}, ${w}, ${H}, ${S})`;
+        }
+        const b = document.createElement("div");
+        b.style.color = l, document.body.appendChild(b);
+        const $ = window.getComputedStyle(b).color;
+        return document.body.removeChild(b), h($, S);
+      }, o = parseFloat(String(n)) / 100, c = h(y || "rgb(0,0,0)", o);
+      f = "color", p = c;
+    }
+    const C = `[codepress-data-fp="${u}"]:${i}`;
+    a.textContent = `${C} { ${f}: ${p} !important; }`;
+    return;
+  }
+  Object.entries(e).forEach(([n, a]) => {
+    if (n.startsWith("_")) return;
+    const f = D[n] ?? n.replace(/([A-Z])/g, "-$1").toLowerCase();
+    if (a == null || a === "") {
+      n === "imageSrc" && t.tagName === "IMG" ? t.removeAttribute("src") : n === "imageAlt" && t.tagName === "IMG" ? t.removeAttribute("alt") : t.style.removeProperty(f);
+      return;
+    }
+    if (n === "rotation")
+      t.style.transform = t.style.transform.replace(/rotate\([^)]*\)/, "") + ` rotate(${a}deg)`;
+    else if (n === "opacity")
+      t.style.opacity = String(parseFloat(String(a)) / 100);
+    else if (n === "fontSize") {
+      const p = String(a);
+      /^\d+(\.\d+)?$/.test(p) ? t.style.setProperty(f, `${p}px`) : t.style.setProperty(f, p);
+    } else if (n === "colorOpacity") {
+      let p;
+      typeof e.color == "string" && e.color ? p = e.color : s && _[s]?.color ? p = String(_[s].color) : p = window.getComputedStyle(t).getPropertyValue("color");
+      const C = (o, c) => {
+        if (o = o.trim(), o.startsWith("#")) {
+          let b, $, m;
+          return o.length === 4 ? (b = parseInt(o[1] + o[1], 16), $ = parseInt(o[2] + o[2], 16), m = parseInt(o[3] + o[3], 16)) : (b = parseInt(o.slice(1, 3), 16), $ = parseInt(o.slice(3, 5), 16), m = parseInt(o.slice(5, 7), 16)), `rgba(${b}, ${$}, ${m}, ${c})`;
+        }
+        const l = o.match(
+          /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
+        );
+        if (l) {
+          const b = parseInt(l[1], 10), $ = parseInt(l[2], 10), m = parseInt(l[3], 10);
+          return `rgba(${b}, ${$}, ${m}, ${c})`;
+        }
+        const S = document.createElement("div");
+        S.style.color = o, document.body.appendChild(S);
+        const v = window.getComputedStyle(S).color;
+        return document.body.removeChild(S), C(v, c);
+      }, y = parseFloat(String(a)) / 100, h = C(p || "rgb(0,0,0)", y);
+      t.style.setProperty("color", h);
+    } else n === "imageSrc" && t.tagName === "IMG" ? (t.src = String(a), t.removeAttribute("srcset")) : n === "imageAlt" && t.tagName === "IMG" ? t.alt = String(a) : (d.debug("cssProperty", f), t.style.setProperty(f, String(a)));
+  }), s && Object.keys(e).length > 0 && (_[s] = {
+    ..._[s] || {},
+    ...e
+  });
+}
+const D = {
+  // appearance
+  cornerRadius: "border-radius"
+  // rotation is handled separately (mapped to transform) so no alias here
+};
+export {
+  W as applyStylesToTarget,
+  N as checkSelectorMatch,
+  E as extractHoverValues,
+  A as getCSSHoverStyles,
+  T as getElementValues,
+  k as getHoverStyles,
+  R as getNonHoverComputedStyle,
+  V as getTailwindHoverStyles,
+  I as resolveTailwindColor,
+  F as rgbToHex,
+  _ as unsavedStylesCache
+};

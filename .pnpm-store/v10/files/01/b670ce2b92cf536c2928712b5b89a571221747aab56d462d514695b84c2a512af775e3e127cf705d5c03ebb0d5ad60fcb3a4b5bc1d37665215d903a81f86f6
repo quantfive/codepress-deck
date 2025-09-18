@@ -1,0 +1,4 @@
+import { Scope } from "@sentry/browser";
+declare const Sentry: Scope;
+export default Sentry;
+//# sourceMappingURL=sentry.d.ts.map

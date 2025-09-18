@@ -1,0 +1,90 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useDeployment } from "@/context/DeploymentContext";
+import { useVisualEditor } from "@/context/VisualEditorContext";
+import { sanitizeBranchName, stripBranchPrefix } from "@/lib/deployment";
+import { logger } from "@/lib/logger";
+import { cn } from "@/lib/utils";
+import Sentry from "@/sentry";
+import { Popover, PopoverContent, PopoverTrigger, } from "@radix-ui/react-popover";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../ui/button.js";
+import BranchSelector from "./BranchSelector.js";
+import SaveButton from "./SaveButton.js";
+const SaveBar = ({ onSave, onCancel, unsavedChanges, isSaving, }) => {
+    const { branchName, setBranchName, setShowDeploymentPopover, 
+    // Branch save history
+    addSavedBranch, shouldShowSaveDialog, } = useDeployment();
+    const { undo, canUndo, redo, canRedo } = useVisualEditor();
+    const [showSaveDialog, setShowSaveDialog] = useState(false);
+    const [showCommentDialog, setShowCommentDialog] = useState(false);
+    const [commitMessage, setCommitMessage] = useState(undefined);
+    const onComment = () => {
+        // TODO: don't open both saveDialog and comment dialog at the same time
+        setShowCommentDialog(true);
+    };
+    const handleSave = useCallback(async (overrideBranchName) => {
+        const name = overrideBranchName ? overrideBranchName : branchName;
+        // Show dialog based on branch save history (main branches + first-time saves)
+        if (shouldShowSaveDialog(stripBranchPrefix(name)) && !showSaveDialog) {
+            setShowSaveDialog(true);
+            return false;
+        }
+        try {
+            const newBranchName = sanitizeBranchName(name);
+            if (newBranchName !== name) {
+                toast.warning("We tweaked your save name", {
+                    id: "nameTweak",
+                    description: "Invalid characters were removed.",
+                });
+                logger.log("Your save name has been sanitized");
+            }
+            setBranchName(newBranchName);
+            const success = await onSave(newBranchName, commitMessage);
+            if (success) {
+                // Mark this branch as saved
+                addSavedBranch(stripBranchPrefix(newBranchName));
+                setCommitMessage(undefined);
+                const previewData = await getPreviewLink({
+                    branchName: newBranchName,
+                });
+                setShowSaveDialog(false);
+                setShowDeploymentPopover({
+                    ...previewData,
+                    branch_name: newBranchName,
+                });
+            }
+            return success;
+        }
+        catch (err) {
+            toast.error("Save failed", {
+                id: "saveFailed",
+                description: err instanceof Error
+                    ? err.message
+                    : typeof err === "string"
+                        ? err
+                        : "Unknown Error",
+                action: {
+                    label: "Retry",
+                    onClick: () => handleSave(overrideBranchName),
+                },
+            });
+            Sentry.captureException(err);
+            logger.error("Save failed:", err);
+        }
+        return false;
+    }, [
+        branchName,
+        showSaveDialog,
+        setShowSaveDialog,
+        setShowDeploymentPopover,
+        addSavedBranch,
+        setBranchName,
+        onSave,
+        shouldShowSaveDialog,
+        commitMessage,
+    ]);
+    const hasUnsavedChanges = unsavedChanges > 0;
+    return (_jsxs("div", { className: "fixed bottom-4 left-1/2 -translate-x-1/2 rounded-md shadow-xl border border-gray-200 bg-white/95 backdrop-blur w-fit z-[9999] flex items-center gap-4 min-w-0", children: [_jsx("div", { className: cn("border-r-1 border-gray-300 p-3 flex-shrink-0", hasUnsavedChanges ? "border-r-0" : ""), children: _jsx(BranchSelector, {}) }), hasUnsavedChanges && (_jsxs("span", { className: "bg-gray-200 text-gray-800 rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap flex-shrink-0", children: [unsavedChanges, " unsaved change", unsavedChanges > 1 ? "s" : ""] })), hasUnsavedChanges && (_jsxs("div", { className: "flex items-center gap-4 p-3 flex-shrink-0", children: [_jsx(Button, { onClick: undo, disabled: !canUndo, variant: "ghost", className: "text-sm", children: "Undo" }), _jsx(Button, { onClick: onCancel, disabled: isSaving, variant: "ghost", className: "text-sm", children: "Discard" }), _jsx(Button, { onClick: redo, disabled: !canRedo, variant: "ghost", className: "text-sm", children: "Redo" }), _jsxs(Popover, { open: showCommentDialog, onOpenChange: setShowCommentDialog, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(Button, { onClick: onComment, disabled: isSaving, variant: "outline", className: "text-sm", children: "Comment" }) }), _jsxs(PopoverContent, { className: "z-[10050] w-[480px] p-4 shadow-xl border border-gray-200 bg-white rounded-xl", side: "top", sideOffset: 24, align: "center", children: [_jsx("h4", { className: "text-base font-semibold mb-1", children: "Add you Comment" }), _jsx("p", { className: "text-sm text-gray-600 mb-4", children: "When you save, CodePress will add this comments to the github pull request (so any developer can read them)." }), _jsx("textarea", { id: "comment", name: "commitMessage", onChange: (e) => setCommitMessage(!!e.target.value ? e.target.value : undefined), value: commitMessage, className: "w-full border focus:ring-gray-900" })] })] }), _jsx(SaveButton, { open: showSaveDialog, onOpenChange: setShowSaveDialog, branchName: stripBranchPrefix(branchName), onSave: handleSave, isSaving: isSaving })] }))] }));
+};
+export default SaveBar;

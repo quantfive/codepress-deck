@@ -1,0 +1,91 @@
+import logger from "../logger.js";
+import Sentry from "@/sentry";
+// Import server URLs from fetch.ts
+import { apiFetch, GET_CONFIG, TOKEN_STORAGE_KEY, } from "../../fetch.js";
+import { API_BASE_URL, OAUTH_BASE_URL } from "@/lib/env";
+// Default auth configuration
+export const defaultConfig = {
+    clientId: "Iv23liPtsCOHyl6mrulZ",
+    scopes: ["read:user", "user:email", "read:org", "repo"],
+    redirectUri: `${OAUTH_BASE_URL}/auth/github/callback`,
+};
+// GitHub OAuth URL
+export const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
+// Storage keys
+export const USER_STORAGE_KEY = "github_user_data";
+// Save auth token to storage
+export async function saveToken(token) {
+    await browser.storage.local.set({ [TOKEN_STORAGE_KEY]: token });
+}
+// Get auth token from storage
+export async function getToken() {
+    const data = await browser.storage.local.get(TOKEN_STORAGE_KEY);
+    return data[TOKEN_STORAGE_KEY] || null;
+}
+// Remove auth token from storage
+export async function removeToken() {
+    await browser.storage.local.remove(TOKEN_STORAGE_KEY);
+}
+// Save user data to storage
+export async function saveUser(user) {
+    await browser.storage.local.set({ [USER_STORAGE_KEY]: user });
+}
+// Get user data from storage
+export async function getUser() {
+    const data = await browser.storage.local.get(USER_STORAGE_KEY);
+    return data[USER_STORAGE_KEY] || null;
+}
+// Remove user data from storage
+export async function removeUser() {
+    await browser.storage.local.remove(USER_STORAGE_KEY);
+}
+// Get current auth state
+export async function getAuthState() {
+    const token = await getToken();
+    const user = await getUser();
+    return {
+        token,
+        user,
+        isLoggedIn: !!token && !!user,
+    };
+}
+// Clear all auth data
+export async function logout() {
+    await Promise.all([removeToken(), removeUser()]);
+}
+// Fetch user profile from GitHub API
+export async function fetchUserProfile(token) {
+    logger.debug("Fetching GitHub user profile with token");
+    try {
+        const config = await GET_CONFIG({ includeAuth: true });
+        const response = await apiFetch(`${API_BASE_URL}/auth/me`, config);
+        logger.debug("GitHub API response status:", response.status);
+        if (!response.ok) {
+            // Try to get error details
+            let errorMsg;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.message || response.statusText;
+            }
+            catch (err) {
+                Sentry.captureException(err);
+                errorMsg = response.statusText;
+            }
+            throw new Error(`Failed to fetch user profile: ${errorMsg} (${response.status})`);
+        }
+        const userData = await response.json();
+        logger.debug("GitHub user data received:", userData);
+        // Create a standardized user object
+        return {
+            login: userData.login,
+            name: userData.name || userData.login,
+            email: userData.email || "",
+            avatar_url: userData.avatar_url,
+        };
+    }
+    catch (error) {
+        logger.error("Error fetching GitHub profile:", error);
+        Sentry.captureException(error);
+        throw error;
+    }
+}

@@ -1,0 +1,11 @@
+import React from "react";
+interface SaveButtonProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    branchName: string;
+    onSave: (newBranchName?: string | undefined) => Promise<boolean>;
+    isSaving: boolean;
+}
+declare const SaveButton: React.FC<SaveButtonProps>;
+export default SaveButton;
+//# sourceMappingURL=SaveButton.d.ts.map

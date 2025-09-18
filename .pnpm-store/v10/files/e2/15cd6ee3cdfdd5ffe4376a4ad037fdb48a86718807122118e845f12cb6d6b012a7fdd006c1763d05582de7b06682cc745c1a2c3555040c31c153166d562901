@@ -1,0 +1,127 @@
+import * as s from "react";
+import { composeEventHandlers as h } from "./index97.js";
+import { Primitive as w, dispatchDiscreteCustomEvent as k } from "./index107.js";
+import { useComposedRefs as R } from "./index98.js";
+import { useCallbackRef as g } from "./index159.js";
+import { useEscapeKeydown as U } from "./index160.js";
+import { j as x } from "./index7.js";
+var j = "DismissableLayer", p = "dismissableLayer.update", z = "dismissableLayer.pointerDownOutside", H = "dismissableLayer.focusOutside", C, T = s.createContext({
+  layers: /* @__PURE__ */ new Set(),
+  layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
+  branches: /* @__PURE__ */ new Set()
+}), M = s.forwardRef(
+  (n, e) => {
+    const {
+      disableOutsidePointerEvents: r = !1,
+      onEscapeKeyDown: a,
+      onPointerDownOutside: i,
+      onFocusOutside: c,
+      onInteractOutside: f,
+      onDismiss: d,
+      ...E
+    } = n, o = s.useContext(T), [u, F] = s.useState(null), l = u?.ownerDocument ?? globalThis?.document, [, I] = s.useState({}), S = R(e, (t) => F(t)), y = Array.from(o.layers), [W] = [...o.layersWithOutsidePointerEventsDisabled].slice(-1), A = y.indexOf(W), b = u ? y.indexOf(u) : -1, N = o.layersWithOutsidePointerEventsDisabled.size > 0, D = b >= A, _ = Y((t) => {
+      const v = t.target, P = [...o.branches].some((m) => m.contains(v));
+      !D || P || (i?.(t), f?.(t), t.defaultPrevented || d?.());
+    }, l), O = q((t) => {
+      const v = t.target;
+      [...o.branches].some((m) => m.contains(v)) || (c?.(t), f?.(t), t.defaultPrevented || d?.());
+    }, l);
+    return U((t) => {
+      b === o.layers.size - 1 && (a?.(t), !t.defaultPrevented && d && (t.preventDefault(), d()));
+    }, l), s.useEffect(() => {
+      if (u)
+        return r && (o.layersWithOutsidePointerEventsDisabled.size === 0 && (C = l.body.style.pointerEvents, l.body.style.pointerEvents = "none"), o.layersWithOutsidePointerEventsDisabled.add(u)), o.layers.add(u), L(), () => {
+          r && o.layersWithOutsidePointerEventsDisabled.size === 1 && (l.body.style.pointerEvents = C);
+        };
+    }, [u, l, r, o]), s.useEffect(() => () => {
+      u && (o.layers.delete(u), o.layersWithOutsidePointerEventsDisabled.delete(u), L());
+    }, [u, o]), s.useEffect(() => {
+      const t = () => I({});
+      return document.addEventListener(p, t), () => document.removeEventListener(p, t);
+    }, []), /* @__PURE__ */ x.jsx(
+      w.div,
+      {
+        ...E,
+        ref: S,
+        style: {
+          pointerEvents: N ? D ? "auto" : "none" : void 0,
+          ...n.style
+        },
+        onFocusCapture: h(n.onFocusCapture, O.onFocusCapture),
+        onBlurCapture: h(n.onBlurCapture, O.onBlurCapture),
+        onPointerDownCapture: h(
+          n.onPointerDownCapture,
+          _.onPointerDownCapture
+        )
+      }
+    );
+  }
+);
+M.displayName = j;
+var K = "DismissableLayerBranch", X = s.forwardRef((n, e) => {
+  const r = s.useContext(T), a = s.useRef(null), i = R(e, a);
+  return s.useEffect(() => {
+    const c = a.current;
+    if (c)
+      return r.branches.add(c), () => {
+        r.branches.delete(c);
+      };
+  }, [r.branches]), /* @__PURE__ */ x.jsx(w.div, { ...n, ref: i });
+});
+X.displayName = K;
+function Y(n, e = globalThis?.document) {
+  const r = g(n), a = s.useRef(!1), i = s.useRef(() => {
+  });
+  return s.useEffect(() => {
+    const c = (d) => {
+      if (d.target && !a.current) {
+        let E = function() {
+          B(
+            z,
+            r,
+            o,
+            { discrete: !0 }
+          );
+        };
+        const o = { originalEvent: d };
+        d.pointerType === "touch" ? (e.removeEventListener("click", i.current), i.current = E, e.addEventListener("click", i.current, { once: !0 })) : E();
+      } else
+        e.removeEventListener("click", i.current);
+      a.current = !1;
+    }, f = window.setTimeout(() => {
+      e.addEventListener("pointerdown", c);
+    }, 0);
+    return () => {
+      window.clearTimeout(f), e.removeEventListener("pointerdown", c), e.removeEventListener("click", i.current);
+    };
+  }, [e, r]), {
+    // ensures we check React component tree (not just DOM tree)
+    onPointerDownCapture: () => a.current = !0
+  };
+}
+function q(n, e = globalThis?.document) {
+  const r = g(n), a = s.useRef(!1);
+  return s.useEffect(() => {
+    const i = (c) => {
+      c.target && !a.current && B(H, r, { originalEvent: c }, {
+        discrete: !1
+      });
+    };
+    return e.addEventListener("focusin", i), () => e.removeEventListener("focusin", i);
+  }, [e, r]), {
+    onFocusCapture: () => a.current = !0,
+    onBlurCapture: () => a.current = !1
+  };
+}
+function L() {
+  const n = new CustomEvent(p);
+  document.dispatchEvent(n);
+}
+function B(n, e, r, { discrete: a }) {
+  const i = r.originalEvent.target, c = new CustomEvent(n, { bubbles: !1, cancelable: !0, detail: r });
+  e && i.addEventListener(n, e, { once: !0 }), a ? k(i, c) : i.dispatchEvent(c);
+}
+export {
+  M as DismissableLayer,
+  X as DismissableLayerBranch
+};

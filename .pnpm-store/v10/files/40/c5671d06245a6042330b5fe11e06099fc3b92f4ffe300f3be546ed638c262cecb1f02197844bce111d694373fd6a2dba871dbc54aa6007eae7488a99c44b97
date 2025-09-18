@@ -1,0 +1,17 @@
+/**
+ * CodePress Drag & Drop Debug Utilities
+ *
+ * Helper functions to debug drag & drop issues and verify setup
+ */
+export interface DebugInfo {
+    elementsWithCodePressData: number;
+    shadowDomElements: number;
+    eventListeners: string[];
+    browserExtensionContext: boolean;
+    domReady: boolean;
+    errors: string[];
+}
+export declare function debugDragDropSetup(): DebugInfo;
+export declare function testDragHandlePositioning(): void;
+export declare function logCodePressElementsStructure(): void;
+//# sourceMappingURL=drag-drop-debug.d.ts.map

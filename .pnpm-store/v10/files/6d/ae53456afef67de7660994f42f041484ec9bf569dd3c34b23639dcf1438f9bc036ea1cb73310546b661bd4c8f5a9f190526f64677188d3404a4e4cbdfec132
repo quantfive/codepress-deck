@@ -1,0 +1,82 @@
+const i = Object.prototype.toString;
+function c(e) {
+  switch (i.call(e)) {
+    case "[object Error]":
+    case "[object Exception]":
+    case "[object DOMException]":
+    case "[object WebAssembly.Exception]":
+      return !0;
+    default:
+      return t(e, Error);
+  }
+}
+function n(e, r) {
+  return i.call(e) === `[object ${r}]`;
+}
+function s(e) {
+  return n(e, "ErrorEvent");
+}
+function f(e) {
+  return n(e, "DOMError");
+}
+function l(e) {
+  return n(e, "DOMException");
+}
+function E(e) {
+  return n(e, "String");
+}
+function o(e) {
+  return typeof e == "object" && e !== null && "__sentry_template_string__" in e && "__sentry_template_values__" in e;
+}
+function p(e) {
+  return e === null || o(e) || typeof e != "object" && typeof e != "function";
+}
+function u(e) {
+  return n(e, "Object");
+}
+function b(e) {
+  return typeof Event < "u" && t(e, Event);
+}
+function _(e) {
+  return typeof Element < "u" && t(e, Element);
+}
+function y(e) {
+  return n(e, "RegExp");
+}
+function j(e) {
+  return !!(e?.then && typeof e.then == "function");
+}
+function v(e) {
+  return u(e) && "nativeEvent" in e && "preventDefault" in e && "stopPropagation" in e;
+}
+function t(e, r) {
+  try {
+    return e instanceof r;
+  } catch {
+    return !1;
+  }
+}
+function a(e) {
+  return !!(typeof e == "object" && e !== null && (e.__isVue || e._isVue));
+}
+function d(e) {
+  return typeof Request < "u" && t(e, Request);
+}
+export {
+  f as isDOMError,
+  l as isDOMException,
+  _ as isElement,
+  c as isError,
+  s as isErrorEvent,
+  b as isEvent,
+  t as isInstanceOf,
+  o as isParameterizedString,
+  u as isPlainObject,
+  p as isPrimitive,
+  y as isRegExp,
+  d as isRequest,
+  E as isString,
+  v as isSyntheticEvent,
+  j as isThenable,
+  a as isVueViewModel
+};

@@ -1,0 +1,12 @@
+type CodepressEditorProps = {
+    container?: HTMLElement | null;
+    apiBaseUrl?: string;
+    oauthBaseUrl?: string;
+    token?: string | null;
+    tokenProvider?: () => string | null | Promise<string | null>;
+    demo?: boolean;
+    useShadow?: boolean;
+};
+export declare function CodepressEditor({ container, apiBaseUrl, oauthBaseUrl, token, tokenProvider, demo, useShadow, }: CodepressEditorProps): any;
+export default CodepressEditor;
+//# sourceMappingURL=CodepressEditor.d.ts.map

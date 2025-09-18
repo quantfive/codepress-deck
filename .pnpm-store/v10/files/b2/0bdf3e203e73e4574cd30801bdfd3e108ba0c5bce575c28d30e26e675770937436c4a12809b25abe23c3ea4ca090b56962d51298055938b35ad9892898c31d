@@ -1,0 +1,4 @@
+export declare function setToken(token: string | null): void;
+export declare function setTokenProvider(provider: () => string | null | Promise<string | null>): void;
+export declare function getProvidedToken(): Promise<string | null>;
+//# sourceMappingURL=authTokenProvider.d.ts.map

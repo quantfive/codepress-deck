@@ -1,0 +1,58 @@
+import { generateApiUrl, apiFetch, GET_CONFIG, POST_CONFIG, DELETE_CONFIG, } from "../../fetch.js";
+import logger from "../logger.js";
+/**
+ * Fetch organizations with repositories
+ */
+export async function fetchOrganizationsWithRepositories() {
+    logger.debug("here");
+    const config = await GET_CONFIG();
+    const response = await apiFetch(generateApiUrl("github/organizations/with-repositories"), config);
+    return response.json();
+}
+/**
+ * Fetch details for a specific repository
+ */
+export async function fetchRepositoryDetails(repoId) {
+    const config = await GET_CONFIG();
+    const response = await apiFetch(generateApiUrl(`repositories/${repoId}`), config);
+    return response.json();
+}
+/**
+ * Link repository to a GitHub repository
+ */
+export async function linkRepository(options) {
+    const config = await POST_CONFIG({ data: options });
+    const response = await apiFetch(generateApiUrl("repositories/link"), config);
+    return response.json();
+}
+/**
+ * Create a new API key for an organization
+ */
+export async function createApiKey(organizationId, permissions) {
+    // Just send permissions if provided
+    const data = permissions
+        ? { permissions }
+        : { permissions: { file_mappings: true } };
+    const config = await POST_CONFIG({ data });
+    const response = await apiFetch(generateApiUrl(`github/organizations/${organizationId}/api-keys`), config);
+    return response.json();
+}
+/**
+ * Get all API keys for an organization
+ */
+export async function getApiKeys(organizationId) {
+    const config = await GET_CONFIG();
+    const response = await apiFetch(generateApiUrl(`github/organizations/${organizationId}/api-keys`), config);
+    return response.json();
+}
+/**
+ * Revoke (delete) an API key
+ */
+export async function revokeApiKey(organizationId, keyId) {
+    const config = await DELETE_CONFIG();
+    const response = await apiFetch(generateApiUrl(`github/organizations/${organizationId}/api-keys/${keyId}`), config);
+    return response.json();
+}
+/**
+ * Add more GitHub-specific API functions here as needed
+ */

@@ -1,0 +1,6 @@
+function e() {
+  return "npm";
+}
+export {
+  e as getSDKSource
+};

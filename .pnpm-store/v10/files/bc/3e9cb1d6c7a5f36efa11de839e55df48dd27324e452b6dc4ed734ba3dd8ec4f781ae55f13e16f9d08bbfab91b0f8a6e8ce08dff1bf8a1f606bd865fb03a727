@@ -1,0 +1,14 @@
+import React from "react";
+interface ShimmerTextProps {
+    text: string;
+    windowWidth?: number;
+    animationDuration?: number;
+    disabled?: boolean;
+}
+/**
+ * ShimmerText component displays text with an animated shimmer effect using CSS masks.
+ * The shimmer animation is defined in the global CSS file.
+ */
+declare const ShimmerText: React.FC<ShimmerTextProps>;
+export default ShimmerText;
+//# sourceMappingURL=ShimmerText.d.ts.map

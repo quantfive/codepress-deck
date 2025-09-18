@@ -1,0 +1,158 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from "react";
+import { Input } from "../../ui/input.js";
+import { InputWithPopover } from "../../block/InputWithPopover.js";
+import { Label } from "../../ui/label.js";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, } from "../../ui/select.js";
+import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group.js";
+import { useVisualEditor } from "../../../context/VisualEditorContext.js";
+import { usePopoverContainer } from "../../../context/PopoverContainerContext.js";
+// Ensures px unit if only a number is entered
+const ensurePx = (value) => {
+    if (value === "")
+        return "";
+    const trimmed = value.trim();
+    // Already has unit or is keyword
+    if (/[^0-9.-]/.test(trimmed.slice(-1)))
+        return trimmed;
+    return `${trimmed}px`;
+};
+const LayoutGroup = ({ popoverContainer }) => {
+    const { activeElementFpId, trackedElements, updateActiveElementStyle, editingState, } = useVisualEditor();
+    // Fallback to context-provided container if prop not supplied
+    const contextContainer = usePopoverContainer();
+    const portalContainer = popoverContainer ?? contextContainer ?? undefined;
+    const activeElement = activeElementFpId
+        ? trackedElements[activeElementFpId]?.element
+        : null;
+    const initialValues = activeElementFpId
+        ? trackedElements[activeElementFpId]?.currentValues
+        : null;
+    const [styles, setStyles] = useState({
+        position: "",
+        top: "",
+        right: "",
+        bottom: "",
+        left: "",
+        zIndex: "",
+        display: "",
+        flexDirection: "",
+        flexWrap: "",
+        justifyContent: "",
+        alignItems: "",
+        alignContent: "",
+        justifyItems: "",
+        order: "",
+        alignSelf: "",
+        gridTemplateColumns: "",
+        gridTemplateRows: "",
+        gap: "",
+        rowGap: "",
+        columnGap: "",
+        gridColumn: "",
+        gridRow: "",
+        overflow: "",
+        overflowX: "",
+        overflowY: "",
+    });
+    // Controls which set of grid fields (columns vs rows) are shown
+    const [gridMode, setGridMode] = useState("columns");
+    useEffect(() => {
+        if (!initialValues)
+            return;
+        const resolve = (prop) => {
+            if (editingState === "normal") {
+                return initialValues[prop] ?? "";
+            }
+            const pseudoKey = `${editingState}_${prop}`;
+            return (initialValues[pseudoKey] ?? initialValues[prop] ?? "");
+        };
+        setStyles({
+            position: resolve("position"),
+            top: resolve("top"),
+            right: resolve("right"),
+            bottom: resolve("bottom"),
+            left: resolve("left"),
+            zIndex: initialValues.zIndex ?? "",
+            display: initialValues.display ?? "",
+            flexDirection: resolve("flexDirection"),
+            flexWrap: resolve("flexWrap"),
+            justifyContent: resolve("justifyContent"),
+            alignItems: resolve("alignItems"),
+            alignContent: resolve("alignContent"),
+            justifyItems: resolve("justifyItems"),
+            order: resolve("order"),
+            alignSelf: resolve("alignSelf"),
+            gridTemplateColumns: resolve("gridTemplateColumns"),
+            gridTemplateRows: resolve("gridTemplateRows"),
+            gap: resolve("gap"),
+            rowGap: resolve("rowGap"),
+            columnGap: resolve("columnGap"),
+            gridColumn: resolve("gridColumn"),
+            gridRow: resolve("gridRow"),
+            overflow: resolve("overflow"),
+            overflowX: resolve("overflowX"),
+            overflowY: resolve("overflowY"),
+        });
+    }, [initialValues, editingState]);
+    if (!activeElement) {
+        return null;
+    }
+    // --- Helpers --- //
+    const updateStyle = (partial) => {
+        setStyles((prev) => ({ ...prev, ...partial }));
+        // Cast to any to allow zIndex (not yet in FormValues) to pass through
+        updateActiveElementStyle(partial);
+        Object.entries(partial).forEach(([prop, val]) => {
+            if (!activeElement)
+                return;
+            // Direct assignment for all props
+            // Map zIndex -> zIndex to satisfy TS
+            activeElement.style[prop] = val;
+        });
+    };
+    // --- Popover content --- //
+    const renderPositionPopoverContent = () => (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "position-select", className: "text-sm", children: "Position" }), _jsxs(Select, { value: styles.position, onValueChange: (val) => updateStyle({ position: val }), children: [_jsx(SelectTrigger, { id: "position-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "static" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: [
+                                    "static",
+                                    "relative",
+                                    "absolute",
+                                    "fixed",
+                                    "sticky",
+                                ].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsx("div", { className: "grid grid-cols-2 gap-2", children: [
+                    ["top", "Top"],
+                    ["right", "Right"],
+                    ["bottom", "Bottom"],
+                    ["left", "Left"],
+                ].map(([key, label]) => (_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: `${key}-input`, className: "text-sm", children: label }), _jsx(Input, { id: `${key}-input`, value: styles[key], defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, [key]: e.target.value })), onCommit: (val) => updateStyle({ [key]: ensurePx(val) }) })] }, key))) }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "z-index-input", className: "text-sm", children: "z-index" }), _jsx(Input, { id: "z-index-input", value: styles.zIndex, type: "number", onChange: (e) => setStyles((prev) => ({ ...prev, zIndex: e.target.value })), onCommit: (val) => updateStyle({ zIndex: val }) })] })] }));
+    const renderDisplayPopoverContent = () => {
+        const isGrid = styles.display.includes("grid");
+        const isFlex = styles.display.includes("flex");
+        return (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "display-select", className: "text-sm", children: "Display" }), _jsxs(Select, { value: styles.display, onValueChange: (val) => updateStyle({ display: val }), children: [_jsx(SelectTrigger, { id: "display-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "block" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: [
+                                        "block",
+                                        "inline",
+                                        "inline-block",
+                                        "flex",
+                                        "inline-flex",
+                                        "grid",
+                                        "inline-grid",
+                                        "contents",
+                                        "none",
+                                    ].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), isFlex && (_jsxs("div", { className: "grid grid-cols-2 gap-2", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "flex-direction-select", className: "text-sm", children: "flex-direction" }), _jsxs(Select, { value: styles.flexDirection, onValueChange: (val) => updateStyle({ flexDirection: val }), children: [_jsx(SelectTrigger, { id: "flex-direction-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "row" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["row", "row-reverse", "column", "column-reverse"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "flex-wrap-select", className: "text-sm", children: "flex-wrap" }), _jsxs(Select, { value: styles.flexWrap, onValueChange: (val) => updateStyle({ flexWrap: val }), children: [_jsx(SelectTrigger, { id: "flex-wrap-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "nowrap" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["nowrap", "wrap", "wrap-reverse"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "justify-content-select", className: "text-sm", children: "justify-content" }), _jsxs(Select, { value: styles.justifyContent, onValueChange: (val) => updateStyle({ justifyContent: val }), children: [_jsx(SelectTrigger, { id: "justify-content-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "flex-start" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["flex-start", "center", "flex-end", "space-between", "space-around", "space-evenly"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "align-items-select", className: "text-sm", children: "align-items" }), _jsxs(Select, { value: styles.alignItems, onValueChange: (val) => updateStyle({ alignItems: val }), children: [_jsx(SelectTrigger, { id: "align-items-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "stretch" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["stretch", "center", "flex-start", "flex-end", "baseline"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "align-content-select", className: "text-sm", children: "align-content" }), _jsxs(Select, { value: styles.alignContent, onValueChange: (val) => updateStyle({ alignContent: val }), children: [_jsx(SelectTrigger, { id: "align-content-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "normal" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["normal", "stretch", "center", "flex-start", "flex-end", "space-between", "space-around", "space-evenly"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "gap-input-flex", className: "text-sm", children: "gap" }), _jsx(Input, { id: "gap-input-flex", value: styles.gap, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, gap: e.target.value })), onCommit: (val) => updateStyle({ gap: ensurePx(val) }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "row-gap-input-flex", className: "text-sm", children: "row-gap" }), _jsx(Input, { id: "row-gap-input-flex", value: styles.rowGap, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, rowGap: e.target.value })), onCommit: (val) => updateStyle({ rowGap: ensurePx(val) }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "column-gap-input-flex", className: "text-sm", children: "column-gap" }), _jsx(Input, { id: "column-gap-input-flex", value: styles.columnGap, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, columnGap: e.target.value })), onCommit: (val) => updateStyle({ columnGap: ensurePx(val) }) })] })] })), isGrid && (_jsxs(ToggleGroup, { className: "w-full", type: "single", value: gridMode, onValueChange: (val) => val && setGridMode(val), children: [_jsx(ToggleGroupItem, { className: "flex-1", value: "columns", children: "Columns" }), _jsx(ToggleGroupItem, { className: "flex-1", value: "rows", children: "Rows" })] })), isGrid && (_jsxs("div", { className: "grid grid-cols-2 gap-2", children: [(gridMode === "columns"
+                            ? [
+                                ["gridTemplateColumns", "grid-template-columns"],
+                                ["gridColumn", "grid-column"],
+                            ]
+                            : [
+                                ["gridTemplateRows", "grid-template-rows"],
+                                ["gridRow", "grid-row"],
+                            ]).map(([key, label]) => (_jsxs("div", { className: "flex flex-col", children: [_jsx(Label, { htmlFor: `${key}-input`, className: "text-sm", children: label }), _jsx(Input, { id: `${key}-input`, value: styles[key], onChange: (e) => setStyles((prev) => ({ ...prev, [key]: e.target.value })), onCommit: (val) => updateStyle({ [key]: val }) })] }, key))), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "gap-input", className: "text-sm", children: "gap" }), _jsx(Input, { id: "gap-input", value: styles.gap, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, gap: e.target.value })), onCommit: (val) => updateStyle({ gap: ensurePx(val) }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "row-gap-input", className: "text-sm", children: "row-gap" }), _jsx(Input, { id: "row-gap-input", value: styles.rowGap, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, rowGap: e.target.value })), onCommit: (val) => updateStyle({ rowGap: ensurePx(val) }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "column-gap-input", className: "text-sm", children: "column-gap" }), _jsx(Input, { id: "column-gap-input", value: styles.columnGap, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, columnGap: e.target.value })), onCommit: (val) => updateStyle({ columnGap: ensurePx(val) }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "justify-content-grid-select", className: "text-sm", children: "justify-content" }), _jsxs(Select, { value: styles.justifyContent, onValueChange: (val) => updateStyle({ justifyContent: val }), children: [_jsx(SelectTrigger, { id: "justify-content-grid-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "start" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["start", "center", "end", "stretch", "space-between", "space-around", "space-evenly"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "align-content-grid-select", className: "text-sm", children: "align-content" }), _jsxs(Select, { value: styles.alignContent, onValueChange: (val) => updateStyle({ alignContent: val }), children: [_jsx(SelectTrigger, { id: "align-content-grid-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "start" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["start", "center", "end", "stretch", "space-between", "space-around", "space-evenly"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "justify-items-grid-select", className: "text-sm", children: "justify-items" }), _jsxs(Select, { value: styles.justifyItems, onValueChange: (val) => updateStyle({ justifyItems: val }), children: [_jsx(SelectTrigger, { id: "justify-items-grid-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "stretch" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["stretch", "start", "center", "end"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "align-items-grid-select", className: "text-sm", children: "align-items" }), _jsxs(Select, { value: styles.alignItems, onValueChange: (val) => updateStyle({ alignItems: val }), children: [_jsx(SelectTrigger, { id: "align-items-grid-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "stretch" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["stretch", "start", "center", "end"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] })] })), isFlex && (_jsxs("div", { className: "grid grid-cols-2 gap-2", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "order-input", className: "text-sm", children: "order" }), _jsx(Input, { id: "order-input", type: "number", value: styles.order, onChange: (e) => setStyles((prev) => ({ ...prev, order: e.target.value })), onCommit: (val) => updateStyle({ order: val }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "align-self-select", className: "text-sm", children: "align-self" }), _jsxs(Select, { value: styles.alignSelf, onValueChange: (val) => updateStyle({ alignSelf: val }), children: [_jsx(SelectTrigger, { id: "align-self-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "auto" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["auto", "stretch", "center", "flex-start", "flex-end", "baseline"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] })] }))] }));
+    };
+    /* ---------------- Overflow Popover ---------------- */
+    const renderOverflowPopoverContent = () => (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "overflow-select", className: "text-sm", children: "Overflow" }), _jsxs(Select, { value: styles.overflow, onValueChange: (val) => updateStyle({ overflow: val }), children: [_jsx(SelectTrigger, { id: "overflow-select", className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "visible" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["visible", "hidden", "scroll", "auto", "clip", "inherit", "initial", "unset"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }), _jsx("div", { className: "grid grid-cols-2 gap-2", children: [
+                    ["overflowX", "overflow-x"],
+                    ["overflowY", "overflow-y"],
+                ].map(([key, label]) => (_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: `${key}-select`, className: "text-sm", children: label }), _jsxs(Select, { value: styles[key], onValueChange: (val) => updateStyle({ [key]: val }), children: [_jsx(SelectTrigger, { id: `${key}-select`, className: "w-full h-8", children: _jsx(SelectValue, { placeholder: "visible" }) }), _jsx(SelectContent, { container: portalContainer, sideOffset: 8, children: ["visible", "hidden", "scroll", "auto", "clip", "inherit", "initial", "unset"].map((opt) => (_jsx(SelectItem, { value: opt, className: "text-sm", children: opt }, opt))) })] })] }, key))) })] }));
+    // --- Render --- //
+    return (_jsxs("div", { className: "flex items-center space-x-2", children: [_jsx(InputWithPopover, { id: "display-input", className: "w-[120px] h-8", value: styles.display, placeholder: "display", onChange: (e) => setStyles((prev) => ({ ...prev, display: e.target.value })), onCommit: (val) => updateStyle({ display: val }), popoverContent: renderDisplayPopoverContent(), container: portalContainer, topLabel: "Display" }), _jsx(InputWithPopover, { id: "position-input", className: "w-[120px] h-8", value: styles.position, placeholder: "position", onChange: (e) => setStyles((prev) => ({ ...prev, position: e.target.value })), onCommit: (val) => updateStyle({ position: val }), popoverContent: renderPositionPopoverContent(), container: portalContainer, topLabel: "Position" }), _jsx(InputWithPopover, { id: "overflow-input", className: "w-[120px] h-8", value: styles.overflow, placeholder: "overflow", onChange: (e) => setStyles((prev) => ({ ...prev, overflow: e.target.value })), onCommit: (val) => updateStyle({ overflow: val }), popoverContent: renderOverflowPopoverContent(), container: portalContainer, topLabel: "Overflow" })] }));
+};
+export default LayoutGroup;

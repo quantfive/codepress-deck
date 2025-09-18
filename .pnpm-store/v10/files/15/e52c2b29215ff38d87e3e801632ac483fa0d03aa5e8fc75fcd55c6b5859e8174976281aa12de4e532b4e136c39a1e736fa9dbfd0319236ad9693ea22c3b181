@@ -1,0 +1,8 @@
+interface ApiKeyGeneratorProps {
+    organizationId: number;
+    organizationName: string;
+    repositoryName?: string;
+}
+export default function ApiKeyGenerator({ organizationId, organizationName, repositoryName, }: ApiKeyGeneratorProps): import("react/jsx-runtime").JSX.Element;
+export {};
+//# sourceMappingURL=ApiKeyGenerator.d.ts.map

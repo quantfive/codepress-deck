@@ -1,0 +1,9 @@
+import React from "react";
+interface DesignBarProps {
+    onClose: () => void;
+    popoverContainer?: HTMLElement;
+    onOpenDesignPanel: () => void;
+}
+declare const DesignBar: React.FC<DesignBarProps>;
+export default DesignBar;
+//# sourceMappingURL=DesignBar.d.ts.map

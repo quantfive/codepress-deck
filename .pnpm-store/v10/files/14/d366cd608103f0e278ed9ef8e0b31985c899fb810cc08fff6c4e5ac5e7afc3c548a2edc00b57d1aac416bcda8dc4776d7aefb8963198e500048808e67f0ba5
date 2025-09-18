@@ -1,0 +1,163 @@
+import * as v from "react";
+import { composeEventHandlers as g } from "./index97.js";
+import { createContextScope as N } from "./index99.js";
+import { createRovingFocusGroupScope as x, Root as P, Item as S } from "./index236.js";
+import { Presence as F } from "./index106.js";
+import { Primitive as p } from "./index107.js";
+import { useDirection as w } from "./index233.js";
+import { useControllableState as D } from "./index109.js";
+import { useId as V } from "./index103.js";
+import { j as l } from "./index7.js";
+var b = "Tabs", [G] = N(b, [
+  x
+]), C = x(), [L, T] = G(b), h = v.forwardRef(
+  (e, r) => {
+    const {
+      __scopeTabs: s,
+      value: t,
+      onValueChange: n,
+      defaultValue: c,
+      orientation: o = "horizontal",
+      dir: d,
+      activationMode: f = "automatic",
+      ...m
+    } = e, i = w(d), [a, u] = D({
+      prop: t,
+      onChange: n,
+      defaultProp: c ?? "",
+      caller: b
+    });
+    return /* @__PURE__ */ l.jsx(
+      L,
+      {
+        scope: s,
+        baseId: V(),
+        value: a,
+        onValueChange: u,
+        orientation: o,
+        dir: i,
+        activationMode: f,
+        children: /* @__PURE__ */ l.jsx(
+          p.div,
+          {
+            dir: i,
+            "data-orientation": o,
+            ...m,
+            ref: r
+          }
+        )
+      }
+    );
+  }
+);
+h.displayName = b;
+var I = "TabsList", R = v.forwardRef(
+  (e, r) => {
+    const { __scopeTabs: s, loop: t = !0, ...n } = e, c = T(I, s), o = C(s);
+    return /* @__PURE__ */ l.jsx(
+      P,
+      {
+        asChild: !0,
+        ...o,
+        orientation: c.orientation,
+        dir: c.dir,
+        loop: t,
+        children: /* @__PURE__ */ l.jsx(
+          p.div,
+          {
+            role: "tablist",
+            "aria-orientation": c.orientation,
+            ...n,
+            ref: r
+          }
+        )
+      }
+    );
+  }
+);
+R.displayName = I;
+var _ = "TabsTrigger", y = v.forwardRef(
+  (e, r) => {
+    const { __scopeTabs: s, value: t, disabled: n = !1, ...c } = e, o = T(_, s), d = C(s), f = E(o.baseId, t), m = M(o.baseId, t), i = t === o.value;
+    return /* @__PURE__ */ l.jsx(
+      S,
+      {
+        asChild: !0,
+        ...d,
+        focusable: !n,
+        active: i,
+        children: /* @__PURE__ */ l.jsx(
+          p.button,
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": i,
+            "aria-controls": m,
+            "data-state": i ? "active" : "inactive",
+            "data-disabled": n ? "" : void 0,
+            disabled: n,
+            id: f,
+            ...c,
+            ref: r,
+            onMouseDown: g(e.onMouseDown, (a) => {
+              !n && a.button === 0 && a.ctrlKey === !1 ? o.onValueChange(t) : a.preventDefault();
+            }),
+            onKeyDown: g(e.onKeyDown, (a) => {
+              [" ", "Enter"].includes(a.key) && o.onValueChange(t);
+            }),
+            onFocus: g(e.onFocus, () => {
+              const a = o.activationMode !== "manual";
+              !i && !n && a && o.onValueChange(t);
+            })
+          }
+        )
+      }
+    );
+  }
+);
+y.displayName = _;
+var A = "TabsContent", j = v.forwardRef(
+  (e, r) => {
+    const { __scopeTabs: s, value: t, forceMount: n, children: c, ...o } = e, d = T(A, s), f = E(d.baseId, t), m = M(d.baseId, t), i = t === d.value, a = v.useRef(i);
+    return v.useEffect(() => {
+      const u = requestAnimationFrame(() => a.current = !1);
+      return () => cancelAnimationFrame(u);
+    }, []), /* @__PURE__ */ l.jsx(F, { present: n || i, children: ({ present: u }) => /* @__PURE__ */ l.jsx(
+      p.div,
+      {
+        "data-state": i ? "active" : "inactive",
+        "data-orientation": d.orientation,
+        role: "tabpanel",
+        "aria-labelledby": f,
+        hidden: !u,
+        id: m,
+        tabIndex: 0,
+        ...o,
+        ref: r,
+        style: {
+          ...e.style,
+          animationDuration: a.current ? "0s" : void 0
+        },
+        children: u && c
+      }
+    ) });
+  }
+);
+j.displayName = A;
+function E(e, r) {
+  return `${e}-trigger-${r}`;
+}
+function M(e, r) {
+  return `${e}-content-${r}`;
+}
+var Q = h, U = R, W = y, X = j;
+export {
+  X as Content,
+  U as List,
+  Q as Root,
+  h as Tabs,
+  j as TabsContent,
+  R as TabsList,
+  y as TabsTrigger,
+  W as Trigger
+};

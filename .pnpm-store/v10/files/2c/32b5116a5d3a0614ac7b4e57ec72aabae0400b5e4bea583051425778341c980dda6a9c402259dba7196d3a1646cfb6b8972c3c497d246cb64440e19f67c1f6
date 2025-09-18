@@ -1,0 +1,110 @@
+import { DEBUG_BUILD as I } from "./index143.js";
+import { eventFromUnknownInput as u } from "./index122.js";
+import { shouldIgnoreOnError as f } from "./index116.js";
+import { defineIntegration as _ } from "./index144.js";
+import { addGlobalErrorInstrumentationHandler as b } from "./index156.js";
+import { debug as j } from "./index151.js";
+import { addGlobalUnhandledRejectionInstrumentationHandler as k } from "./index157.js";
+import { getClient as d } from "./index120.js";
+import { captureEvent as p } from "./index64.js";
+import { isPrimitive as h, isString as H } from "./index132.js";
+import { getLocationHref as N } from "./index118.js";
+import { UNKNOWN_FUNCTION as O } from "./index131.js";
+const U = "GlobalHandlers", G = (n = {}) => {
+  const e = {
+    onerror: !0,
+    onunhandledrejection: !0,
+    ...n
+  };
+  return {
+    name: U,
+    setupOnce() {
+      Error.stackTraceLimit = 50;
+    },
+    setup(o) {
+      e.onerror && (x(o), m("onerror")), e.onunhandledrejection && (R(o), m("onunhandledrejection"));
+    }
+  };
+}, q = _(G);
+function x(n) {
+  b((e) => {
+    const { stackParser: o, attachStacktrace: a } = g();
+    if (d() !== n || f())
+      return;
+    const { msg: t, url: r, line: c, column: l, error: i } = e, s = y(
+      u(o, i || t, void 0, a, !1),
+      r,
+      c,
+      l
+    );
+    s.level = "error", p(s, {
+      originalException: i,
+      mechanism: {
+        handled: !1,
+        type: "onerror"
+      }
+    });
+  });
+}
+function R(n) {
+  k((e) => {
+    const { stackParser: o, attachStacktrace: a } = g();
+    if (d() !== n || f())
+      return;
+    const t = P(e), r = h(t) ? S(t) : u(o, t, void 0, a, !0);
+    r.level = "error", p(r, {
+      originalException: t,
+      mechanism: {
+        handled: !1,
+        type: "onunhandledrejection"
+      }
+    });
+  });
+}
+function P(n) {
+  if (h(n))
+    return n;
+  try {
+    if ("reason" in n)
+      return n.reason;
+    if ("detail" in n && "reason" in n.detail)
+      return n.detail.reason;
+  } catch {
+  }
+  return n;
+}
+function S(n) {
+  return {
+    exception: {
+      values: [
+        {
+          type: "UnhandledRejection",
+          // String() is needed because the Primitive type includes symbols (which can't be automatically stringified)
+          value: `Non-Error promise rejection captured with value: ${String(n)}`
+        }
+      ]
+    }
+  };
+}
+function y(n, e, o, a) {
+  const t = n.exception = n.exception || {}, r = t.values = t.values || [], c = r[0] = r[0] || {}, l = c.stacktrace = c.stacktrace || {}, i = l.frames = l.frames || [], s = a, v = o, E = H(e) && e.length > 0 ? e : N();
+  return i.length === 0 && i.push({
+    colno: s,
+    filename: E,
+    function: O,
+    in_app: !0,
+    lineno: v
+  }), n;
+}
+function m(n) {
+  I && j.log(`Global Handler attached: ${n}`);
+}
+function g() {
+  return d()?.getOptions() || {
+    stackParser: () => [],
+    attachStacktrace: !1
+  };
+}
+export {
+  q as globalHandlersIntegration
+};

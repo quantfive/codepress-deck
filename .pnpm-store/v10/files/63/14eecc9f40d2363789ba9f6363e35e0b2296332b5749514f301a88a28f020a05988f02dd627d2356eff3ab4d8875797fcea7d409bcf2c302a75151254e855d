@@ -1,0 +1,127 @@
+import { j as o } from "./index7.js";
+import * as s from "react";
+import { cn as y } from "./index29.js";
+const h = s.forwardRef(({ type: m, className: x, onBlur: f, onKeyDown: d, onChange: a, ...p }, l) => /* @__PURE__ */ o.jsx(
+  "input",
+  {
+    type: m,
+    className: x,
+    ref: l,
+    onBlur: f,
+    onKeyDown: d,
+    onChange: a,
+    ...p
+  }
+));
+h.displayName = "InputElement";
+const H = s.forwardRef(
+  ({
+    className: m,
+    type: x,
+    startEnhancer: f,
+    endEnhancer: d,
+    defaultUnit: a,
+    incrementStep: p = 1,
+    onBlur: l,
+    onKeyDown: g,
+    onChange: u,
+    onCommit: r,
+    commitOnChange: N = !0,
+    commitDebounceMs: R = 500,
+    topLabel: b,
+    ...j
+  }, k) => {
+    const n = s.useRef(null);
+    s.useImperativeHandle(
+      k,
+      () => n.current
+    );
+    const v = s.useCallback(
+      (t) => {
+        if (!a) return t;
+        const e = t.trim().match(/^(-?\d+)(.*)$/);
+        return e ? e[2] ? t : `${e[1]}${a}` : t;
+      },
+      [a]
+    ), I = (t) => {
+      if (!l) {
+        const e = v(t.target.value);
+        if (e !== t.target.value && (n.current && (n.current.value = e), u)) {
+          const c = {
+            ...t,
+            target: { ...t.target, value: e }
+          };
+          u(c);
+        }
+        r && r(e);
+      }
+      l && l(t);
+    }, $ = (t) => {
+      if (!g) {
+        if (t.key === "ArrowUp" || t.key === "ArrowDown") {
+          t.preventDefault();
+          const e = t.key === "ArrowUp" ? p : -p, c = t.currentTarget.value.trim().match(/^(-?\d+)(.*)$/);
+          if (c) {
+            const V = parseInt(c[1], 10), D = c[2] || a || "", w = `${Math.max(0, V + e)}${D}`;
+            if (n.current && (n.current.value = w), u) {
+              const F = {
+                ...t,
+                target: { ...t.target, value: w }
+              };
+              u(F);
+            }
+            r && r(w);
+          }
+          return;
+        }
+        if (t.key === "Enter") {
+          const e = v(t.currentTarget.value);
+          r && r(e), n.current && n.current.blur();
+          return;
+        }
+      }
+      g && g(t);
+    }, i = s.useRef(
+      null
+    );
+    s.useEffect(() => () => {
+      i.current && clearTimeout(i.current);
+    }, []);
+    const E = (t) => {
+      if (u && u(t), N && r) {
+        i.current && clearTimeout(i.current);
+        const e = t.target.value;
+        i.current = setTimeout(() => {
+          r(e);
+        }, R);
+      }
+    }, T = y(
+      "flex h-10 w-full items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-2 ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 box-border relative",
+      b && "pt-4",
+      m
+    ), A = y(
+      "w-full flex-1 bg-transparent p-0 text-xs placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 box-border"
+    );
+    return /* @__PURE__ */ o.jsxs("div", { className: T, children: [
+      f && f,
+      b && /* @__PURE__ */ o.jsx("span", { className: "absolute left-1 top-0.5 text-[8px] text-gray-500", children: b }),
+      /* @__PURE__ */ o.jsx(
+        h,
+        {
+          type: x,
+          className: A,
+          ref: n,
+          onBlur: I,
+          onKeyDown: $,
+          onChange: E,
+          ...j
+        }
+      ),
+      d && /* @__PURE__ */ o.jsx("span", { className: "ml-auto", children: d })
+    ] });
+  }
+);
+H.displayName = "Input";
+export {
+  H as Input
+};

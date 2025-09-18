@@ -1,0 +1,50 @@
+import o from "./index245.js";
+import { useRef as b, useCallback as i } from "react";
+import { j as c } from "./index7.js";
+var f = {
+  marginRight: 0,
+  marginBottom: 0,
+  borderRadius: 0,
+  boxSizing: "border-box",
+  height: 25,
+  width: 25
+};
+function y(n) {
+  var {
+    style: l,
+    title: a,
+    checked: t,
+    color: h,
+    onClick: s,
+    rectProps: r
+  } = n, e = b(null), d = i(() => {
+    e.current.style.zIndex = "2", e.current.style.outline = "#fff solid 2px", e.current.style.boxShadow = "rgb(0 0 0 / 25%) 0 0 5px 2px";
+  }, []), u = i(() => {
+    t || (e.current.style.zIndex = "0", e.current.style.outline = "initial", e.current.style.boxShadow = "initial");
+  }, [t]), x = t ? {
+    zIndex: 1,
+    outline: "#fff solid 2px",
+    boxShadow: "rgb(0 0 0 / 25%) 0 0 5px 2px"
+  } : {
+    zIndex: 0
+  };
+  return /* @__PURE__ */ c.jsx("div", o({
+    ref: e,
+    title: a
+  }, r, {
+    onClick: s,
+    onMouseEnter: d,
+    onMouseLeave: u,
+    style: o({}, l, {
+      marginRight: 0,
+      marginBottom: 0,
+      borderRadius: 0,
+      boxSizing: "border-box",
+      height: 25,
+      width: 25
+    }, f, x, r?.style)
+  }));
+}
+export {
+  y as default
+};

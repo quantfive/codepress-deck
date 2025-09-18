@@ -1,0 +1,208 @@
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { useState, useEffect, useCallback, memo } from "react";
+import { useAuth } from "@/lib/auth";
+import { fetchOrganizationsWithRepositories, } from "@/lib/github";
+import { Label } from "@/components/ui/label";
+import { parseGitHubUrl } from "@/lib/utils";
+import ApiKeyGenerator from "@/components/ApiKeyGenerator";
+import Select, { components, } from "react-select";
+import Sentry from "@/sentry";
+// Custom styles for react-select
+const orgSelectStyles = {
+    control: (base) => ({
+        ...base,
+        borderRadius: "0.375rem",
+        borderColor: "#e2e8f0",
+        boxShadow: "none",
+        "&:hover": {
+            borderColor: "#cbd5e1",
+        },
+    }),
+    option: (base, { isSelected, isFocused, data }) => ({
+        ...base,
+        backgroundColor: isSelected ? "#3b82f6" : isFocused ? "#e2e8f0" : "white",
+        color: isSelected ? "white" : "#1e293b",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.5rem",
+    }),
+};
+const repoSelectStyles = {
+    control: (base) => ({
+        ...base,
+        borderRadius: "0.375rem",
+        borderColor: "#e2e8f0",
+        boxShadow: "none",
+        "&:hover": {
+            borderColor: "#cbd5e1",
+        },
+    }),
+    option: (base, { isSelected, isFocused, data }) => ({
+        ...base,
+        backgroundColor: isSelected
+            ? "#3b82f6"
+            : data.isCurrent
+                ? "#f0fdf4"
+                : isFocused
+                    ? "#e2e8f0"
+                    : "white",
+        color: isSelected ? "white" : "#1e293b",
+        borderLeft: data.isCurrent ? "2px solid #22c55e" : "none",
+    }),
+};
+// Custom option components for react-select
+const CustomOrgOption = (props) => {
+    const { data } = props;
+    return (_jsx(components.Option, { ...props, children: _jsxs("div", { className: "flex items-center gap-2", children: [data.avatarUrl && (_jsx("img", { src: data.avatarUrl, alt: data.label, className: "w-6 h-6 rounded-full" })), _jsx("span", { children: data.label })] }) }));
+};
+const CustomRepoOption = (props) => {
+    const { data } = props;
+    return (_jsx(components.Option, { ...props, children: _jsxs("div", { children: [_jsx("div", { className: "font-medium", children: data.label }), _jsx("div", { className: "text-xs text-gray-500", children: data.owner }), data.isCurrent && (_jsx("span", { className: "text-xs text-green-600 mt-1 inline-block", children: "Current repository" }))] }) }));
+};
+// Separate select components
+const OrganizationSelect = memo(({ options, value, onChange }) => {
+    return (_jsxs("div", { children: [_jsx(Label, { className: "mb-2 block", children: "Select Organization" }), _jsx(Select, { options: options, value: value, onChange: (val) => onChange(val), placeholder: "Select an organization...", isSearchable: true, styles: orgSelectStyles, components: {
+                    Option: CustomOrgOption,
+                }, classNames: {
+                    control: () => "py-1",
+                    menu: () => "mt-1",
+                } })] }));
+});
+OrganizationSelect.displayName = "OrganizationSelect";
+const RepositorySelect = memo(({ options, value, onChange, showLabel = true }) => {
+    if (options.length === 0) {
+        return _jsx("div", { className: "text-center py-2", children: "No repositories found." });
+    }
+    return (_jsxs("div", { children: [showLabel && _jsx(Label, { className: "mb-2 block", children: "Select Repository" }), _jsx(Select, { options: options, value: value, onChange: (val) => onChange(val), placeholder: "Select a repository...", isSearchable: true, styles: repoSelectStyles, components: {
+                    Option: CustomRepoOption,
+                }, classNames: {
+                    control: () => "py-1",
+                    menu: () => "mt-1",
+                } })] }));
+});
+RepositorySelect.displayName = "RepositorySelect";
+// Main component
+const OrgRepoSelector = memo(({ onSelectRepository, currentUrl }) => {
+    const { token } = useAuth();
+    const [organizations, setOrganizations] = useState([]);
+    const [selectedOrg, setSelectedOrg] = useState(null);
+    const [selectedOrgOption, setSelectedOrgOption] = useState(null);
+    const [selectedRepoOption, setSelectedRepoOption] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    // Parse the current URL to match with repositories
+    const gitHubInfo = parseGitHubUrl(currentUrl);
+    const currentOwner = gitHubInfo?.owner || "";
+    const currentRepo = gitHubInfo?.repo || "";
+    const isGitHubUrl = !!gitHubInfo;
+    // Fetch organizations with repositories
+    useEffect(() => {
+        const fetchOrganizations = async () => {
+            if (!token)
+                return;
+            setLoading(true);
+            setError(null);
+            try {
+                const data = await fetchOrganizationsWithRepositories();
+                setOrganizations(data);
+                // If there's only one organization, select it automatically
+                if (data.length === 1) {
+                    setSelectedOrg(data[0]);
+                    setSelectedOrgOption({
+                        value: data[0].id,
+                        label: data[0].name,
+                        avatarUrl: data[0].avatar_url,
+                        data: data[0],
+                    });
+                }
+                // Try to auto-select organization and repository based on current URL
+                if (isGitHubUrl && currentOwner && currentRepo) {
+                    const matchingOrg = data.find((org) => org.name.toLowerCase() === currentOwner.toLowerCase() ||
+                        org.repositories.some((repo) => repo.owner.toLowerCase() === currentOwner.toLowerCase()));
+                    if (matchingOrg) {
+                        setSelectedOrg(matchingOrg);
+                        setSelectedOrgOption({
+                            value: matchingOrg.id,
+                            label: matchingOrg.name,
+                            avatarUrl: matchingOrg.avatar_url,
+                            data: matchingOrg,
+                        });
+                        const matchingRepo = matchingOrg.repositories.find((repo) => repo.name.toLowerCase() === currentRepo.toLowerCase() &&
+                            repo.owner.toLowerCase() === currentOwner.toLowerCase());
+                        if (matchingRepo) {
+                            onSelectRepository(matchingRepo);
+                            setSelectedRepoOption({
+                                value: matchingRepo.id,
+                                label: matchingRepo.name,
+                                owner: matchingRepo.owner,
+                                isCurrent: true,
+                                data: matchingRepo,
+                            });
+                        }
+                    }
+                }
+            }
+            catch (err) {
+                Sentry.captureException(err);
+                setError(err instanceof Error ? err.message : "An unknown error occurred");
+                console.error("Error fetching organizations:", err);
+            }
+            finally {
+                setLoading(false);
+            }
+        };
+        fetchOrganizations();
+    }, [
+        token,
+        currentOwner,
+        currentRepo,
+        currentUrl,
+        isGitHubUrl,
+        onSelectRepository,
+    ]);
+    // Convert organizations to select options
+    const orgOptions = organizations.map((org) => ({
+        value: org.id,
+        label: org.name,
+        avatarUrl: org.avatar_url,
+        data: org,
+    }));
+    // Convert repositories to select options
+    const repoOptions = selectedOrg
+        ? selectedOrg.repositories.map((repo) => ({
+            value: repo.id,
+            label: repo.name,
+            owner: repo.owner,
+            isCurrent: currentOwner.toLowerCase() === repo.owner.toLowerCase() &&
+                currentRepo.toLowerCase() === repo.name.toLowerCase(),
+            data: repo,
+        }))
+        : [];
+    // Handle organization selection - memoized to prevent recreation
+    const handleOrgChange = useCallback((newValue) => {
+        if (newValue) {
+            setSelectedOrgOption(newValue);
+            setSelectedOrg(newValue.data);
+            setSelectedRepoOption(null);
+        }
+    }, []);
+    // Handle repository selection - memoized to prevent recreation
+    const handleRepoChange = useCallback((newValue) => {
+        if (newValue) {
+            setSelectedRepoOption(newValue);
+            onSelectRepository(newValue.data);
+        }
+    }, [onSelectRepository]);
+    if (loading) {
+        return _jsx("div", { className: "p-4 text-center", children: "Loading organizations..." });
+    }
+    if (error) {
+        return _jsxs("div", { className: "p-4 text-center text-red-500", children: ["Error: ", error] });
+    }
+    if (organizations.length === 0) {
+        return _jsx("div", { className: "p-4 text-center", children: "No organizations found." });
+    }
+    return (_jsxs("div", { className: "space-y-4", children: [_jsx(OrganizationSelect, { options: orgOptions, value: selectedOrgOption, onChange: handleOrgChange }), selectedOrg && (_jsxs(_Fragment, { children: [_jsx("div", { children: _jsx(RepositorySelect, { options: repoOptions, value: selectedRepoOption, onChange: handleRepoChange }) }), _jsx("div", { className: "mt-4 border-t pt-4", children: _jsx(ApiKeyGenerator, { organizationId: selectedOrg.id, organizationName: selectedOrg.name }) })] }))] }));
+});
+OrgRepoSelector.displayName = "OrgRepoSelector";
+export default OrgRepoSelector;

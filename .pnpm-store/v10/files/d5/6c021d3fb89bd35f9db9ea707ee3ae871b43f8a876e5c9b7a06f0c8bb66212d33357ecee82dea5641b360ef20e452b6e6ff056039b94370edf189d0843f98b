@@ -1,0 +1,19 @@
+import * as o from "react";
+import { Primitive as i } from "./index107.js";
+import { j as s } from "./index7.js";
+var f = "Label", e = o.forwardRef((r, a) => /* @__PURE__ */ s.jsx(
+  i.label,
+  {
+    ...r,
+    ref: a,
+    onMouseDown: (t) => {
+      t.target.closest("button, input, select, textarea") || (r.onMouseDown?.(t), !t.defaultPrevented && t.detail > 1 && t.preventDefault());
+    }
+  }
+));
+e.displayName = f;
+var n = e;
+export {
+  e as Label,
+  n as Root
+};

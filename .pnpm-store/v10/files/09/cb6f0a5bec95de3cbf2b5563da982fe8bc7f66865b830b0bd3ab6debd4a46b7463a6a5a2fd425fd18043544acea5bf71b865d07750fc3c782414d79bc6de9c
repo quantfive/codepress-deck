@@ -1,0 +1,165 @@
+import { ReactNode } from "react";
+import { Control, UseFormWatch, UseFormReset, UseFormSetValue, UseFormGetValues } from "react-hook-form";
+import { MoveChange } from "../utils/saveChanges.js";
+export interface NormalFormValues {
+    elementType: string;
+    availableSections: Record<string, boolean>;
+    position: string;
+    left: string;
+    top: string;
+    right: string;
+    bottom: string;
+    width: string;
+    height: string;
+    display: string;
+    flexDirection: string;
+    flexWrap: string;
+    justifyContent: string;
+    alignItems: string;
+    alignContent: string;
+    justifyItems: string;
+    order: string;
+    alignSelf: string;
+    gridTemplateColumns: string;
+    gridTemplateRows: string;
+    gap: string;
+    rowGap: string;
+    columnGap: string;
+    gridColumn: string;
+    gridRow: string;
+    overflow: string;
+    overflowX: string;
+    overflowY: string;
+    padding: string;
+    paddingTop: string;
+    paddingRight: string;
+    paddingBottom: string;
+    paddingLeft: string;
+    margin: string;
+    marginTop: string;
+    marginRight: string;
+    marginBottom: string;
+    marginLeft: string;
+    showAdvancedSpacing: boolean;
+    rotation: number;
+    opacity: number;
+    cornerRadius: string;
+    fontSize: string;
+    lineHeight: string;
+    letterSpacing: string;
+    fontFamily: string;
+    textAlign: string;
+    fontWeight: string;
+    fontStyle: string;
+    textDecoration: string;
+    text: string;
+    href: string;
+    backgroundColor: string;
+    backgroundImage: string;
+    backgroundSize: string;
+    backgroundPosition: string;
+    backgroundRepeat: string;
+    imageSrc: string;
+    imageAlt: string;
+    color: string;
+    colorOpacity: number;
+}
+export interface HoverFormValues {
+    hover_backgroundColor: string;
+    hover_color: string;
+    hover_colorOpacity: number;
+    hover_fontSize: string;
+    hover_opacity: number;
+    hover_cornerRadius: string;
+    hover_padding: string;
+    hover_paddingTop: string;
+    hover_paddingRight: string;
+    hover_paddingBottom: string;
+    hover_paddingLeft: string;
+    hover_margin: string;
+    hover_marginTop: string;
+    hover_marginRight: string;
+    hover_marginBottom: string;
+    hover_marginLeft: string;
+    hover_width: string;
+    hover_height: string;
+    hover_lineHeight: string;
+    hover_letterSpacing: string;
+    hover_textAlign: string;
+}
+export interface ActiveFormValues {
+    active_backgroundColor?: string;
+    active_color?: string;
+    active_colorOpacity?: number;
+    active_fontSize?: string;
+    active_opacity?: number;
+    active_cornerRadius?: string;
+    active_padding?: string;
+    active_paddingTop?: string;
+    active_paddingRight?: string;
+    active_paddingBottom?: string;
+    active_paddingLeft?: string;
+    active_margin?: string;
+    active_marginTop?: string;
+    active_marginRight?: string;
+    active_marginBottom?: string;
+    active_marginLeft?: string;
+    active_width?: string;
+    active_height?: string;
+    active_lineHeight?: string;
+    active_letterSpacing?: string;
+    active_textAlign?: string;
+}
+export interface FormValues extends NormalFormValues, HoverFormValues, ActiveFormValues {
+}
+export declare const defaultValues: FormValues;
+export interface TrackedElement {
+    fpId: string;
+    element: HTMLElement;
+    originalHtml: string;
+    originalValues: FormValues;
+    currentValues: FormValues;
+    moveChanges: MoveChange[];
+}
+type HistoryEntry = {
+    id: string;
+    fpId: string;
+    timestamp: number;
+    patch: Partial<FormValues>;
+    inversePatch: Partial<FormValues>;
+    source: "batch" | "field";
+    label?: string;
+    domHtmlBefore?: string;
+    domHtmlAfter?: string;
+};
+interface VisualEditorContextType {
+    control: Control<FormValues>;
+    watch: UseFormWatch<FormValues>;
+    reset: UseFormReset<FormValues>;
+    setValue: UseFormSetValue<FormValues>;
+    getValues: UseFormGetValues<FormValues>;
+    trackedElements: Record<string, TrackedElement>;
+    activeElementFpId: string | null;
+    history: HistoryEntry[];
+    canUndo: boolean;
+    canRedo: boolean;
+    selectElement: (element: HTMLElement, initialValues: FormValues) => void;
+    updateActiveElementStyle: (update: Partial<FormValues>) => void;
+    saveAllChanges: (newBranch: string, commitMessage?: string) => Promise<boolean>;
+    cancelAllChanges: () => void;
+    undo: () => void;
+    redo: () => void;
+    totalUnsavedChanges: number;
+    isSaving: boolean;
+    isDemo: boolean;
+    /** Which pseudo-state is currently being edited */
+    editingState: "normal" | "hover" | "active";
+    setEditingState: (state: "normal" | "hover" | "active") => void;
+}
+export declare const VisualEditorProvider: ({ children, demo, }: {
+    children: ReactNode;
+    demo?: boolean;
+}) => import("react/jsx-runtime").JSX.Element;
+export declare const useVisualEditor: () => VisualEditorContextType;
+export {};
+//# sourceMappingURL=VisualEditorContext.d.ts.map

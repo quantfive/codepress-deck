@@ -1,0 +1,7 @@
+interface DesignPanelProps {
+    onClose?: () => void;
+    shadowRoot?: HTMLElement;
+}
+export declare function DesignPanel({ onClose, shadowRoot }: DesignPanelProps): import("react/jsx-runtime").JSX.Element;
+export {};
+//# sourceMappingURL=DesignPanel.d.ts.map

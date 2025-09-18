@@ -1,0 +1,1088 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, } from "react";
+import { useForm, } from "react-hook-form";
+import { saveVisualEditorChanges, } from "../utils/saveChanges.js";
+import { getCleanElementHTML } from "../utils/saveChanges.js";
+import { detectRepositoryInfo } from "../lib/utils.js";
+import logger from "../lib/logger.js";
+// -----------------------------
+const advancedSpacingKeys = [
+    "paddingTop",
+    "paddingRight",
+    "paddingBottom",
+    "paddingLeft",
+    "marginTop",
+    "marginRight",
+    "marginBottom",
+    "marginLeft",
+];
+const CSS_UNITS = [
+    "px",
+    "em",
+    "rem",
+    "%",
+    "vw",
+    "vh",
+    "vmin",
+    "vmax",
+    "cm",
+    "mm",
+    "in",
+    "pt",
+    "pc",
+    "fr",
+];
+const CSS_KEYWORDS = [
+    "auto",
+    "initial",
+    "inherit",
+    "unset",
+    "normal",
+    "none",
+    "cover",
+    "contain",
+    "fill",
+    "stretch",
+];
+function extFromDataUri(dataUri) {
+    const match = /^data:image\/([^;+]+)/i.exec(dataUri);
+    return match ? match[1].toLowerCase() : "png";
+}
+const ensurePxUnit = (value) => {
+    if (value === undefined || value === null)
+        return "";
+    const sValue = String(value).trim();
+    if (sValue === "")
+        return "";
+    // Check if it already has a unit or is a keyword or is a CSS variable
+    if (CSS_UNITS.some((unit) => sValue.endsWith(unit) && isNaN(parseFloat(sValue))) || // e.g. 10px (valid) vs 10pxpx (invalid from parseFloat perspective)
+        CSS_UNITS.some((unit) => sValue.endsWith(unit) &&
+            !isNaN(parseFloat(sValue.slice(0, -unit.length)))) || // handles cases like "10px"
+        CSS_KEYWORDS.includes(sValue.toLowerCase()) ||
+        sValue.startsWith("var(") ||
+        sValue.startsWith("calc(") ||
+        sValue.startsWith("clamp(") ||
+        sValue.startsWith("min(") ||
+        sValue.startsWith("max(")) {
+        const unitMatch = CSS_UNITS.find((unit) => sValue.endsWith(unit));
+        if (unitMatch) {
+            const numPart = sValue.slice(0, -unitMatch.length);
+            if (numPart === "" || isNaN(parseFloat(numPart))) {
+                if (!CSS_KEYWORDS.includes(sValue.toLowerCase())) {
+                }
+                return sValue;
+            }
+        }
+        else if (!CSS_KEYWORDS.includes(sValue.toLowerCase()) &&
+            !sValue.startsWith("var(") &&
+            !sValue.startsWith("calc(") &&
+            !sValue.startsWith("clamp(") &&
+            !sValue.startsWith("min(") &&
+            !sValue.startsWith("max(")) {
+        }
+        return sValue;
+    }
+    if (/^-?\d+(\.\d+)?$/.test(sValue)) {
+        return `${sValue}px`;
+    }
+    return sValue;
+};
+export const defaultValues = {
+    elementType: "",
+    availableSections: {},
+    position: "",
+    left: "",
+    top: "",
+    right: "",
+    bottom: "",
+    width: "",
+    height: "",
+    display: "",
+    flexDirection: "",
+    flexWrap: "",
+    justifyContent: "",
+    alignItems: "",
+    alignContent: "",
+    justifyItems: "",
+    order: "",
+    alignSelf: "",
+    gridTemplateColumns: "",
+    gridTemplateRows: "",
+    gap: "",
+    rowGap: "",
+    columnGap: "",
+    gridColumn: "",
+    gridRow: "",
+    overflow: "",
+    overflowX: "",
+    overflowY: "",
+    padding: "",
+    paddingTop: "",
+    paddingRight: "",
+    paddingBottom: "",
+    paddingLeft: "",
+    margin: "",
+    marginTop: "",
+    marginRight: "",
+    marginBottom: "",
+    marginLeft: "",
+    showAdvancedSpacing: false,
+    rotation: 0,
+    opacity: 100,
+    cornerRadius: "",
+    fontSize: "",
+    lineHeight: "",
+    letterSpacing: "",
+    fontFamily: "Open Sans",
+    textAlign: "left",
+    fontWeight: "",
+    fontStyle: "",
+    textDecoration: "",
+    text: "",
+    href: "",
+    backgroundColor: "",
+    backgroundImage: "",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    imageSrc: "",
+    imageAlt: "",
+    color: "",
+    colorOpacity: 100,
+    hover_backgroundColor: "",
+    hover_color: "",
+    hover_colorOpacity: 100,
+    hover_fontSize: "",
+    hover_opacity: 100,
+    hover_cornerRadius: "",
+    hover_padding: "",
+    hover_paddingTop: "",
+    hover_paddingRight: "",
+    hover_paddingBottom: "",
+    hover_paddingLeft: "",
+    hover_margin: "",
+    hover_marginTop: "",
+    hover_marginRight: "",
+    hover_marginBottom: "",
+    hover_marginLeft: "",
+    hover_width: "",
+    hover_height: "",
+    hover_lineHeight: "",
+    hover_letterSpacing: "",
+    hover_textAlign: "left",
+    active_backgroundColor: "",
+    active_color: "",
+    active_colorOpacity: 100,
+    active_fontSize: "",
+    active_opacity: 100,
+    active_cornerRadius: "",
+    active_padding: "",
+    active_paddingTop: "",
+    active_paddingRight: "",
+    active_paddingBottom: "",
+    active_paddingLeft: "",
+    active_margin: "",
+    active_marginTop: "",
+    active_marginRight: "",
+    active_marginBottom: "",
+    active_marginLeft: "",
+    active_width: "",
+    active_height: "",
+    active_lineHeight: "",
+    active_letterSpacing: "",
+    active_textAlign: "left",
+};
+const VisualEditorContext = createContext(undefined);
+export const VisualEditorProvider = ({ children, demo = false, }) => {
+    const { control, watch, reset, setValue, getValues } = useForm({
+        defaultValues,
+    });
+    // Flag to indicate when a form reset is in progress. This allows us to
+    // temporarily suppress the watch callback so that loading a new element's
+    // initial values **does not** dispatch style-update events that would apply
+    // styles to the DOM as if they were user edits.
+    const isResettingRef = React.useRef(false);
+    const [trackedElements, setTrackedElements] = useState({});
+    const [activeElementFpId, setActiveElementFpId] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const subscriptionRef = React.useRef(null);
+    // Currently selected pseudo-state ("normal" | "hover" | "active")
+    const [editingState, setEditingState] = useState("normal");
+    const [history, setHistory] = useState([]);
+    const [redoStack, setRedoStack] = useState([]);
+    const isTimeTravelingRef = React.useRef(false);
+    const isBatchingRef = React.useRef(false);
+    const batchRef = React.useRef(null);
+    // Effect: When the editingState changes, adjust displayed form values for the
+    // selected element. Do NOT apply styles to the DOM here. Styles should only
+    // be applied when the user actually edits a value.
+    useEffect(() => {
+        // No element selected – nothing to preview
+        if (!activeElementFpId)
+            return;
+        const trackedEl = trackedElements[activeElementFpId];
+        if (!trackedEl)
+            return;
+        const currentVals = trackedEl.currentValues;
+        // Build a list of base (un-prefixed) property names that we care about. We
+        // derive this by looking at *all* keys in the FormValues object and
+        // stripping any pseudo-state prefixes.
+        const baseProps = new Set();
+        for (const key of Object.keys(currentVals)) {
+            if (key.startsWith("hover_")) {
+                baseProps.add(key.replace("hover_", ""));
+            }
+            else if (key.startsWith("active_")) {
+                baseProps.add(key.replace("active_", ""));
+            }
+            else {
+                // Ignore housekeeping / non-style fields
+                if ([
+                    "elementType",
+                    "availableSections",
+                    "showAdvancedSpacing",
+                    "text",
+                    "href",
+                ].includes(key)) {
+                    continue;
+                }
+                baseProps.add(key);
+            }
+        }
+        // Prepare an object that will update the displayed form values so that UI
+        // controls show the correct fallback value (normal → hover) without marking
+        // the form dirty, and without applying any styles to the DOM yet.
+        const displayPatch = {};
+        baseProps.forEach((prop) => {
+            const hoverKey = `hover_${prop}`;
+            const activeKey = `active_${prop}`;
+            if (editingState === "hover") {
+                const hoverVal = currentVals[hoverKey];
+                const baseVal = currentVals[prop];
+                if (!(hoverVal !== undefined && hoverVal !== "")) {
+                    // No hover-specific value → mirror the normal value into the hover
+                    // controls purely for display so the user sees the fallback.
+                    displayPatch[prop] = baseVal;
+                }
+            }
+            else if (editingState === "active") {
+                const activeVal = currentVals[activeKey];
+                const baseVal = currentVals[prop];
+                if (!(activeVal !== undefined && activeVal !== "")) {
+                    displayPatch[prop] = baseVal;
+                }
+            }
+            else {
+                // normal
+                const baseVal = currentVals[prop];
+                displayPatch[prop] = baseVal;
+            }
+        });
+        // Patch the form values so the Design Bar / Panel inputs show the right
+        // value without setting the form dirty or causing another watch event.
+        isResettingRef.current = true;
+        Object.entries(displayPatch).forEach(([k, v]) => {
+            setValue(k, v, { shouldDirty: false });
+        });
+        setTimeout(() => {
+            isResettingRef.current = false;
+        }, 0);
+    }, [editingState, activeElementFpId, trackedElements]);
+    const updateTrackedElement = useCallback((fpId, updates) => {
+        setTrackedElements((prev) => {
+            if (!prev[fpId])
+                return prev;
+            return {
+                ...prev,
+                [fpId]: {
+                    ...prev[fpId],
+                    currentValues: { ...prev[fpId].currentValues, ...updates },
+                },
+            };
+        });
+    }, [] //[trackedElements]
+    );
+    const pushHistoryEntry = useCallback((entry) => {
+        setHistory((prev) => [
+            ...prev,
+            { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, timestamp: Date.now(), ...entry },
+        ]);
+    }, []);
+    const beginHistoryBatch = (fpId) => {
+        isBatchingRef.current = true;
+        batchRef.current = { fpId, patch: {}, inversePatch: {} };
+    };
+    const addToBatch = (key, before, after) => {
+        if (!batchRef.current)
+            return;
+        if (!(key in batchRef.current.inversePatch)) {
+            batchRef.current.inversePatch[key] = before ?? "";
+        }
+        batchRef.current.patch[key] = after ?? "";
+    };
+    const commitHistoryBatch = () => {
+        const b = batchRef.current;
+        isBatchingRef.current = false;
+        if (b && Object.keys(b.patch).length) {
+            pushHistoryEntry({
+                fpId: b.fpId,
+                patch: b.patch,
+                inversePatch: b.inversePatch,
+                label: b.label,
+                source: "batch",
+            });
+            setRedoStack([]);
+        }
+        batchRef.current = null;
+    };
+    const applyContentFieldToDom = (el, key, value) => {
+        if (key === "text") {
+            if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+                el.value = String(value ?? "");
+                return true;
+            }
+            // CONTENT-EDITABLE: preserve structure and line breaks
+            if (el.isContentEditable) {
+                // Treat the value as *plain* text coming from the form.
+                // Escape HTML, then convert newlines to <br> so we don't flatten layout.
+                const plain = String(value ?? "");
+                const escaped = plain
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+                // Note: we only introduce <br> for new lines; we *don’t* remove
+                // any existing spans/divs that might have been inserted earlier.
+                // If you want to replace the entire content, keep this line.
+                el.innerHTML = escaped.replace(/\n/g, "<br>");
+                return true;
+            }
+            // Non-editable regular element → plain text is fine
+            el.textContent = String(value ?? "");
+            return true;
+        }
+        // TODO: handle special cases
+        // font weight, href, outer container selected but text changed in inner container?
+        if (key === "href") {
+        }
+        if (key === "elementType") {
+        }
+        if (key === "availableSections") {
+        }
+        if (key === "showAdvancedSpacing") {
+        }
+        return false; // not a content field we handle here
+    };
+    const applyPatchToTracked = useCallback((fpId, patch) => {
+        setTrackedElements((prev) => {
+            const el = prev[fpId]?.element;
+            if (!el)
+                return prev;
+            // Update state snapshot first
+            const nextCurrent = { ...prev[fpId].currentValues, ...patch };
+            const next = { ...prev, [fpId]: { ...prev[fpId], currentValues: nextCurrent } };
+            // Apply to DOM: text/href directly, everything else via style event
+            Object.entries(patch).forEach(([name, value]) => {
+                // First, try content fields
+                const handled = applyContentFieldToDom(el, name, value);
+                if (handled)
+                    return;
+                // Otherwise, dispatch your style update event as before
+                const stateMatch = name.match(/^(hover|active)_/);
+                const pseudoState = stateMatch ? stateMatch[1] : null;
+                const baseProperty = pseudoState ? name.replace(`${pseudoState}_`, "") : name;
+                const event = new CustomEvent("design-panel-style-update", {
+                    detail: {
+                        fpId,
+                        [baseProperty]: value,
+                        _isHoverState: pseudoState === "hover",
+                        _pseudoState: pseudoState,
+                        _baseProperty: baseProperty,
+                    },
+                    bubbles: true,
+                    composed: true,
+                });
+                document.dispatchEvent(event);
+            });
+            return next;
+        });
+        // Keep the form in sync if this element is active
+        if (fpId === activeElementFpId) {
+            const updatedVals = { ...getValues(), ...patch };
+            isResettingRef.current = true;
+            reset(updatedVals);
+            setTimeout(() => (isResettingRef.current = false), 0);
+        }
+    }, [activeElementFpId, reset, getValues]);
+    const selectElement = useCallback((element, initialValues) => {
+        let fpId = element.getAttribute("codepress-data-fp");
+        if (demo || !fpId) {
+            if (!fpId) {
+                console.warn("Selected element does not have a codepress-data-fp attribute. Changes may not be tracked correctly.");
+            }
+            fpId = `temp_${new Date().getTime()}`;
+            element.setAttribute("codepress-data-fp", fpId);
+        }
+        // 1. Save changes of the previously active element (if any)
+        if (activeElementFpId && trackedElements[activeElementFpId]) {
+            const previousElementValues = getValues();
+            updateTrackedElement(activeElementFpId, previousElementValues);
+        }
+        // 2. Set new active element
+        setActiveElementFpId(fpId);
+        // 3. Load new element's state into the form
+        if (trackedElements[fpId]) {
+            // Element is already tracked, but it might be a different DOM node that shares the same fpId (e.g., identical JSX rendered multiple times).
+            // Ensure we keep a reference to the most recently selected instance so live-preview updates are applied to the correct node.
+            setTrackedElements((prev) => ({
+                ...prev,
+                [fpId]: {
+                    ...prev[fpId],
+                    element,
+                },
+            }));
+            // Prevent style updates during the reset operation
+            isResettingRef.current = true;
+            reset(trackedElements[fpId].currentValues);
+            // Allow the event loop to finish before re-enabling updates so that the
+            // watch subscription ignores the values written by `reset`.
+            setTimeout(() => {
+                isResettingRef.current = false;
+            }, 0);
+        }
+        else {
+            // New element, track it and set form to initial values
+            setTrackedElements((prev) => ({
+                ...prev,
+                [fpId]: {
+                    fpId: fpId,
+                    element,
+                    originalHtml: getCleanElementHTML(element, false),
+                    originalValues: initialValues,
+                    currentValues: initialValues,
+                    moveChanges: [],
+                },
+            }));
+            isResettingRef.current = true;
+            reset(initialValues);
+            setTimeout(() => {
+                isResettingRef.current = false;
+            }, 0);
+        }
+    }, [
+        activeElementFpId,
+        getValues,
+        reset,
+        trackedElements,
+        updateTrackedElement,
+        demo,
+    ]);
+    useEffect(() => {
+        const handleSelectElement = (event) => {
+            const { element, initialValues } = event.detail;
+            if (element) {
+                selectElement(element, initialValues);
+            }
+        };
+        const handleDeselectElement = () => {
+            setActiveElementFpId(null);
+            reset(defaultValues);
+        };
+        const handleElementMoved = (event) => {
+            const { moveChange, sourceElement } = event.detail;
+            // Find the fpId of the moved element
+            const sourceFpId = sourceElement.getAttribute("codepress-data-fp");
+            if (sourceFpId && trackedElements[sourceFpId]) {
+                // Add the move change to the tracked element
+                setTrackedElements((prev) => ({
+                    ...prev,
+                    [sourceFpId]: {
+                        ...prev[sourceFpId],
+                        moveChanges: [...(prev[sourceFpId].moveChanges || []), moveChange],
+                    },
+                }));
+                logger.info("✅ Move change tracked:", { sourceFpId, moveChange });
+            }
+            else {
+                // Element not tracked yet, create a tracking entry for it
+                const initialValues = { ...defaultValues }; // Use default values as fallback
+                const newTrackedElement = {
+                    fpId: sourceFpId || `temp_${Date.now()}`,
+                    element: sourceElement,
+                    originalHtml: getCleanElementHTML(sourceElement, false),
+                    originalValues: initialValues,
+                    currentValues: initialValues,
+                    moveChanges: [moveChange],
+                };
+                setTrackedElements((prev) => ({
+                    ...prev,
+                    [newTrackedElement.fpId]: newTrackedElement,
+                }));
+                logger.info("✅ New element tracked with move change:", {
+                    fpId: newTrackedElement.fpId,
+                    moveChange,
+                });
+            }
+        };
+        document.addEventListener("codepress-select-element", handleSelectElement);
+        document.addEventListener("codepress-deselect-element", handleDeselectElement);
+        document.addEventListener("codepress-element-moved", handleElementMoved);
+        return () => {
+            document.removeEventListener("codepress-select-element", handleSelectElement);
+            document.removeEventListener("codepress-deselect-element", handleDeselectElement);
+            document.removeEventListener("codepress-element-moved", handleElementMoved);
+        };
+    }, [selectElement, reset, trackedElements]);
+    // Effect to watch for form changes and dispatch live preview updates
+    useEffect(() => {
+        subscriptionRef.current?.unsubscribe();
+        subscriptionRef.current = watch((currentFormValues, { name, type }) => {
+            // Ignore updates triggered while we are programmatically resetting the
+            // form to a new element's initial state.
+            if (isResettingRef.current) {
+                return;
+            }
+            if (!name || !activeElementFpId) {
+                return;
+            }
+            const nameStr = String(name);
+            // Snapshot the previous value BEFORE we write current values to state
+            const prevVals = trackedElements[activeElementFpId]?.currentValues;
+            let prevForKey = prevVals ? prevVals[nameStr] : undefined;
+            let valueToUpdate = currentFormValues[nameStr];
+            const isAdvancedSpacingKey = advancedSpacingKeys.some((key) => key === nameStr);
+            const isSimpleSpacingKey = nameStr === "padding" || nameStr === "margin";
+            if (isAdvancedSpacingKey || isSimpleSpacingKey) {
+                valueToUpdate = ensurePxUnit(valueToUpdate);
+            }
+            const stateMatch = nameStr.match(/^(hover|active)_/);
+            const pseudoState = stateMatch ? stateMatch[1] : null;
+            const baseProperty = pseudoState ? nameStr.replace(`${pseudoState}_`, "") : nameStr;
+            const el = activeElementFpId ? trackedElements[activeElementFpId]?.element : null;
+            const isCE = !!el?.isContentEditable;
+            // Snapshot BEFORE state for undo when text changes in content-editable nodes
+            const domHtmlBefore = isCE ? el.innerHTML : undefined;
+            if (!isTimeTravelingRef.current && !isBatchingRef.current) {
+                pushHistoryEntry({
+                    fpId: activeElementFpId,
+                    patch: { [nameStr]: valueToUpdate },
+                    inversePatch: { [nameStr]: prevForKey },
+                    source: "field",
+                    ...(domHtmlBefore ? { domHtmlBefore } : {}),
+                });
+                setRedoStack([]);
+            }
+            // Update the current values for the active element in our tracking state
+            updateTrackedElement(activeElementFpId, currentFormValues);
+            const update = {
+                fpId: activeElementFpId, // Let consumers know which element this update belongs to
+                [baseProperty]: valueToUpdate,
+                _isHoverState: pseudoState === "hover", // legacy flag
+                _pseudoState: pseudoState, // new flexible flag ("hover" | "active" | null)
+                _baseProperty: baseProperty,
+            };
+            const event = new CustomEvent("design-panel-style-update", {
+                detail: update,
+                bubbles: true,
+                composed: true,
+            });
+            document.dispatchEvent(event);
+        });
+        return () => subscriptionRef.current?.unsubscribe();
+    }, [watch, activeElementFpId, getValues]);
+    // --- Actions ---
+    const updateActiveElementStyle = useCallback((update) => {
+        if (!activeElementFpId)
+            return;
+        const before = getValues();
+        beginHistoryBatch(activeElementFpId);
+        // --- Expand shorthand spacing & border props so individual sides mirror the value --- //
+        const expandedUpdate = { ...update };
+        const parseBoxShorthand = (val) => {
+            const parts = val.trim().split(/\s+/);
+            switch (parts.length) {
+                case 1:
+                    return [parts[0], parts[0], parts[0], parts[0]];
+                case 2:
+                    return [parts[0], parts[1], parts[0], parts[1]]; // top/right/bottom/left
+                case 3:
+                    return [parts[0], parts[1], parts[2], parts[1]];
+                case 4:
+                    return [parts[0], parts[1], parts[2], parts[3]];
+                default:
+                    return [val, val, val, val];
+            }
+        };
+        const mirrorValue = (base, value) => {
+            if (base === "padding" || base === "margin") {
+                if (typeof value === "string") {
+                    const [top, right, bottom, left] = parseBoxShorthand(value);
+                    expandedUpdate[`${base}Top`] = top;
+                    expandedUpdate[`${base}Right`] = right;
+                    expandedUpdate[`${base}Bottom`] = bottom;
+                    expandedUpdate[`${base}Left`] = left;
+                }
+            }
+            else if (base === "border") {
+                // For border we still replicate the same value to all sides
+                expandedUpdate[`${base}Top`] = value;
+                expandedUpdate[`${base}Right`] = value;
+                expandedUpdate[`${base}Bottom`] = value;
+                expandedUpdate[`${base}Left`] = value;
+            }
+        };
+        Object.entries(update).forEach(([key, val]) => {
+            if (key === "padding" || key === "margin" || key === "border") {
+                mirrorValue(key, val);
+            }
+        });
+        // Persist each property (including any expanded keys)
+        // If individual side spacing values were changed, ensure the shorthand property is kept in sync
+        const synchronizeShorthand = (base) => {
+            const sides = ["Top", "Right", "Bottom", "Left"];
+            const values = sides.map((side) => {
+                const key = `${base}${side}`;
+                return (expandedUpdate[key] ??
+                    getValues()[key]);
+            });
+            const [top, right, bottom, left] = values;
+            const allEqual = values.every((v) => v === top);
+            let shorthand = "";
+            if (allEqual) {
+                shorthand = top ?? "";
+            }
+            else if (top === bottom && right === left) {
+                shorthand = `${top} ${right}`;
+            }
+            else if (right === left) {
+                shorthand = `${top} ${right} ${bottom}`;
+            }
+            else {
+                shorthand = `${top} ${right} ${bottom} ${left}`;
+            }
+            expandedUpdate[base] = shorthand;
+        };
+        // Check if any side-specific spacing keys were part of the update
+        const updatedKeys = Object.keys(update);
+        const paddingSideChanged = updatedKeys.some((k) => ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].includes(k));
+        const marginSideChanged = updatedKeys.some((k) => ["marginTop", "marginRight", "marginBottom", "marginLeft"].includes(k));
+        const borderSideChanged = updatedKeys.some((k) => ["borderTop", "borderRight", "borderBottom", "borderLeft"].includes(k));
+        if (paddingSideChanged)
+            synchronizeShorthand("padding");
+        if (marginSideChanged)
+            synchronizeShorthand("margin");
+        if (borderSideChanged)
+            synchronizeShorthand("border");
+        // Actually persist
+        Object.entries(expandedUpdate).forEach(([name, value]) => {
+            const resolvedName = editingState === "normal" ? name : `${editingState}_${name}`;
+            const beforeVal = before[resolvedName];
+            addToBatch(resolvedName, beforeVal, value);
+            setValue(resolvedName, value, {
+                shouldDirty: true,
+            });
+        });
+        commitHistoryBatch();
+        updateTrackedElement(activeElementFpId, getValues());
+    }, [activeElementFpId, setValue, getValues, updateTrackedElement, editingState]);
+    const calculateChanges = (original, current) => {
+        const changes = [];
+        const allKeys = new Set([
+            ...Object.keys(original),
+            ...Object.keys(current),
+        ]); // corrected type to Set<string>
+        allKeys.forEach((key) => {
+            // Skip keys that aren't styles or are handled differently
+            if ([
+                "elementType",
+                "availableSections",
+                "showAdvancedSpacing",
+                "text",
+                "href",
+            ].includes(key)) {
+                return;
+            }
+            const originalValue = original[key];
+            const currentValue = current[key];
+            let isDifferent = false;
+            if (key === "fontWeight") {
+                const isOriginalBold = String(originalValue) === "bold" || Number(originalValue) >= 600;
+                const isCurrentBold = String(currentValue) === "bold" || Number(currentValue) >= 600;
+                isDifferent = isOriginalBold !== isCurrentBold;
+            }
+            else if (key === "textDecoration") {
+                // This handles simple toggling of underline. It might not cover complex text-decoration changes.
+                const isOriginalUnderlined = String(originalValue).includes("underline");
+                const isCurrentUnderlined = String(currentValue).includes("underline");
+                isDifferent = isOriginalUnderlined !== isCurrentUnderlined;
+            }
+            else if (originalValue !== currentValue) {
+                // Treat undefined, null, and empty strings as equivalent so we don't
+                // flag spurious changes like { old: "", new: "" } or { old: undefined, new: "" }
+                const normalize = (val) => {
+                    if (val === undefined || val === null)
+                        return "";
+                    return String(val);
+                };
+                isDifferent = normalize(originalValue) !== normalize(currentValue);
+            }
+            if (isDifferent) {
+                const isHoverState = key.startsWith("hover_");
+                const property = isHoverState ? key.replace("hover_", "") : key;
+                changes.push({
+                    property,
+                    oldValue: String(original[key] ?? ""),
+                    newValue: String(current[key] ?? ""),
+                    isHoverState,
+                });
+            }
+        });
+        return changes;
+    };
+    const calculateTextChanges = (original, current) => {
+        const textChanges = [];
+        // Check for text content changes
+        if (original.text !== current.text) {
+            textChanges.push({
+                oldText: String(original.text ?? ""),
+                newText: String(current.text ?? ""),
+            });
+        }
+        // Check for href changes
+        if (original.href !== current.href) {
+            textChanges.push({
+                oldText: String(original.href ?? ""),
+                newText: String(current.href ?? ""),
+            });
+        }
+        return textChanges;
+    };
+    // Utility: climb up the DOM from a given element to find the nearest ancestor
+    // with a stable (non-temporary) `codepress-data-fp`. Declared as a function
+    // statement so it is hoisted and available anywhere in this file.
+    function findStableParentFpId(el) {
+        let current = el?.parentElement || null;
+        while (current) {
+            const id = current.getAttribute("codepress-data-fp");
+            if (id && !id.startsWith("new_span_")) {
+                return id;
+            }
+            current = current.parentElement;
+        }
+        return null;
+    }
+    const saveAllChanges = useCallback(async (newBranch, commitMessage) => {
+        if (demo) {
+            logger.debug("DEMO MODE: Changes would be saved here.", {
+                changes: Object.values(trackedElements),
+            });
+            setTrackedElements({});
+            setActiveElementFpId(null);
+            reset(defaultValues);
+            return true; // Demo mode always succeeds
+        }
+        setIsSaving(true);
+        const repoInfo = detectRepositoryInfo();
+        if (!repoInfo?.repository) {
+            logger.error("Could not determine repository information. Cannot save changes.");
+            setIsSaving(false);
+            alert("Could not determine repository information. Cannot save changes.");
+            return false; // Failed to save due to missing repository info
+        }
+        // TODO: handle multiple image files in a change?
+        const changesToSave = Object.values(trackedElements)
+            .filter((trackedElement) => {
+            const styleChanges = calculateChanges(trackedElement.originalValues, trackedElement.currentValues);
+            const textChanges = calculateTextChanges(trackedElement.originalValues, trackedElement.currentValues);
+            const moveChanges = trackedElement.moveChanges || [];
+            return (styleChanges.length > 0 ||
+                textChanges.length > 0 ||
+                moveChanges.length > 0);
+        })
+            .map((trackedElement) => {
+            let styleChanges = calculateChanges(trackedElement.originalValues, trackedElement.currentValues);
+            const textChanges = calculateTextChanges(trackedElement.originalValues, trackedElement.currentValues);
+            const hasImageChange = styleChanges.some((change) => change.property === "imageSrc" &&
+                change.newValue.startsWith("data:image"));
+            const ext = hasImageChange && trackedElement.currentValues.imageSrc
+                ? extFromDataUri(trackedElement.currentValues.imageSrc)
+                : "png";
+            const filename = hasImageChange
+                ? `images/image-${Date.now()}.${ext}`
+                : undefined;
+            let newHtml = getCleanElementHTML(trackedElement.element, false);
+            if (hasImageChange && filename) {
+                newHtml = newHtml.replace(/src="data:image\/[^"]+"/, `src="/${filename}"`);
+            }
+            if (hasImageChange && filename) {
+                styleChanges = styleChanges.map((change) => {
+                    if (change.property === "imageSrc" &&
+                        change.newValue.startsWith("data:image")) {
+                        return {
+                            ...change,
+                            newValue: `/${filename}`,
+                        };
+                    }
+                    return change;
+                });
+            }
+            return {
+                // If the tracked element is a *new* <span> that we injected for
+                // inline formatting we actually want to reference its *parent*
+                // element so that the engine updates the correct file instead of
+                // trying to locate a temporary fpId that does not exist in the
+                // source. We detect our synthetic spans by checking that the tag
+                // is SPAN *and* that a parent element with a codepress-data-fp
+                // attribute exists.
+                encodedLocation: trackedElement.element.tagName === "SPAN"
+                    ? findStableParentFpId(trackedElement.element) ||
+                        trackedElement.fpId
+                    : trackedElement.fpId,
+                oldHtml: trackedElement.originalHtml,
+                newHtml: newHtml,
+                styleChanges: styleChanges.map((change) => {
+                    // For injected spans include `target` & `htmlTag` so backend
+                    // knows to wrap just that text.
+                    if (trackedElement.element.tagName === "SPAN") {
+                        return {
+                            ...change,
+                            target: trackedElement.element.textContent || null,
+                            htmlTag: trackedElement.element.tagName.toLowerCase(),
+                        };
+                    }
+                    return change;
+                }),
+                textChanges,
+                moveChanges: trackedElement.moveChanges || [],
+                imageData: hasImageChange
+                    ? trackedElement.currentValues.imageSrc
+                    : undefined,
+                filename: filename,
+                browserWidth: window.innerWidth,
+                browserHeight: window.innerHeight,
+            };
+        });
+        if (changesToSave.length === 0) {
+            setIsSaving(false);
+            return true; // No changes to save is considered successful
+        }
+        const success = await saveVisualEditorChanges({
+            changes: changesToSave,
+            githubRepoName: repoInfo.repository,
+            githubBaseBranchName: repoInfo?.branch,
+            githubBranchName: newBranch || repoInfo?.branch,
+            commitMessage: commitMessage,
+        });
+        if (success) {
+            // Clear unsaved changes by updating original values to current values
+            setTrackedElements((prev) => {
+                const newTrackedElements = { ...prev };
+                changesToSave.forEach((savedChange) => {
+                    const savedEl = newTrackedElements[savedChange.encodedLocation];
+                    if (savedEl) {
+                        newTrackedElements[savedChange.encodedLocation] = {
+                            ...savedEl,
+                            originalValues: savedEl.currentValues,
+                            originalHtml: getCleanElementHTML(savedEl.element, false),
+                            moveChanges: [], // Clear move changes after successful save
+                        };
+                    }
+                });
+                return newTrackedElements;
+            });
+        }
+        else {
+            logger.error("Some changes failed to save.");
+            // Optionally handle partial failures
+        }
+        setIsSaving(false);
+        return success;
+    }, [trackedElements, demo, reset]);
+    const cancelAllChanges = useCallback(() => {
+        // Revert all DOM changes and remove any newly inserted temporary spans
+        setTrackedElements((prev) => {
+            const revertedTrackedElements = { ...prev };
+            Object.keys(revertedTrackedElements).forEach((fpId) => {
+                const elementState = revertedTrackedElements[fpId];
+                const isNewSpan = fpId.startsWith("new_span_");
+                // If this element was freshly created (temporary span), remove it entirely
+                if (isNewSpan) {
+                    const el = elementState.element;
+                    if (el && el.parentNode) {
+                        // unwrap: replace the span with its children so text remains
+                        while (el.firstChild) {
+                            el.parentNode.insertBefore(el.firstChild, el);
+                        }
+                        el.parentNode.removeChild(el);
+                    }
+                    else {
+                        // Fallback: query in case reference is stale
+                        const maybeEl = document.querySelector(`[codepress-data-fp="${fpId}"]`);
+                        if (maybeEl && maybeEl.parentNode) {
+                            while (maybeEl.firstChild) {
+                                maybeEl.parentNode.insertBefore(maybeEl.firstChild, maybeEl);
+                            }
+                            maybeEl.parentNode.removeChild(maybeEl);
+                        }
+                    }
+                    // Finally, remove from tracking map
+                    delete revertedTrackedElements[fpId];
+                    return; // Skip style‐revert logic for deleted span
+                }
+                // For normal tracked elements, reset current values → original values and clear move changes
+                revertedTrackedElements[fpId] = {
+                    ...elementState,
+                    currentValues: elementState.originalValues,
+                    moveChanges: [], // Clear any move changes when canceling
+                };
+                // TODO: debug:
+                // when there's a multiline change + style change on same element it kills the styling
+                // Revert text/href directly in the DOM
+                const el = elementState.element;
+                const ov = elementState.originalValues;
+                applyContentFieldToDom(el, "text", ov.text);
+                applyContentFieldToDom(el, "href", ov.href);
+                // Revert styles via event (as before)
+                const event = new CustomEvent("design-panel-style-update", {
+                    detail: {
+                        ...elementState.originalValues,
+                        _isRevert: true,
+                        fpId: fpId,
+                    },
+                    bubbles: true,
+                    composed: true,
+                });
+                document.dispatchEvent(event);
+            });
+            return revertedTrackedElements;
+        });
+        if (activeElementFpId && trackedElements[activeElementFpId]) {
+            reset(trackedElements[activeElementFpId].originalValues);
+        }
+        else {
+            // Active element was deleted – just clear the form
+            reset(defaultValues);
+        }
+    }, [activeElementFpId, trackedElements, reset]);
+    const undo = useCallback(() => {
+        setHistory((prev) => {
+            const last = prev[prev.length - 1];
+            if (!last)
+                return prev;
+            // Capture "after" snapshot for redo (the state we’re about to leave)
+            const tracked = trackedElements[last.fpId];
+            const el = tracked?.element;
+            const domHtmlAfter = el?.isContentEditable ? el.innerHTML : undefined;
+            isTimeTravelingRef.current = true;
+            try {
+                if (el && el.isContentEditable && last.domHtmlBefore !== undefined) {
+                    // Restore exact DOM structure from before this change
+                    el.innerHTML = last.domHtmlBefore;
+                    // Keep the form in sync without triggering watch
+                    const afterValues = { ...getValues() };
+                    afterValues.text = el.innerText;
+                    isResettingRef.current = true;
+                    reset(afterValues);
+                    setTimeout(() => (isResettingRef.current = false), 0);
+                }
+                else {
+                    // Normal style/text undo
+                    applyPatchToTracked(last.fpId, last.inversePatch);
+                }
+                // Make this action redoable
+                setRedoStack((rs) => [
+                    ...rs,
+                    { ...last, ...(domHtmlAfter ? { domHtmlAfter } : {}) },
+                ]);
+            }
+            finally {
+                isTimeTravelingRef.current = false;
+            }
+            return prev.slice(0, -1);
+        });
+    }, [applyPatchToTracked, getValues, reset, trackedElements]);
+    const redo = useCallback(() => {
+        setRedoStack((prev) => {
+            const next = prev[prev.length - 1];
+            if (!next)
+                return prev;
+            const tracked = trackedElements[next.fpId];
+            const el = tracked?.element;
+            isTimeTravelingRef.current = true;
+            try {
+                if (el && el.isContentEditable && next.domHtmlAfter !== undefined) {
+                    // Restore the "after" structure
+                    el.innerHTML = next.domHtmlAfter;
+                    // Sync form
+                    const afterValues = { ...getValues() };
+                    afterValues.text = el.innerText;
+                    isResettingRef.current = true;
+                    reset(afterValues);
+                    setTimeout(() => (isResettingRef.current = false), 0);
+                }
+                else {
+                    // Re-apply the forward patch
+                    applyPatchToTracked(next.fpId, next.patch);
+                }
+                // Put it back on the undo stack
+                setHistory((h) => [...h, next]);
+            }
+            finally {
+                isTimeTravelingRef.current = false;
+            }
+            // Pop from redo stack
+            return prev.slice(0, -1);
+        });
+    }, [applyPatchToTracked, getValues, reset, trackedElements]);
+    const canUndo = useMemo(() => history.length > 0, [history]);
+    const canRedo = useMemo(() => redoStack.length > 0, [redoStack]);
+    // --- Computed State ---
+    const totalUnsavedChanges = history.length;
+    // const totalUnsavedChanges = Object.values(trackedElements).reduce(
+    //   (acc, el) => {
+    //     const styleChanges = calculateChanges(
+    //       el.originalValues,
+    //       el.currentValues
+    //     );
+    //     const textChanges = calculateTextChanges(
+    //       el.originalValues,
+    //       el.currentValues
+    //     );
+    //     const moveChanges = el.moveChanges || [];
+    //     return (
+    //       acc + styleChanges.length + textChanges.length + moveChanges.length
+    //     );
+    //   },
+    //   0
+    // );
+    const value = {
+        control,
+        watch,
+        reset,
+        setValue,
+        getValues,
+        trackedElements,
+        activeElementFpId,
+        selectElement,
+        updateActiveElementStyle,
+        saveAllChanges,
+        cancelAllChanges,
+        totalUnsavedChanges,
+        isSaving,
+        isDemo: demo,
+        editingState,
+        setEditingState,
+        history,
+        canUndo,
+        undo,
+        canRedo,
+        redo,
+    };
+    return (_jsx(VisualEditorContext.Provider, { value: value, children: children }));
+};
+export const useVisualEditor = () => {
+    const context = useContext(VisualEditorContext);
+    if (context === undefined) {
+        throw new Error("useVisualEditor must be used within a VisualEditorProvider");
+    }
+    return context;
+};

@@ -1,0 +1,85 @@
+import { WINDOW as o } from "./index242.js";
+import { addHandler as g, maybeInstrument as T, triggerHandlers as b } from "./index222.js";
+import { fill as _, addNonEnumerableProperty as y } from "./index119.js";
+import { uuid4 as k } from "./index121.js";
+const C = 1e3;
+let p, f, h;
+function P(t) {
+  const r = "dom";
+  g(r, t), T(r, O);
+}
+function O() {
+  if (!o.document)
+    return;
+  const t = b.bind(null, "dom"), r = E(t, !0);
+  o.document.addEventListener("click", r, !1), o.document.addEventListener("keypress", r, !1), ["EventTarget", "Node"].forEach((n) => {
+    const l = o[n]?.prototype;
+    l?.hasOwnProperty?.("addEventListener") && (_(l, "addEventListener", function(i) {
+      return function(e, c, d) {
+        if (e === "click" || e == "keypress")
+          try {
+            const u = this.__sentry_instrumentation_handlers__ = this.__sentry_instrumentation_handlers__ || {}, a = u[e] = u[e] || { refCount: 0 };
+            if (!a.handler) {
+              const m = E(t);
+              a.handler = m, i.call(this, e, m, d);
+            }
+            a.refCount++;
+          } catch {
+          }
+        return i.call(this, e, c, d);
+      };
+    }), _(
+      l,
+      "removeEventListener",
+      function(i) {
+        return function(e, c, d) {
+          if (e === "click" || e == "keypress")
+            try {
+              const u = this.__sentry_instrumentation_handlers__ || {}, a = u[e];
+              a && (a.refCount--, a.refCount <= 0 && (i.call(this, e, a.handler, d), a.handler = void 0, delete u[e]), Object.keys(u).length === 0 && delete this.__sentry_instrumentation_handlers__);
+            } catch {
+            }
+          return i.call(this, e, c, d);
+        };
+      }
+    ));
+  });
+}
+function D(t) {
+  if (t.type !== f)
+    return !1;
+  try {
+    if (!t.target || t.target._sentryId !== h)
+      return !1;
+  } catch {
+  }
+  return !0;
+}
+function I(t, r) {
+  return t !== "keypress" ? !1 : r?.tagName ? !(r.tagName === "INPUT" || r.tagName === "TEXTAREA" || r.isContentEditable) : !0;
+}
+function E(t, r = !1) {
+  return (n) => {
+    if (!n || n._sentryCaptured)
+      return;
+    const s = N(n);
+    if (I(n.type, s))
+      return;
+    y(n, "_sentryCaptured", !0), s && !s._sentryId && y(s, "_sentryId", k());
+    const l = n.type === "keypress" ? "input" : n.type;
+    D(n) || (t({ event: n, name: l, global: r }), f = n.type, h = s ? s._sentryId : void 0), clearTimeout(p), p = o.setTimeout(() => {
+      h = void 0, f = void 0;
+    }, C);
+  };
+}
+function N(t) {
+  try {
+    return t.target;
+  } catch {
+    return null;
+  }
+}
+export {
+  P as addClickKeypressInstrumentationHandler,
+  O as instrumentDOM
+};

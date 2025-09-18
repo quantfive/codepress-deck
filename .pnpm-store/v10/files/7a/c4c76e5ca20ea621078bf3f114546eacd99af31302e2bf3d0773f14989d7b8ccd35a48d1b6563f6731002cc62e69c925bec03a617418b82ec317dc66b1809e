@@ -1,0 +1,16 @@
+import * as React from "react";
+import { InputProps } from "../ui/input.js";
+export interface InputWithPopoverProps extends Omit<InputProps, "endEnhancer"> {
+    /** Content rendered inside the popover */
+    popoverContent: React.ReactNode;
+    /** Optional custom element to use as the trigger icon (defaults to a plus icon) */
+    triggerIcon?: React.ReactNode;
+    /** Override portal container (defaults to context-provided container) */
+    container?: HTMLElement;
+}
+/**
+ * Renders an `Input` whose end enhancer acts as a trigger for a popover.
+ * The popover is positioned below the input by default.
+ */
+export declare const InputWithPopover: React.ForwardRefExoticComponent<InputWithPopoverProps & React.RefAttributes<HTMLInputElement>>;
+//# sourceMappingURL=InputWithPopover.d.ts.map

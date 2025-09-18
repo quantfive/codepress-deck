@@ -1,0 +1,14 @@
+import React from "react";
+interface HeaderProps {
+    onClose: () => void;
+    onOpenDesignPanel: () => void;
+    onOpenAgentChat?: () => void;
+    /**
+     * Callback fired when the user presses the mouse down on an area of the header
+     * that should initiate dragging of the Design Bar.
+     */
+    onDragMouseDown?: (e: React.MouseEvent) => void;
+}
+declare const Header: React.FC<HeaderProps>;
+export default Header;
+//# sourceMappingURL=Header.d.ts.map

@@ -1,0 +1,19 @@
+import { j as m } from "./index7.js";
+import * as t from "react";
+import { Root as o } from "./index83.js";
+import { cn as s } from "./index29.js";
+const i = t.forwardRef(({ className: e, ...a }, r) => /* @__PURE__ */ m.jsx(
+  o,
+  {
+    ref: r,
+    className: s(
+      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      e
+    ),
+    ...a
+  }
+));
+i.displayName = o.displayName;
+export {
+  i as Label
+};

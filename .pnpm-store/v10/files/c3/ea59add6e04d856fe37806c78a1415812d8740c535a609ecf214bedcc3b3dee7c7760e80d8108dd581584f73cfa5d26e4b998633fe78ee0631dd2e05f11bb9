@@ -1,0 +1,218 @@
+import * as s from "react";
+import { useFloating as fe, offset as me, shift as he, flip as ge, size as ue, arrow as we, hide as xe, limitShift as Pe } from "./index162.js";
+import { Root as ye } from "./index163.js";
+import { useComposedRefs as z } from "./index98.js";
+import { createContextScope as Ae } from "./index99.js";
+import { Primitive as I } from "./index107.js";
+import { useCallbackRef as ve } from "./index159.js";
+import { useLayoutEffect as W } from "./index161.js";
+import { useSize as Ce } from "./index164.js";
+import { j as f } from "./index7.js";
+import { autoUpdate as Se } from "./index165.js";
+var b = "Popper", [Y, Fe] = Ae(b), [be, M] = Y(b), X = (e) => {
+  const { __scopePopper: a, children: o } = e, [i, n] = s.useState(null);
+  return /* @__PURE__ */ f.jsx(be, { scope: a, anchor: i, onAnchorChange: n, children: o });
+};
+X.displayName = b;
+var D = "PopperAnchor", F = s.forwardRef(
+  (e, a) => {
+    const { __scopePopper: o, virtualRef: i, ...n } = e, t = M(D, o), r = s.useRef(null), g = z(a, r);
+    return s.useEffect(() => {
+      t.onAnchorChange(i?.current || r.current);
+    }), i ? null : /* @__PURE__ */ f.jsx(I.div, { ...n, ref: g });
+  }
+);
+F.displayName = D;
+var R = "PopperContent", [Re, Oe] = Y(R), k = s.forwardRef(
+  (e, a) => {
+    const {
+      __scopePopper: o,
+      side: i = "bottom",
+      sideOffset: n = 0,
+      align: t = "center",
+      alignOffset: r = 0,
+      arrowPadding: g = 0,
+      avoidCollisions: p = !0,
+      collisionBoundary: c = [],
+      collisionPadding: u = 0,
+      sticky: m = "partial",
+      hideWhenDetached: x = !1,
+      updatePositionStrategy: P = "optimized",
+      onPlaced: l,
+      ...d
+    } = e, Z = M(R, o), [C, U] = s.useState(null), q = z(a, (w) => U(w)), [S, G] = s.useState(null), O = Ce(S), J = O?.width ?? 0, E = O?.height ?? 0, K = i + (t !== "center" ? "-" + t : ""), Q = typeof u == "number" ? u : { top: 0, right: 0, bottom: 0, left: 0, ...u }, N = Array.isArray(c) ? c : [c], V = N.length > 0, y = {
+      padding: Q,
+      boundary: N.filter(Ne),
+      // with `strategy: 'fixed'`, this is the only way to get it to respect boundaries
+      altBoundary: V
+    }, { refs: ee, floatingStyles: _, placement: te, isPositioned: A, middlewareData: h } = fe({
+      // default to `fixed` strategy so users don't have to pick and we also avoid focus scroll issues
+      strategy: "fixed",
+      placement: K,
+      whileElementsMounted: (...w) => Se(...w, {
+        animationFrame: P === "always"
+      }),
+      elements: {
+        reference: Z.anchor
+      },
+      middleware: [
+        me({ mainAxis: n + E, alignmentAxis: r }),
+        p && he({
+          mainAxis: !0,
+          crossAxis: !1,
+          limiter: m === "partial" ? Pe() : void 0,
+          ...y
+        }),
+        p && ge({ ...y }),
+        ue({
+          ...y,
+          apply: ({ elements: w, rects: H, availableWidth: pe, availableHeight: ce }) => {
+            const { width: de, height: le } = H.reference, v = w.floating.style;
+            v.setProperty("--radix-popper-available-width", `${pe}px`), v.setProperty("--radix-popper-available-height", `${ce}px`), v.setProperty("--radix-popper-anchor-width", `${de}px`), v.setProperty("--radix-popper-anchor-height", `${le}px`);
+          }
+        }),
+        S && we({ element: S, padding: g }),
+        _e({ arrowWidth: J, arrowHeight: E }),
+        x && xe({ strategy: "referenceHidden", ...y })
+      ]
+    }), [$, re] = L(te), j = ve(l);
+    W(() => {
+      A && j?.();
+    }, [A, j]);
+    const oe = h.arrow?.x, ne = h.arrow?.y, ae = h.arrow?.centerOffset !== 0, [ie, se] = s.useState();
+    return W(() => {
+      C && se(window.getComputedStyle(C).zIndex);
+    }, [C]), /* @__PURE__ */ f.jsx(
+      "div",
+      {
+        ref: ee.setFloating,
+        "data-radix-popper-content-wrapper": "",
+        style: {
+          ..._,
+          transform: A ? _.transform : "translate(0, -200%)",
+          // keep off the page when measuring
+          minWidth: "max-content",
+          zIndex: ie,
+          "--radix-popper-transform-origin": [
+            h.transformOrigin?.x,
+            h.transformOrigin?.y
+          ].join(" "),
+          // hide the content if using the hide middleware and should be hidden
+          // set visibility to hidden and disable pointer events so the UI behaves
+          // as if the PopperContent isn't there at all
+          ...h.hide?.referenceHidden && {
+            visibility: "hidden",
+            pointerEvents: "none"
+          }
+        },
+        dir: e.dir,
+        children: /* @__PURE__ */ f.jsx(
+          Re,
+          {
+            scope: o,
+            placedSide: $,
+            onArrowChange: G,
+            arrowX: oe,
+            arrowY: ne,
+            shouldHideArrow: ae,
+            children: /* @__PURE__ */ f.jsx(
+              I.div,
+              {
+                "data-side": $,
+                "data-align": re,
+                ...d,
+                ref: q,
+                style: {
+                  ...d.style,
+                  // if the PopperContent hasn't been placed yet (not all measurements done)
+                  // we prevent animations so that users's animation don't kick in too early referring wrong sides
+                  animation: A ? void 0 : "none"
+                }
+              }
+            )
+          }
+        )
+      }
+    );
+  }
+);
+k.displayName = R;
+var B = "PopperArrow", Ee = {
+  top: "bottom",
+  right: "left",
+  bottom: "top",
+  left: "right"
+}, T = s.forwardRef(function(a, o) {
+  const { __scopePopper: i, ...n } = a, t = Oe(B, i), r = Ee[t.placedSide];
+  return (
+    // we have to use an extra wrapper because `ResizeObserver` (used by `useSize`)
+    // doesn't report size as we'd expect on SVG elements.
+    // it reports their bounding box which is effectively the largest path inside the SVG.
+    /* @__PURE__ */ f.jsx(
+      "span",
+      {
+        ref: t.onArrowChange,
+        style: {
+          position: "absolute",
+          left: t.arrowX,
+          top: t.arrowY,
+          [r]: 0,
+          transformOrigin: {
+            top: "",
+            right: "0 0",
+            bottom: "center 0",
+            left: "100% 0"
+          }[t.placedSide],
+          transform: {
+            top: "translateY(100%)",
+            right: "translateY(50%) rotate(90deg) translateX(-50%)",
+            bottom: "rotate(180deg)",
+            left: "translateY(50%) rotate(-90deg) translateX(50%)"
+          }[t.placedSide],
+          visibility: t.shouldHideArrow ? "hidden" : void 0
+        },
+        children: /* @__PURE__ */ f.jsx(
+          ye,
+          {
+            ...n,
+            ref: o,
+            style: {
+              ...n.style,
+              // ensures the element can be measured correctly (mostly for if SVG)
+              display: "block"
+            }
+          }
+        )
+      }
+    )
+  );
+});
+T.displayName = B;
+function Ne(e) {
+  return e !== null;
+}
+var _e = (e) => ({
+  name: "transformOrigin",
+  options: e,
+  fn(a) {
+    const { placement: o, rects: i, middlewareData: n } = a, r = n.arrow?.centerOffset !== 0, g = r ? 0 : e.arrowWidth, p = r ? 0 : e.arrowHeight, [c, u] = L(o), m = { start: "0%", center: "50%", end: "100%" }[u], x = (n.arrow?.x ?? 0) + g / 2, P = (n.arrow?.y ?? 0) + p / 2;
+    let l = "", d = "";
+    return c === "bottom" ? (l = r ? m : `${x}px`, d = `${-p}px`) : c === "top" ? (l = r ? m : `${x}px`, d = `${i.floating.height + p}px`) : c === "right" ? (l = `${-p}px`, d = r ? m : `${P}px`) : c === "left" && (l = `${i.floating.width + p}px`, d = r ? m : `${P}px`), { data: { x: l, y: d } };
+  }
+});
+function L(e) {
+  const [a, o = "center"] = e.split("-");
+  return [a, o];
+}
+var ke = X, Be = F, Te = k, Le = T;
+export {
+  Be as Anchor,
+  Le as Arrow,
+  Te as Content,
+  X as Popper,
+  F as PopperAnchor,
+  T as PopperArrow,
+  k as PopperContent,
+  ke as Root,
+  Fe as createPopperScope
+};

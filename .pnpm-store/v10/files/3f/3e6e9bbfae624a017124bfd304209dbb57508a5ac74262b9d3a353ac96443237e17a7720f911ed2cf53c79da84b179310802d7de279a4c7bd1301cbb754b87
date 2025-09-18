@@ -1,0 +1,38 @@
+import { DEBUG_BUILD as a } from "./index208.js";
+import { debug as m } from "./index151.js";
+import { getFunctionName as s } from "./index131.js";
+const e = {}, i = {};
+function g(r, n) {
+  e[r] = e[r] || [], e[r].push(n);
+}
+function h(r, n) {
+  if (!i[r]) {
+    i[r] = !0;
+    try {
+      n();
+    } catch (t) {
+      a && m.error(`Error while instrumenting ${r}`, t);
+    }
+  }
+}
+function l(r, n) {
+  const t = r && e[r];
+  if (t)
+    for (const o of t)
+      try {
+        o(n);
+      } catch (c) {
+        a && m.error(
+          `Error while triggering instrumentation handler.
+Type: ${r}
+Name: ${s(o)}
+Error:`,
+          c
+        );
+      }
+}
+export {
+  g as addHandler,
+  h as maybeInstrument,
+  l as triggerHandlers
+};

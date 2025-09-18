@@ -1,0 +1,36 @@
+import l from "./index245.js";
+import m from "./index247.js";
+import g from "react";
+import f from "./index246.js";
+import { j as d } from "./index7.js";
+var u = ["prefixCls", "className", "hue", "onChange", "direction"], p = /* @__PURE__ */ g.forwardRef((e, i) => {
+  var {
+    prefixCls: n = "w-color-hue",
+    className: s,
+    hue: o = 0,
+    onChange: a,
+    direction: r = "horizontal"
+  } = e, h = m(e, u);
+  return /* @__PURE__ */ d.jsx(f, l({
+    ref: i,
+    className: n + " " + (s || "")
+  }, h, {
+    direction: r,
+    background: "linear-gradient(to " + (r === "horizontal" ? "right" : "bottom") + ", rgb(255, 0, 0) 0%, rgb(255, 255, 0) 17%, rgb(0, 255, 0) 33%, rgb(0, 255, 255) 50%, rgb(0, 0, 255) 67%, rgb(255, 0, 255) 83%, rgb(255, 0, 0) 100%)",
+    hsva: {
+      h: o,
+      s: 100,
+      v: 100,
+      a: o / 360
+    },
+    onChange: (b, t) => {
+      a && a({
+        h: r === "horizontal" ? 360 * t.left : 360 * t.top
+      });
+    }
+  }));
+});
+p.displayName = "Hue";
+export {
+  p as default
+};

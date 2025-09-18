@@ -1,0 +1,9 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+import * as React from "react";
+const PortalContainerContext = React.createContext(null);
+export function usePortalContainer() {
+    return React.useContext(PortalContainerContext);
+}
+export function PortalProvider({ container, children, }) {
+    return (_jsx(PortalContainerContext.Provider, { value: container, children: children }));
+}

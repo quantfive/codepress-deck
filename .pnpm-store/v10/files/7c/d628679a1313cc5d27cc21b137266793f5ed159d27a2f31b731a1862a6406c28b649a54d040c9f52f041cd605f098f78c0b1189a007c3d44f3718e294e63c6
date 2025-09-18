@@ -1,0 +1,30 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+import { useRef, useState } from "react";
+import { Sketch } from "@uiw/react-color";
+import { getCleanElementHTML } from "../utils/saveChanges.js";
+export const ColorPickerContent = ({ type, color, tempColor, onColorChange, onClose, onSave, element, }) => {
+    const [isSaving, setIsSaving] = useState(false);
+    // Store the initial HTML state when the component mounts - clean version without UI elements
+    const originalHtmlRef = useRef(getCleanElementHTML(element, false));
+    const handleColorChange = (color) => {
+        onColorChange(color);
+        // Send only the color that changed
+        const update = type === "background" ? { backgroundColor: color } : { color: color };
+        const event = new CustomEvent("design-panel-style-update", {
+            detail: update,
+            bubbles: true,
+            composed: true,
+        });
+        document.dispatchEvent(event);
+    };
+    const handleCancel = () => {
+        // Revert to original color
+        handleColorChange(color);
+        onClose();
+    };
+    const handleSaveClick = () => {
+        // Call the parent's onSave function with the current color
+        onSave(type, tempColor || color);
+    };
+    return (_jsx("div", { className: "bg-white rounded-lg", onClick: (e) => e.stopPropagation(), children: _jsx(Sketch, { color: tempColor || color, onChange: (color) => handleColorChange(color.hex) }) }));
+};

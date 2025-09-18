@@ -1,0 +1,71 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+import { createContext, useState, useEffect, useContext, } from "react";
+import { getAuthState, logout as logoutUser } from "./github.js";
+import Sentry from "@/sentry";
+// Create the auth context
+const AuthContext = createContext(undefined);
+// Auth provider component
+export const AuthProvider = ({ children }) => {
+    const [authState, setAuthState] = useState({
+        token: null,
+        user: null,
+        isLoggedIn: false,
+    });
+    const [loading, setLoading] = useState(true);
+    // Load auth state on mount
+    useEffect(() => {
+        const loadAuthState = async () => {
+            try {
+                const state = await getAuthState();
+                setAuthState(state);
+            }
+            catch (error) {
+                Sentry.captureException(error);
+                console.error("Failed to load auth state:", error);
+            }
+            finally {
+                setLoading(false);
+            }
+        };
+        loadAuthState();
+    }, []);
+    // Logout function
+    const logout = async () => {
+        try {
+            await logoutUser();
+            setAuthState({
+                token: null,
+                user: null,
+                isLoggedIn: false,
+            });
+        }
+        catch (error) {
+            Sentry.captureException(error);
+            console.error("Failed to logout:", error);
+        }
+    };
+    // Update user
+    const updateUser = ({ user, isLoggedIn, }) => {
+        setAuthState((prev) => ({
+            ...prev,
+            user,
+            isLoggedIn: isLoggedIn ?? prev.isLoggedIn,
+        }));
+    };
+    // Context value
+    const value = {
+        ...authState,
+        loading,
+        logout,
+        updateUser,
+    };
+    return _jsx(AuthContext.Provider, { value: value, children: children });
+};
+// Auth hook
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};

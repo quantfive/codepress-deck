@@ -1,0 +1,378 @@
+import { j as d } from "./index7.js";
+import { DeploymentProvider as te } from "./index8.js";
+import { useState as y, useRef as R, useEffect as b, useCallback as f } from "react";
+import { PopoverContainerProvider as ne } from "./index9.js";
+import { RepositoryProvider as oe } from "./index10.js";
+import { VisualEditorProvider as re, useVisualEditor as se } from "./index6.js";
+import { debugDragDropSetup as ie } from "./index11.js";
+import { logger as c } from "./index12.js";
+import { SimpleDragDrop as le } from "./index13.js";
+import { getElementValues as W, applyStylesToTarget as ae } from "./index14.js";
+import { getCleanElementHTML as Z } from "./index15.js";
+import ce from "./index16.js";
+import { DesignPanel as de } from "./index17.js";
+import ue from "./index18.js";
+import me from "./index19.js";
+import { DeploymentPopover as fe } from "./index20.js";
+import { GitHubProvider as pe } from "./index21.js";
+function ge({
+  isEditing: k,
+  isDesignPanelOpen: C,
+  setIsDesignPanelOpen: v,
+  selectedElement: g,
+  popoverContainer: E,
+  elementValues: L,
+  handleCloseCb: H,
+  handleOpenDesignPanel: V
+}) {
+  const {
+    totalUnsavedChanges: B,
+    saveAllChanges: S,
+    cancelAllChanges: l,
+    isSaving: U,
+    activeElementFpId: F
+  } = se();
+  return b(() => {
+    const w = (u) => {
+      const { fpId: a, _isRevert: x, ..._ } = u.detail;
+      if (!a) return;
+      document.querySelectorAll(
+        `[codepress-data-fp="${a}"]`
+      ).forEach((m) => {
+        ae(m, _);
+      });
+    };
+    return document.addEventListener(
+      "design-panel-style-update",
+      w
+    ), () => {
+      document.removeEventListener(
+        "design-panel-style-update",
+        w
+      );
+    };
+  }, [g, F]), /* @__PURE__ */ d.jsxs(ne, { container: E, children: [
+    !C && g && E && L && /* @__PURE__ */ d.jsx(
+      ce,
+      {
+        onClose: H,
+        popoverContainer: E,
+        onOpenDesignPanel: V
+      }
+    ),
+    C && g && L && E && /* @__PURE__ */ d.jsx(
+      de,
+      {
+        onClose: () => v(!1),
+        shadowRoot: E
+      }
+    ),
+    k && /* @__PURE__ */ d.jsx(
+      me,
+      {
+        onSave: S,
+        onCancel: l,
+        unsavedChanges: B,
+        isSaving: U
+      }
+    )
+  ] });
+}
+function Te({
+  demo: k = !1,
+  onToggleReady: C
+}) {
+  const [v, g] = y(
+    null
+  ), [E, L] = y(null), [H, V] = y(null), [B, S] = y(null), [l, U] = y(() => {
+    if (typeof window < "u") {
+      const e = localStorage.getItem("codepress-editing-mode");
+      return e ? JSON.parse(e) : !1;
+    }
+    return !1;
+  }), [F, w] = y(!1), u = R(null);
+  b(() => {
+    typeof window < "u" && localStorage.setItem("codepress-editing-mode", JSON.stringify(l));
+  }, [l]);
+  const a = R({ selectedElement: v, hoveredElement: E, isEditing: l });
+  a.current = { selectedElement: v, hoveredElement: E, isEditing: l };
+  const x = R(null), _ = 6, h = (e) => {
+    const t = e.composedPath(), n = t.length > 0 ? t[0] : e.target;
+    return n instanceof HTMLElement ? n : null;
+  }, m = (e) => e ? !!(e.closest("[data-codepress-root], [data-codepress-portal]") || e.classList.contains("simple-long-press-active") || e.classList.contains("simple-ghost-element") || e.classList.contains("simple-drop-indicator") || e.dataset.codepressHandle === "true") : !1, $ = (e) => !e || m(e) ? !1 : !!(e.closest("a") || e.closest("button")), N = f(() => {
+    const e = a.current.selectedElement;
+    e && (e.style.outline = "", e.contentEditable = e.dataset.originalContentEditable ?? "inherit", delete e.dataset.originalContentEditable), g(null), w(!1);
+    const t = window.getSelection();
+    t && t.removeAllRanges();
+    const n = new CustomEvent("codepress-deselect-element");
+    document.dispatchEvent(n);
+  }, []), A = f((e) => {
+    const t = h(e);
+    x.current = {
+      x: e.clientX,
+      y: e.clientY,
+      startInUi: m(t)
+    };
+  }, []), p = f(() => {
+    const e = a.current.hoveredElement;
+    e && !m(e.element) && (e.element.style.outline = e.originalOutline), L(null);
+  }, []), O = f(
+    (e) => {
+      const t = h(e);
+      if (!t || m(t) || t === a.current.selectedElement) {
+        a.current.hoveredElement && p();
+        return;
+      }
+      a.current.hoveredElement?.element !== t && (p(), L({
+        element: t,
+        originalOutline: t.style.outline
+      }), t.style.outline = "2px dashed #2563eb");
+    },
+    [p]
+  ), T = f(
+    (e) => {
+      const t = h(e);
+      (!t || a.current.hoveredElement && a.current.hoveredElement.element === t) && p();
+    },
+    [p]
+  ), M = f(
+    (e) => {
+      const t = window.getSelection();
+      if (t && t.rangeCount > 0 && !t.isCollapsed) {
+        const i = h(e);
+        if (!i || m(i) || !$(i))
+          return;
+      }
+      const n = x.current;
+      if (n) {
+        const i = e.clientX - n.x, I = e.clientY - n.y;
+        if (n.startInUi && Math.hypot(i, I) > _) {
+          x.current = null;
+          return;
+        }
+      }
+      const o = h(e);
+      if (!o || m(o))
+        return;
+      e.preventDefault(), e.stopPropagation(), x.current = null;
+      const s = a.current.selectedElement;
+      s && s !== o && (s.style.outline = "", s.contentEditable = s.dataset.originalContentEditable ?? "inherit", delete s.dataset.originalContentEditable), p(), o.style.outline = "2px solid #2563eb", o.dataset.originalContentEditable = o.contentEditable, o.contentEditable = "true", g(o);
+      const r = W(o);
+      S(r);
+      const D = new CustomEvent("codepress-select-element", {
+        detail: {
+          element: o,
+          initialValues: r
+        }
+      });
+      document.dispatchEvent(D), o && (Y.current = Z(o, !1)), o.focus();
+    },
+    [p]
+  ), j = R(!1), G = f(
+    async (e) => {
+      c.info("Drag & Drop: Element dropped", e);
+      const { source: t, target: n, position: o } = e;
+      try {
+        switch (c.info("🔧 MOVE OPERATION DEBUG:", {
+          operation: "optimisticMoveAndTrack",
+          source: {
+            location: t.location,
+            tagName: t.tagName
+          },
+          target: {
+            location: n.location,
+            tagName: n.tagName
+          },
+          position: o,
+          timestamp: Date.now()
+        }), o) {
+          case "before":
+            n.element.parentNode && (n.element.parentNode.insertBefore(
+              t.element,
+              n.element
+            ), c.info("✅ Element moved BEFORE target"));
+            break;
+          case "after":
+            if (n.element.parentNode) {
+              const r = n.element.nextSibling;
+              r ? n.element.parentNode.insertBefore(
+                t.element,
+                r
+              ) : n.element.parentNode.appendChild(t.element), c.info("✅ Element moved AFTER target");
+            }
+            break;
+          case "left":
+            n.element.parentNode && (n.element.parentNode.insertBefore(
+              t.element,
+              n.element
+            ), c.info("✅ Element moved LEFT of target"));
+            break;
+          case "right":
+            if (n.element.parentNode) {
+              const r = n.element.nextSibling;
+              r ? n.element.parentNode.insertBefore(
+                t.element,
+                r
+              ) : n.element.parentNode.appendChild(t.element), c.info("✅ Element moved RIGHT of target");
+            }
+            break;
+          case "inside":
+            n.element.appendChild(t.element), c.info("✅ Element moved INSIDE target");
+            break;
+          default:
+            c.error("❌ Unknown drop position:", o);
+            return;
+        }
+        const s = {
+          sourceLocation: t.location || "",
+          targetLocation: n.location || "",
+          position: o,
+          sourceTag: t.tagName?.toLowerCase(),
+          targetTag: n.tagName?.toLowerCase()
+        };
+        if (t.location) {
+          const r = new CustomEvent("codepress-element-moved", {
+            detail: {
+              moveChange: s,
+              sourceElement: t.element,
+              targetElement: n.element
+            },
+            bubbles: !0,
+            composed: !0
+          });
+          document.dispatchEvent(r), c.info("📝 Move tracked as unsaved change:", {
+            sourceLocation: t.location,
+            moveChange: s
+          });
+        }
+        v === t.element && N(), c.info("🎉 Move operation completed successfully!");
+      } catch (s) {
+        c.error("❌ Failed to move element:", s);
+      }
+    },
+    [v, N]
+  ), X = f(() => {
+    j.current || (document.addEventListener("mouseover", O, !0), document.addEventListener("mouseout", T, !0), document.addEventListener("mousedown", A, !0), document.addEventListener("click", M, !0), j.current = !0);
+  }, [M, T, O, A]), z = f(() => {
+    j.current && (document.removeEventListener("mouseover", O, !0), document.removeEventListener("mouseout", T, !0), document.removeEventListener("mousedown", A, !0), document.removeEventListener("click", M, !0), p(), j.current = !1);
+  }, [
+    p,
+    M,
+    T,
+    O,
+    A
+  ]);
+  b(() => {
+    l ? X() : z();
+  }, [l, X, z]), b(() => (l ? u.current || (c.info(
+    "Drag & Drop: Initializing simple drag and drop functionality"
+  ), setTimeout(() => {
+    const e = ie();
+    e.elementsWithCodePressData === 0 && c.warn(
+      "⚠️ No elements with codepress-data-fp found! Drag & drop won't work."
+    ), e.errors.length > 0 && c.info("🔍 Drag & Drop Debug Issues:", e.errors);
+  }, 1e3), u.current = new le({
+    onDropElement: G,
+    // Customize the appearance to match CodePress theme
+    dropZoneColor: "#2563eb",
+    ghostOpacity: 0.6,
+    longPressDuration: 500,
+    // 125ms hold to activate drag
+    movementThreshold: 5
+    // 5px max movement during hold
+  })) : u.current && (c.info(
+    "Drag & Drop: Cleaning up simple drag and drop functionality"
+  ), u.current.destroy(), u.current = null), () => {
+    u.current && (u.current.destroy(), u.current = null);
+  }), [l, G]);
+  const J = () => {
+    U((e) => {
+      const t = !e;
+      return t || N(), t;
+    });
+  };
+  b(() => {
+    C && C(J);
+  }, [C]);
+  const K = () => {
+    w(!0);
+  }, Q = f(N, [N]), Y = R("");
+  return b(() => {
+    if (!l) return;
+    let e = !1;
+    const t = (o) => {
+      const s = h(o);
+      m(s) || (e = !0);
+    }, n = () => {
+      try {
+        if (!e) return;
+        e = !1;
+        const o = window.getSelection();
+        if (!o || o.rangeCount === 0 || o.isCollapsed) return;
+        const s = o.getRangeAt(0).cloneRange(), r = s.commonAncestorContainer || o.anchorNode;
+        if (!r) return;
+        const D = r.nodeType === Node.ELEMENT_NODE ? r : r.parentElement;
+        if (!D || m(D)) return;
+        const i = D.closest("[codepress-data-fp]") || D.closest("*");
+        if (!i) return;
+        if (a.current.selectedElement !== i) {
+          const P = a.current.selectedElement;
+          P && (P.style.outline = "", P.contentEditable = P.dataset.originalContentEditable ?? "inherit", delete P.dataset.originalContentEditable), i.style.outline = "2px solid #2563eb", i.dataset.originalContentEditable = i.contentEditable, i.contentEditable = "true", g(i);
+          const q = W(i);
+          S(q);
+          const ee = new CustomEvent("codepress-select-element", {
+            detail: { element: i, initialValues: q }
+          });
+          document.dispatchEvent(ee), Y.current = Z(i, !1);
+        }
+        const I = window.getSelection();
+        I && (I.removeAllRanges(), I.addRange(s));
+      } catch {
+      }
+    };
+    return document.addEventListener("mousedown", t, !0), document.addEventListener("mouseup", n, !0), () => {
+      document.removeEventListener("mousedown", t, !0), document.removeEventListener("mouseup", n, !0);
+    };
+  }, [l]), b(() => {
+    const e = (t) => {
+      const n = t, o = n.detail?.element, s = n.detail?.initialValues;
+      if (!o) return;
+      const r = a.current.selectedElement;
+      r && r !== o && (r.style.outline = "", r.contentEditable = r.dataset.originalContentEditable ?? "inherit", delete r.dataset.originalContentEditable), o.style.outline = "2px solid #2563eb", o.dataset.originalContentEditable = o.contentEditable, o.contentEditable = "true", g(o), s && S(s);
+    };
+    return document.addEventListener(
+      "codepress-select-element",
+      e
+    ), () => {
+      document.removeEventListener(
+        "codepress-select-element",
+        e
+      );
+    };
+  }, []), /* @__PURE__ */ d.jsx(pe, { children: /* @__PURE__ */ d.jsx(te, { children: /* @__PURE__ */ d.jsx(oe, { children: /* @__PURE__ */ d.jsx(re, { demo: k, children: /* @__PURE__ */ d.jsxs("div", { "data-codepress-root": "true", ref: V, children: [
+    /* @__PURE__ */ d.jsx(fe, { isEditing: l }),
+    /* @__PURE__ */ d.jsx(
+      ue,
+      {
+        onToggleEditing: J,
+        isEditing: l
+      }
+    ),
+    /* @__PURE__ */ d.jsx(
+      ge,
+      {
+        isDesignPanelOpen: F,
+        setIsDesignPanelOpen: w,
+        selectedElement: v,
+        popoverContainer: H,
+        elementValues: B,
+        handleCloseCb: Q,
+        handleOpenDesignPanel: K,
+        isEditing: l
+      }
+    )
+  ] }) }) }) }) });
+}
+export {
+  Te as default
+};

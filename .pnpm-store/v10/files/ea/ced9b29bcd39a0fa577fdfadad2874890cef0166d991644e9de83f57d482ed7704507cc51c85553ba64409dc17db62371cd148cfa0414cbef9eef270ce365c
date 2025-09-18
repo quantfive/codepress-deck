@@ -1,0 +1,1561 @@
+import { j as e } from "./index7.js";
+import x from "react";
+import { Controller as l } from "./index28.js";
+import { Card as De, CardContent as Ve } from "./index49.js";
+import { Accordion as ze, AccordionItem as S, AccordionTrigger as k, AccordionContent as I } from "./index50.js";
+import { Input as i } from "./index51.js";
+import { Label as t } from "./index52.js";
+import { Slider as pe } from "./index53.js";
+import { Button as E } from "./index54.js";
+import { ToggleGroup as M, ToggleGroupItem as u } from "./index55.js";
+import { Select as Fe, SelectTrigger as He, SelectValue as Oe, SelectContent as Ue, SelectItem as D } from "./index56.js";
+import { FontAwesomeIcon as v } from "@fortawesome/react-fontawesome";
+import { faTimes as Ge, faSpinnerThird as V, faSearch as qe, faAlignLeft as We, faAlignCenter as Ye, faAlignRight as Ke, faAlignJustify as Xe, faUpload as ae } from "@fortawesome/pro-regular-svg-icons";
+import { Popover as je, PopoverTrigger as ve, PopoverContent as ye } from "./index57.js";
+import { ColorPickerContent as fe } from "./index58.js";
+import { detectRepositoryInfo as be } from "./index29.js";
+import { useVisualEditor as Je } from "./index6.js";
+import { IS_DEVELOPMENT as Qe, checkGithubMode as Ze, API_BASE_URL as Ne, BASE_LOCAL_CODEPRESS_DEPRECATED as ea } from "./index26.js";
+import { POST_CONFIG as Ce, apiFetch as we } from "./index38.js";
+import z from "./index40.js";
+import { useGitHub as aa } from "./index21.js";
+function Ia({ onClose: Se, shadowRoot: W }) {
+  const {
+    control: n,
+    watch: ke,
+    setValue: f,
+    getValues: Ie,
+    updateActiveElementStyle: T,
+    activeElementFpId: se,
+    trackedElements: Ee
+  } = Je(), {
+    isGitHubMode: sa,
+    setIsGitHubMode: ta
+  } = aa(), N = (se ? Ee[se] : null)?.element, [C, te] = x.useState(!1), [Ae, Pe] = x.useState(!1), [Y, Te] = x.useState(!1), [F, Re] = x.useState(""), [re, L] = x.useState(""), [B, ne] = x.useState(!1), [na, A] = x.useState(null), K = x.useRef(null), [le, Le] = x.useState({ x: 0, y: 0 }), oe = (a, s, p) => Math.max(s, Math.min(p, a));
+  x.useEffect(() => {
+    const a = N;
+    if (!a) return;
+    const s = () => {
+      const h = a.getBoundingClientRect(), d = 16, b = 16, o = window.scrollX, r = window.scrollY, m = K.current?.offsetWidth || 320, j = K.current?.offsetHeight || 600;
+      let y = h.right + b + o;
+      y + m + d > window.innerWidth + o && (y = h.left - m - b + o, y = oe(
+        y,
+        d + o,
+        window.innerWidth - m - d + o
+      ));
+      let w = h.top + r;
+      w = oe(
+        w,
+        d + r,
+        window.innerHeight - j - d + r
+      ), Le({ x: y, y: w });
+    };
+    s(), setTimeout(s, 0);
+    const p = () => s();
+    return window.addEventListener("resize", p), () => {
+      window.removeEventListener("resize", p);
+    };
+  }, [N]);
+  const g = ke(), [ie, Be] = x.useState(
+    "normal"
+  ), [H, ce] = x.useState(!1), [de, O] = x.useState(""), [he, X] = x.useState(!1), [me, J] = x.useState(!1), [Q, U] = x.useState(""), [Z, G] = x.useState(""), c = (a) => ie === "hover" ? `hover_${a}` : a, _ = (a) => {
+    const s = c(a);
+    return g[s];
+  }, R = (a, s) => {
+    const p = c(a), h = (o, r) => {
+      ["Top", "Right", "Bottom", "Left"].forEach((m) => {
+        const j = c(`${o}${m}`);
+        f(j, r);
+      });
+    }, d = (o) => {
+      const r = o.trim().split(/\s+/);
+      switch (r.length) {
+        case 1:
+          return [r[0], r[0], r[0], r[0]];
+        case 2:
+          return [r[0], r[1], r[0], r[1]];
+        case 3:
+          return [r[0], r[1], r[2], r[1]];
+        case 4:
+          return [r[0], r[1], r[2], r[3]];
+        default:
+          return [o, o, o, o];
+      }
+    };
+    if ((a === "padding" || a === "margin") && typeof s == "string") {
+      const [o, r, m, j] = d(s);
+      h(a, s);
+      const y = {
+        padding: [o, r, m, j],
+        margin: [o, r, m, j]
+      };
+      ["Top", "Right", "Bottom", "Left"].forEach((w, $) => {
+        const P = c(`${a}${w}`);
+        f(P, y[a][$]);
+      });
+    } else a === "border" && h(a, s);
+    Object.entries({
+      padding: ["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"],
+      margin: ["marginTop", "marginRight", "marginBottom", "marginLeft"],
+      border: ["borderTop", "borderRight", "borderBottom", "borderLeft"]
+    }).forEach(([o, r]) => {
+      if (r.includes(a)) {
+        const m = r.map(
+          (q) => q === a ? s : _(q)
+        ), [j, y, w, $] = m;
+        let P = "";
+        m.every((q) => q === j) ? P = j : j === w && y === $ ? P = `${j} ${y}` : y === $ ? P = `${j} ${y} ${w}` : P = `${j} ${y} ${w} ${$}`;
+        const Me = c(o);
+        f(Me, P);
+      }
+    }), f(p, s);
+  }, ge = (a) => {
+    a === "background" ? (X(!1), U("")) : (J(!1), G(""));
+  }, xe = (a, s) => {
+    const h = c(a === "background" ? "backgroundColor" : "color");
+    a === "background" ? (X(!1), U("")) : (J(!1), G("")), f(h, s);
+  }, ee = async (a, s = "background") => {
+    const p = a.target.files;
+    if (!p || p.length === 0) return;
+    const h = p[0];
+    if (h.name, !h.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+    if (h.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+    try {
+      te(!0);
+      const d = new FileReader(), b = await new Promise((r, m) => {
+        d.onload = () => r(d.result), d.onerror = () => m(new Error("Failed to read file")), d.readAsDataURL(h);
+      });
+      f(s === "background" ? "backgroundImage" : "imageSrc", b), A(b);
+    } catch (d) {
+      z.captureException(d), console.error("Error processing image:", d), alert("Failed to process image. Please try again.");
+    } finally {
+      te(!1), a.target.value = "";
+    }
+  };
+  x.useEffect(() => {
+    g.backgroundImage ? A(g.backgroundImage) : g.imageSrc ? A(g.imageSrc) : A(null);
+  }, [g.backgroundImage, g.imageSrc]);
+  const ue = async () => {
+    if (!(!F.trim() || B)) {
+      ne(!0), L("");
+      try {
+        if (!N) {
+          L("No element selected for modification.");
+          return;
+        }
+        const a = N.getAttribute("codepress-data-fp");
+        if (!a) {
+          L(
+            "This element doesn't have a file mapping. Please select a different element."
+          );
+          return;
+        }
+        const s = be(), p = {
+          encoded_location: a,
+          ai_instruction: F,
+          github_repo_name: s?.repository,
+          github_base_branch_name: s?.branch,
+          additional_context: {
+            target_element_html: N?.outerHTML || void 0
+          }
+        }, h = await Ce({
+          data: p,
+          includeAuth: !0
+        }), b = Ze() ? `${Ne}/code-sync/get-ai-changes` : `${ea}/visual-editor-api-ai`, o = await we(b, h);
+        if (!o.ok) {
+          const m = await o.json().catch((j) => {
+            z.captureException(j);
+          });
+          throw new Error(
+            m.error || `API request failed with status ${o.status}`
+          );
+        }
+        const r = await o.json();
+        if (!r.success)
+          throw new Error(r.message || "Failed to process AI request");
+        if (L(r.message || "Changes applied successfully!"), r.modified_content) {
+          const m = document.createElement("div");
+          m.innerHTML = r.modified_content, m.firstElementChild && (m.firstElementChild.setAttribute("codepress-data-fp", a), N.outerHTML = m.firstElementChild.outerHTML);
+        }
+      } catch (a) {
+        z.captureException(a), console.error("Error processing AI request:", a), L(
+          a instanceof Error ? a.message : "Sorry, there was an error processing your request. Please try again."
+        );
+      } finally {
+        ne(!1);
+      }
+    }
+  }, _e = async () => {
+    if (!H) {
+      ce(!0), O("");
+      try {
+        const a = be();
+        if (!a || !a.repository) {
+          O(
+            "No repository information found. Please ensure you're on a CodePress-enabled page."
+          );
+          return;
+        }
+        const s = {
+          repository_name: a.repository,
+          branch: a.branch || void 0
+        }, p = await Ce({
+          data: s,
+          includeAuth: !0
+        }), h = await we(
+          `${Ne}/code-sync/analyze-repository-style`,
+          p
+        );
+        if (!h.ok) {
+          const b = await h.json().catch((o) => {
+            z.captureException(o);
+          });
+          throw new Error(
+            b.detail || `API request failed with status ${h.status}`
+          );
+        }
+        const d = await h.json();
+        if (d.success)
+          O(
+            `Successfully indexed ${d.total_files} files from ${d.repository_name}. The codebase analysis has been cached for faster AI suggestions.`
+          );
+        else
+          throw new Error(d.message || "Failed to index codebase");
+      } catch (a) {
+        z.captureException(a), console.error("Error indexing codebase:", a), O(
+          a instanceof Error ? a.message : "Sorry, there was an error indexing the codebase. Please try again."
+        );
+      } finally {
+        ce(!1);
+      }
+    }
+  };
+  if (!N)
+    return /* @__PURE__ */ e.jsx(
+      "div",
+      {
+        id: "codepress-ui",
+        className: "fixed top-0 right-0 h-full w-80 bg-white border-l border-gray-200 shadow-lg z-[10000] p-4 flex items-center justify-center",
+        children: /* @__PURE__ */ e.jsx("div", { className: "text-center", children: /* @__PURE__ */ e.jsx("p", { className: "text-gray-500", children: "Select an element on the page to start editing." }) })
+      }
+    );
+  const $e = "@keyframes fadeInDesignPanel { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }";
+  if (typeof document < "u") {
+    const a = "codepress-designpanel-fadein";
+    if (!document.getElementById(a)) {
+      const s = document.createElement("style");
+      s.id = a, s.textContent = $e, document.head.appendChild(s);
+    }
+  }
+  return /* @__PURE__ */ e.jsx(
+    "div",
+    {
+      id: "codepress-ui",
+      ref: K,
+      className: "absolute bg-white rounded-lg shadow-2xl border border-gray-200 z-[2147483647] overflow-y-auto",
+      style: {
+        top: `${le.y}px`,
+        left: `${le.x}px`,
+        width: "320px",
+        maxHeight: "80vh",
+        animation: "fadeInDesignPanel 0.15s ease-out forwards",
+        backgroundColor: "white"
+      },
+      children: /* @__PURE__ */ e.jsx(De, { className: "w-full shadow-none border-none h-full", children: /* @__PURE__ */ e.jsxs(Ve, { className: "p-4", children: [
+        /* @__PURE__ */ e.jsxs("div", { className: "flex justify-between items-center mb-4 relative", children: [
+          /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-start gap-2", children: [
+            /* @__PURE__ */ e.jsx("h2", { className: "text-lg font-semibold", children: "CodePress" }),
+            /* @__PURE__ */ e.jsxs("div", { className: "flex text-xs items-center gap-3", children: [
+              /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ e.jsx(
+                  "label",
+                  {
+                    htmlFor: "edit-mode-toggle",
+                    className: "text-xs text-gray-500",
+                    children: "Edit Mode"
+                  }
+                ),
+                /* @__PURE__ */ e.jsx(
+                  "input",
+                  {
+                    id: "edit-mode-toggle",
+                    type: "checkbox",
+                    checked: !Ae,
+                    onChange: (a) => {
+                      Pe(!a.target.checked);
+                      const s = new CustomEvent(
+                        "codepress-toggle-inline-edit",
+                        {
+                          detail: { disabled: !a.target.checked },
+                          bubbles: !0,
+                          composed: !0
+                        }
+                      );
+                      document.dispatchEvent(s);
+                    },
+                    className: "h-3 w-3"
+                  }
+                )
+              ] }),
+              Qe
+            ] })
+          ] }),
+          /* @__PURE__ */ e.jsx(
+            E,
+            {
+              variant: "ghost",
+              size: "sm",
+              className: "p-2 absolute -right-2 -top-2",
+              onClick: Se,
+              children: /* @__PURE__ */ e.jsx(v, { icon: Ge, className: "h-4 w-4" })
+            }
+          )
+        ] }),
+        /* @__PURE__ */ e.jsxs("div", { className: "mb-4", children: [
+          /* @__PURE__ */ e.jsx(t, { className: "text-sm font-medium mb-2 block", children: "CSS State" }),
+          /* @__PURE__ */ e.jsxs(
+            M,
+            {
+              type: "single",
+              value: ie,
+              onValueChange: (a) => {
+                a && Be(a);
+              },
+              className: "w-full",
+              children: [
+                /* @__PURE__ */ e.jsx(
+                  u,
+                  {
+                    value: "normal",
+                    className: "flex-1 data-[state=on]:bg-amber-500/20 data-[state=on]:border-amber-500",
+                    children: "Normal"
+                  }
+                ),
+                /* @__PURE__ */ e.jsx(
+                  u,
+                  {
+                    value: "hover",
+                    className: "flex-1 data-[state=on]:bg-amber-500/20 data-[state=on]:border-amber-500",
+                    children: "Hover"
+                  }
+                )
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ e.jsxs("div", { className: "mb-4", children: [
+          /* @__PURE__ */ e.jsx(
+            E,
+            {
+              className: "w-full mb-2 bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white",
+              onClick: () => Te(!Y),
+              children: Y ? "Close CodePress Max" : "Open CodePress Max"
+            }
+          ),
+          Y && /* @__PURE__ */ e.jsxs("div", { className: "border border-gray-200 dark:border-gray-700 rounded-md p-3 space-y-3 bg-gray-50 dark:bg-gray-800", children: [
+            /* @__PURE__ */ e.jsxs(
+              "form",
+              {
+                onSubmit: (a) => {
+                  a.preventDefault(), ue();
+                },
+                className: "space-y-3",
+                children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(
+                      t,
+                      {
+                        htmlFor: "ai-input",
+                        className: "text-gray-700 dark:text-gray-300",
+                        children: "Describe your changes"
+                      }
+                    ),
+                    /* @__PURE__ */ e.jsx(
+                      "textarea",
+                      {
+                        id: "ai-input",
+                        className: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded h-20 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400",
+                        placeholder: "E.g., 'Make the text larger' or 'Change the color to blue'",
+                        value: F,
+                        onChange: (a) => Re(a.target.value),
+                        disabled: B,
+                        onKeyDown: (a) => {
+                          a.key === "Enter" && !a.shiftKey && (a.preventDefault(), ue());
+                        }
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs(
+                    E,
+                    {
+                      type: "submit",
+                      className: "w-full bg-amber-500 hover:bg-amber-600 text-black",
+                      disabled: !F.trim() || B,
+                      children: [
+                        B ? /* @__PURE__ */ e.jsx(
+                          v,
+                          {
+                            icon: V,
+                            className: "h-4 w-4 animate-spin mr-2"
+                          }
+                        ) : null,
+                        B ? "Processing..." : "Apply Changes"
+                      ]
+                    }
+                  )
+                ]
+              }
+            ),
+            re && /* @__PURE__ */ e.jsx("div", { className: "mt-3 p-3 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100", children: /* @__PURE__ */ e.jsx("p", { className: "text-sm", children: re }) })
+          ] })
+        ] }),
+        /* @__PURE__ */ e.jsxs("div", { className: "mb-4", children: [
+          /* @__PURE__ */ e.jsxs(
+            E,
+            {
+              className: "w-full mb-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white",
+              onClick: _e,
+              disabled: H,
+              children: [
+                H ? /* @__PURE__ */ e.jsx(
+                  v,
+                  {
+                    icon: V,
+                    className: "h-4 w-4 animate-spin mr-2"
+                  }
+                ) : /* @__PURE__ */ e.jsx(v, { icon: qe, className: "h-4 w-4 mr-2" }),
+                H ? "Indexing Codebase..." : "Index Codebase"
+              ]
+            }
+          ),
+          de && /* @__PURE__ */ e.jsx("div", { className: "p-3 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100", children: /* @__PURE__ */ e.jsx("p", { className: "text-sm", children: de }) })
+        ] }),
+        /* @__PURE__ */ e.jsxs(
+          ze,
+          {
+            type: "multiple",
+            defaultValue: [
+              "position",
+              "transform",
+              "layout",
+              "appearance",
+              "typography",
+              "background",
+              "color",
+              "image"
+            ],
+            children: [
+              g.availableSections.typography && /* @__PURE__ */ e.jsxs(S, { value: "typography", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Typography" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsxs("div", { className: "space-y-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Font Size" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("fontSize"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => a.onChange(s.target.value)
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Line Height" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("lineHeight"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => a.onChange(s.target.value)
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Letter Spacing" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("letterSpacing"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || ""
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Text Alignment" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("textAlign"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsxs(
+                          M,
+                          {
+                            type: "single",
+                            value: a.value || "left",
+                            onValueChange: a.onChange,
+                            className: "justify-between w-full mt-1 cursor-pointer",
+                            children: [
+                              /* @__PURE__ */ e.jsx(
+                                u,
+                                {
+                                  value: "left",
+                                  className: "flex-1 data-[state=on]:bg-amber-500/20 data-[state=on]:border-amber-500",
+                                  children: /* @__PURE__ */ e.jsx(
+                                    v,
+                                    {
+                                      icon: We,
+                                      className: "h-4 w-4"
+                                    }
+                                  )
+                                }
+                              ),
+                              /* @__PURE__ */ e.jsx(
+                                u,
+                                {
+                                  value: "center",
+                                  className: "flex-1 data-[state=on]:bg-amber-500/20 data-[state=on]:border-amber-500",
+                                  children: /* @__PURE__ */ e.jsx(
+                                    v,
+                                    {
+                                      icon: Ye,
+                                      className: "h-4 w-4"
+                                    }
+                                  )
+                                }
+                              ),
+                              /* @__PURE__ */ e.jsx(
+                                u,
+                                {
+                                  value: "right",
+                                  className: "flex-1 data-[state=on]:bg-amber-500/20 data-[state=on]:border-amber-500",
+                                  children: /* @__PURE__ */ e.jsx(
+                                    v,
+                                    {
+                                      icon: Ke,
+                                      className: "h-4 w-4"
+                                    }
+                                  )
+                                }
+                              ),
+                              /* @__PURE__ */ e.jsx(
+                                u,
+                                {
+                                  value: "justify",
+                                  className: "flex-1 data-[state=on]:bg-amber-500/20 data-[state=on]:border-amber-500",
+                                  children: /* @__PURE__ */ e.jsx(
+                                    v,
+                                    {
+                                      icon: Xe,
+                                      className: "h-4 w-4"
+                                    }
+                                  )
+                                }
+                              )
+                            ]
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) })
+              ] }),
+              /* @__PURE__ */ e.jsxs("div", { className: "space-y-4", children: [
+                /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between", children: [
+                  /* @__PURE__ */ e.jsx(t, { children: "Spacing" }),
+                  /* @__PURE__ */ e.jsx(
+                    E,
+                    {
+                      type: "button",
+                      variant: "ghost",
+                      size: "sm",
+                      onClick: () => {
+                        const a = Ie("showAdvancedSpacing");
+                        f(
+                          "showAdvancedSpacing",
+                          !a
+                        );
+                      },
+                      className: "text-xs",
+                      children: g.showAdvancedSpacing ? "Hide Advanced" : "Show Advanced"
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Padding (All Sides)" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("padding"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => {
+                              a.onChange(s.target.value), R("padding", s.target.value);
+                            }
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Margin (All Sides)" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("margin"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => {
+                              a.onChange(s.target.value), R("margin", s.target.value);
+                            }
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }),
+                g.showAdvancedSpacing && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Padding (Individual Sides)" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Top" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: c("paddingTop"),
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), R("paddingTop", s.target.value);
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Right" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: c("paddingRight"),
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), R("paddingRight", s.target.value);
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Bottom" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: c("paddingBottom"),
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), R(
+                                    "paddingBottom",
+                                    s.target.value
+                                  );
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Left" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: c("paddingLeft"),
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), R("paddingLeft", s.target.value);
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Margin (Individual Sides)" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Top" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "marginTop",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), f(
+                                    "marginTop",
+                                    s.target.value
+                                  );
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Right" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "marginRight",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), f(
+                                    "marginRight",
+                                    s.target.value
+                                  );
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Bottom" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "marginBottom",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), f(
+                                    "marginBottom",
+                                    s.target.value
+                                  );
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { className: "text-xs", children: "Left" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "marginLeft",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => {
+                                  a.onChange(s.target.value), f(
+                                    "marginLeft",
+                                    s.target.value
+                                  );
+                                }
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] })
+                ] })
+              ] }),
+              g.availableSections.color && /* @__PURE__ */ e.jsxs(S, { value: "color", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Color" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsxs("div", { className: "space-y-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Text Color" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", children: [
+                      /* @__PURE__ */ e.jsxs(
+                        je,
+                        {
+                          open: me,
+                          onOpenChange: J,
+                          children: [
+                            /* @__PURE__ */ e.jsx(ve, { asChild: !0, children: /* @__PURE__ */ e.jsx(
+                              "div",
+                              {
+                                className: "w-10 h-10 rounded border cursor-pointer relative",
+                                style: {
+                                  backgroundColor: Z || _("color")
+                                }
+                              }
+                            ) }),
+                            /* @__PURE__ */ e.jsx(
+                              ye,
+                              {
+                                className: "w-auto p-0",
+                                align: "start",
+                                id: "codepress-text-color-picker-content",
+                                container: W,
+                                style: { zIndex: 2147483647 },
+                                children: /* @__PURE__ */ e.jsx(
+                                  fe,
+                                  {
+                                    type: "text",
+                                    color: _("color"),
+                                    tempColor: Z,
+                                    onColorChange: (a) => {
+                                      G(a), T({
+                                        [c("color")]: a
+                                      });
+                                    },
+                                    onClose: () => ge("text"),
+                                    onSave: xe,
+                                    element: N
+                                  }
+                                )
+                              }
+                            )
+                          ]
+                        }
+                      ),
+                      /* @__PURE__ */ e.jsx("div", { className: "flex-1", children: /* @__PURE__ */ e.jsx(
+                        l,
+                        {
+                          name: c("color"),
+                          control: n,
+                          render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                            "input",
+                            {
+                              type: "text",
+                              className: "w-full px-3 py-2 border rounded",
+                              value: Z || a.value,
+                              onChange: (s) => {
+                                G(s.target.value), me || a.onChange(s.target.value);
+                              }
+                            }
+                          )
+                        }
+                      ) })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Color Opacity" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: c("colorOpacity"),
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          pe,
+                          {
+                            min: 0,
+                            max: 100,
+                            step: 1,
+                            value: [
+                              typeof a.value == "number" ? a.value : 0
+                            ],
+                            onValueChange: (s) => a.onChange(s[0])
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) })
+              ] }),
+              g.availableSections.background && /* @__PURE__ */ e.jsxs(S, { value: "background", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Background" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsx("div", { className: "space-y-4", children: g.elementType === "img" ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Image Source URL" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
+                      /* @__PURE__ */ e.jsx("div", { className: "flex-1", children: /* @__PURE__ */ e.jsx(
+                        l,
+                        {
+                          name: "imageSrc",
+                          control: n,
+                          render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                            i,
+                            {
+                              type: "text",
+                              placeholder: "https://...",
+                              ...a,
+                              value: String(a.value ?? ""),
+                              onChange: (s) => {
+                                a.onChange(s), A(s.target.value), T({
+                                  imageSrc: s.target.value
+                                });
+                              }
+                            }
+                          )
+                        }
+                      ) }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "relative", children: [
+                        /* @__PURE__ */ e.jsx(
+                          "input",
+                          {
+                            type: "file",
+                            id: "image-src-upload",
+                            className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer",
+                            accept: "image/*",
+                            onChange: (a) => ee(a, "image"),
+                            disabled: C
+                          }
+                        ),
+                        /* @__PURE__ */ e.jsx(
+                          E,
+                          {
+                            type: "button",
+                            variant: "outline",
+                            className: "h-full",
+                            disabled: C,
+                            children: C ? /* @__PURE__ */ e.jsx(
+                              v,
+                              {
+                                icon: V,
+                                className: "h-4 w-4 animate-spin"
+                              }
+                            ) : /* @__PURE__ */ e.jsx(
+                              v,
+                              {
+                                icon: ae,
+                                className: "h-4 w-4"
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Alt Text" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "imageAlt",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            placeholder: "Image description for accessibility",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => {
+                              a.onChange(s), T({
+                                [c("imageAlt")]: s.target.value
+                              });
+                            }
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Background Color" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2", children: [
+                      /* @__PURE__ */ e.jsxs(
+                        je,
+                        {
+                          open: he,
+                          onOpenChange: X,
+                          children: [
+                            /* @__PURE__ */ e.jsx(ve, { asChild: !0, children: /* @__PURE__ */ e.jsx(
+                              "div",
+                              {
+                                className: "w-10 h-10 rounded border cursor-pointer relative",
+                                style: {
+                                  backgroundColor: Q || _("backgroundColor")
+                                }
+                              }
+                            ) }),
+                            /* @__PURE__ */ e.jsx(
+                              ye,
+                              {
+                                className: "w-auto p-0",
+                                align: "start",
+                                id: "codepress-background-color-picker-content",
+                                container: W,
+                                style: { zIndex: 2147483647 },
+                                children: /* @__PURE__ */ e.jsx(
+                                  fe,
+                                  {
+                                    type: "background",
+                                    color: _("backgroundColor"),
+                                    tempColor: Q,
+                                    onColorChange: (a) => {
+                                      U(a), T({
+                                        [c("backgroundColor")]: a
+                                      });
+                                    },
+                                    onClose: () => ge("background"),
+                                    onSave: xe,
+                                    element: N
+                                  }
+                                )
+                              }
+                            )
+                          ]
+                        }
+                      ),
+                      /* @__PURE__ */ e.jsx("div", { className: "flex-1", children: /* @__PURE__ */ e.jsx(
+                        l,
+                        {
+                          name: c("backgroundColor"),
+                          control: n,
+                          render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                            "input",
+                            {
+                              type: "text",
+                              className: "w-full px-3 py-2 border rounded",
+                              value: Q || a.value,
+                              onChange: (s) => {
+                                U(s.target.value), he || a.onChange(s.target.value);
+                              }
+                            }
+                          )
+                        }
+                      ) })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Background Image URL" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
+                      /* @__PURE__ */ e.jsx("div", { className: "flex-1", children: /* @__PURE__ */ e.jsx(
+                        l,
+                        {
+                          name: "backgroundImage",
+                          control: n,
+                          render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                            i,
+                            {
+                              type: "text",
+                              placeholder: "https://...",
+                              ...a,
+                              onChange: (s) => {
+                                a.onChange(s), A(s.target.value);
+                              }
+                            }
+                          )
+                        }
+                      ) }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "relative", children: [
+                        /* @__PURE__ */ e.jsx(
+                          "input",
+                          {
+                            type: "file",
+                            id: "image-upload",
+                            className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer",
+                            accept: "image/*",
+                            onChange: (a) => ee(a, "background"),
+                            disabled: C
+                          }
+                        ),
+                        /* @__PURE__ */ e.jsx(
+                          E,
+                          {
+                            type: "button",
+                            variant: "outline",
+                            className: "h-full",
+                            disabled: C,
+                            children: C ? /* @__PURE__ */ e.jsx(
+                              v,
+                              {
+                                icon: V,
+                                className: "h-4 w-4 animate-spin"
+                              }
+                            ) : /* @__PURE__ */ e.jsx(
+                              v,
+                              {
+                                icon: ae,
+                                className: "h-4 w-4"
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Background Size" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "backgroundSize",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsxs(
+                          M,
+                          {
+                            type: "single",
+                            value: a.value,
+                            onValueChange: a.onChange,
+                            className: "justify-start",
+                            children: [
+                              /* @__PURE__ */ e.jsx(u, { value: "cover", children: "Cover" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "contain", children: "Contain" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "auto", children: "Auto" })
+                            ]
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Background Position" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "backgroundPosition",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsxs(
+                          M,
+                          {
+                            type: "single",
+                            value: a.value,
+                            onValueChange: a.onChange,
+                            className: "justify-start",
+                            children: [
+                              /* @__PURE__ */ e.jsx(u, { value: "center", children: "Center" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "top", children: "Top" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "bottom", children: "Bottom" })
+                            ]
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Background Repeat" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "backgroundRepeat",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsxs(
+                          M,
+                          {
+                            type: "single",
+                            value: a.value,
+                            onValueChange: a.onChange,
+                            className: "justify-start",
+                            children: [
+                              /* @__PURE__ */ e.jsx(u, { value: "no-repeat", children: "No Repeat" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "repeat", children: "Repeat" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "repeat-x", children: "Repeat X" }),
+                              /* @__PURE__ */ e.jsx(u, { value: "repeat-y", children: "Repeat Y" })
+                            ]
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) }) })
+              ] }),
+              g.availableSections.image && /* @__PURE__ */ e.jsxs(S, { value: "image", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Image" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsxs("div", { className: "space-y-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Image Source URL" }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
+                      /* @__PURE__ */ e.jsx("div", { className: "flex-1", children: /* @__PURE__ */ e.jsx(
+                        l,
+                        {
+                          name: "imageSrc",
+                          control: n,
+                          render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                            i,
+                            {
+                              type: "text",
+                              placeholder: "https://...",
+                              ...a,
+                              value: a.value || "",
+                              onChange: (s) => {
+                                a.onChange(s), A(s.target.value), T({
+                                  imageSrc: s.target.value
+                                });
+                              }
+                            }
+                          )
+                        }
+                      ) }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "relative", children: [
+                        /* @__PURE__ */ e.jsx(
+                          "input",
+                          {
+                            type: "file",
+                            id: "image-src-upload",
+                            className: "absolute inset-0 w-full h-full opacity-0 cursor-pointer",
+                            accept: "image/*",
+                            onChange: (a) => ee(a, "image"),
+                            disabled: C
+                          }
+                        ),
+                        /* @__PURE__ */ e.jsx(
+                          E,
+                          {
+                            type: "button",
+                            variant: "outline",
+                            className: "h-full",
+                            disabled: C,
+                            children: C ? /* @__PURE__ */ e.jsx(
+                              v,
+                              {
+                                icon: V,
+                                className: "h-4 w-4 animate-spin"
+                              }
+                            ) : /* @__PURE__ */ e.jsx(
+                              v,
+                              {
+                                icon: ae,
+                                className: "h-4 w-4"
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Alt Text" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "imageAlt",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            placeholder: "Image description for accessibility",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => {
+                              a.onChange(s), T({
+                                [c("imageAlt")]: s.target.value
+                              });
+                            }
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) })
+              ] }),
+              g.availableSections.position && /* @__PURE__ */ e.jsxs(S, { value: "position", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Position" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsxs("div", { className: "space-y-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Position" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "position",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsxs(
+                          Fe,
+                          {
+                            value: a.value || "static",
+                            onValueChange: a.onChange,
+                            children: [
+                              /* @__PURE__ */ e.jsx(He, { className: "w-full", children: /* @__PURE__ */ e.jsx(Oe, { placeholder: "Select position" }) }),
+                              /* @__PURE__ */ e.jsxs(Ue, { container: W, children: [
+                                /* @__PURE__ */ e.jsx(D, { value: "static", children: "Static" }),
+                                /* @__PURE__ */ e.jsx(D, { value: "relative", children: "Relative" }),
+                                /* @__PURE__ */ e.jsx(D, { value: "absolute", children: "Absolute" }),
+                                /* @__PURE__ */ e.jsx(D, { value: "fixed", children: "Fixed" }),
+                                /* @__PURE__ */ e.jsx(D, { value: "sticky", children: "Sticky" })
+                              ] })
+                            ]
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  ["absolute", "fixed", "sticky"].includes(
+                    g.position
+                  ) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+                    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { children: "Left" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "left",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => a.onChange(s.target.value)
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { children: "Top" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "top",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => a.onChange(s.target.value)
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] }),
+                    /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { children: "Right" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "right",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => a.onChange(s.target.value)
+                              }
+                            )
+                          }
+                        )
+                      ] }),
+                      /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                        /* @__PURE__ */ e.jsx(t, { children: "Bottom" }),
+                        /* @__PURE__ */ e.jsx(
+                          l,
+                          {
+                            name: "bottom",
+                            control: n,
+                            render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                              i,
+                              {
+                                type: "text",
+                                ...a,
+                                value: a.value || "",
+                                onChange: (s) => a.onChange(s.target.value)
+                              }
+                            )
+                          }
+                        )
+                      ] })
+                    ] })
+                  ] })
+                ] }) })
+              ] }),
+              g.availableSections.transform && /* @__PURE__ */ e.jsxs(S, { value: "transform", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Transform" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsx("div", { className: "space-y-4", children: /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                  /* @__PURE__ */ e.jsx(t, { children: "Rotation" }),
+                  /* @__PURE__ */ e.jsx(
+                    l,
+                    {
+                      name: "rotation",
+                      control: n,
+                      render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                        i,
+                        {
+                          type: "number",
+                          min: "0",
+                          max: "360",
+                          ...a,
+                          value: Number(a.value) || 0
+                        }
+                      )
+                    }
+                  )
+                ] }) }) })
+              ] }),
+              g.availableSections.layout && /* @__PURE__ */ e.jsxs(S, { value: "layout", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Layout" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsx("div", { className: "space-y-4", children: /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Width" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "width",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => a.onChange(s.target.value)
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Height" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "height",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => a.onChange(s.target.value)
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) }) })
+              ] }),
+              g.availableSections.appearance && /* @__PURE__ */ e.jsxs(S, { value: "appearance", children: [
+                /* @__PURE__ */ e.jsx(k, { children: "Appearance" }),
+                /* @__PURE__ */ e.jsx(I, { children: /* @__PURE__ */ e.jsxs("div", { className: "space-y-4", children: [
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Opacity" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "opacity",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          pe,
+                          {
+                            min: 0,
+                            max: 100,
+                            step: 1,
+                            value: [Number(a.value) || 0],
+                            onValueChange: (s) => a.onChange(s[0])
+                          }
+                        )
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ e.jsxs("div", { className: "space-y-2", children: [
+                    /* @__PURE__ */ e.jsx(t, { children: "Corner Radius" }),
+                    /* @__PURE__ */ e.jsx(
+                      l,
+                      {
+                        name: "cornerRadius",
+                        control: n,
+                        render: ({ field: a }) => /* @__PURE__ */ e.jsx(
+                          i,
+                          {
+                            type: "text",
+                            ...a,
+                            value: a.value || "",
+                            onChange: (s) => a.onChange(s.target.value)
+                          }
+                        )
+                      }
+                    )
+                  ] })
+                ] }) })
+              ] })
+            ]
+          }
+        )
+      ] }) })
+    }
+  );
+}
+export {
+  Ia as DesignPanel
+};

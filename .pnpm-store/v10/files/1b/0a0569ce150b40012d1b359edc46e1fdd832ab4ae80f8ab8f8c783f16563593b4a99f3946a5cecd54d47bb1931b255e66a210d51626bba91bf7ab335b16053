@@ -1,0 +1,26 @@
+import { j as d } from "./index7.js";
+import c, { createContext as a, useCallback as b, useContext as f } from "react";
+import { setGitHubMode as e, checkGithubMode as m } from "./index26.js";
+typeof window < "u" && (document.readyState === "complete" ? e(!0) : window.addEventListener("load", () => {
+  e(!0);
+}));
+const p = ({
+  children: t
+}) => {
+  const [u, o] = c.useState(() => m()), s = b((i) => {
+    e(i) && o(i);
+  }, [o]), n = {
+    isGitHubMode: u,
+    setIsGitHubMode: s
+  };
+  return /* @__PURE__ */ d.jsx(r.Provider, { value: n, children: t });
+}, r = a(null), w = () => {
+  const t = f(r);
+  if (!t)
+    throw new Error("useGithubContext must be used within a GithubProvider");
+  return t;
+};
+export {
+  p as GitHubProvider,
+  w as useGitHub
+};

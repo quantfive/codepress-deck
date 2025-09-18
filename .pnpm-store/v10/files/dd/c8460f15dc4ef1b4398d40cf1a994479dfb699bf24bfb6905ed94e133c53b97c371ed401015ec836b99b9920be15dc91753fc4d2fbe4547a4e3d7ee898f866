@@ -1,0 +1,40 @@
+import { getIsolationScope as o, getCurrentScope as n, getClient as S } from "./index120.js";
+import { makeSession as a, updateSession as f, closeSession as g } from "./index199.js";
+import { parseEventHintOrCaptureContext as m } from "./index200.js";
+import { GLOBAL_OBJ as l } from "./index117.js";
+function C(e, t) {
+  return n().captureException(e, m());
+}
+function O(e, t) {
+  return n().captureEvent(e, t);
+}
+function U(e) {
+  const t = o(), s = n(), { userAgent: i } = l.navigator || {}, r = a({
+    user: s.getUser() || t.getUser(),
+    ...i && { userAgent: i },
+    ...e
+  }), c = t.getSession();
+  return c?.status === "ok" && f(c, { status: "exited" }), u(), t.setSession(r), r;
+}
+function u() {
+  const e = o(), s = n().getSession() || e.getSession();
+  s && g(s), p(), e.setSession();
+}
+function p() {
+  const e = o(), t = S(), s = e.getSession();
+  s && t && t.captureSession(s);
+}
+function k(e = !1) {
+  if (e) {
+    u();
+    return;
+  }
+  p();
+}
+export {
+  O as captureEvent,
+  C as captureException,
+  k as captureSession,
+  u as endSession,
+  U as startSession
+};

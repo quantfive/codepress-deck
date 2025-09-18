@@ -1,0 +1,48 @@
+import { DEFAULT_ENVIRONMENT as l } from "./index191.js";
+import { getClient as E } from "./index120.js";
+import { SEMANTIC_ATTRIBUTE_SENTRY_SAMPLE_RATE as C, SEMANTIC_ATTRIBUTE_SENTRY_PREVIOUS_TRACE_SAMPLE_RATE as d, SEMANTIC_ATTRIBUTE_SENTRY_SOURCE as u } from "./index192.js";
+import { baggageHeaderToDynamicSamplingContext as R } from "./index193.js";
+import { extractOrgIdFromClient as D } from "./index194.js";
+import { hasSpansEnabled as A } from "./index195.js";
+import { getRootSpan as I, spanToJSON as y, spanIsSampled as x } from "./index196.js";
+import { getCapturedScopesOnSpan as N } from "./index188.js";
+const O = "_frozenDsc";
+function _(n, e) {
+  const t = e.getOptions(), { publicKey: a } = e.getDsn() || {}, o = {
+    environment: t.environment || l,
+    release: t.release,
+    public_key: a,
+    trace_id: n,
+    org_id: D(e)
+  };
+  return e.emit("createDsc", o), o;
+}
+function v(n, e) {
+  const t = e.getPropagationContext();
+  return t.dsc || _(t.traceId, n);
+}
+function z(n) {
+  const e = E();
+  if (!e)
+    return {};
+  const t = I(n), a = y(t), o = a.data, s = t.spanContext().traceState, c = s?.get("sentry.sample_rate") ?? o[C] ?? o[d];
+  function p(T) {
+    return (typeof c == "number" || typeof c == "string") && (T.sample_rate = `${c}`), T;
+  }
+  const i = t[O];
+  if (i)
+    return p(i);
+  const m = s?.get("sentry.dsc"), S = m && R(m);
+  if (S)
+    return p(S);
+  const r = _(n.spanContext().traceId, e), f = o[u], g = a.description;
+  return f !== "url" && g && (r.transaction = g), A() && (r.sampled = String(x(t)), r.sample_rand = // In OTEL we store the sample rand on the trace state because we cannot access scopes for NonRecordingSpans
+  // The Sentry OTEL SpanSampler takes care of writing the sample rand on the root span
+  s?.get("sentry.sample_rand") ?? // On all other platforms we can actually get the scopes from a root span (we use this as a fallback)
+  N(t).scope?.getPropagationContext().sampleRand.toString()), p(r), e.emit("createDsc", r, t), r;
+}
+export {
+  _ as getDynamicSamplingContextFromClient,
+  v as getDynamicSamplingContextFromScope,
+  z as getDynamicSamplingContextFromSpan
+};

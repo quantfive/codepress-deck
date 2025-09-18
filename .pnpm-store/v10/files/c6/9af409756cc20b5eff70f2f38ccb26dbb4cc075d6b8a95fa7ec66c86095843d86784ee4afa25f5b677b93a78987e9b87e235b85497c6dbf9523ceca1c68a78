@@ -1,0 +1,17 @@
+import React, { ReactNode } from "react";
+import { AuthState, GithubUser } from "@/lib/github/types";
+interface AuthContextType extends AuthState {
+    loading: boolean;
+    logout: () => Promise<void>;
+    updateUser: (params: {
+        user: GithubUser;
+        isLoggedIn?: boolean;
+    }) => void;
+}
+interface AuthProviderProps {
+    children: ReactNode;
+}
+export declare const AuthProvider: React.FC<AuthProviderProps>;
+export declare const useAuth: () => AuthContextType;
+export {};
+//# sourceMappingURL=context.d.ts.map

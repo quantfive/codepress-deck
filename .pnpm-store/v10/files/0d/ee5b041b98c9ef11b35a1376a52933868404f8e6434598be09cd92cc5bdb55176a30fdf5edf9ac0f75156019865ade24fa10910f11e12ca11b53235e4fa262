@@ -1,0 +1,52 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useEffect, useRef } from "react";
+// Simple execCommand wrapper helpers
+function applyFormat(range, cmd, value = null) {
+    try {
+        const sel = window.getSelection();
+        if (!sel)
+            return;
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand(cmd, false, value);
+    }
+    catch (e) {
+        console.warn("execCommand failed", cmd, e);
+    }
+}
+export default function SelectionToolbar({ range, onClose }) {
+    const toolbarRef = useRef(null);
+    useEffect(() => {
+        if (!range || range.collapsed)
+            return;
+        // Position toolbar above the range
+        const rect = range.getBoundingClientRect();
+        const toolbar = toolbarRef.current;
+        if (!toolbar)
+            return;
+        toolbar.style.top = `${window.scrollY + rect.top - toolbar.offsetHeight - 8}px`;
+        toolbar.style.left = `${window.scrollX + rect.left + rect.width / 2 - toolbar.offsetWidth / 2}px`;
+    }, [range]);
+    // If selection collapsed close
+    useEffect(() => {
+        const handler = () => {
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed)
+                onClose();
+        };
+        document.addEventListener("selectionchange", handler);
+        return () => document.removeEventListener("selectionchange", handler);
+    }, [onClose]);
+    if (!range || range.collapsed)
+        return null;
+    const btnCls = "px-1 py-0.5 text-sm hover:bg-gray-200 rounded cursor-pointer select-none";
+    return (_jsxs("div", { ref: toolbarRef, className: "fixed z-[10000] flex gap-1 bg-white border border-gray-300 shadow rounded p-1", children: [_jsx("button", { className: btnCls, onMouseDown: (e) => e.preventDefault(), onClick: () => range && applyFormat(range, "bold"), children: "B" }), _jsx("button", { className: btnCls, onMouseDown: (e) => e.preventDefault(), onClick: () => range && applyFormat(range, "italic"), children: "I" }), _jsx("button", { className: btnCls, onMouseDown: (e) => e.preventDefault(), onClick: () => range && applyFormat(range, "underline"), children: "U" }), _jsx("button", { className: btnCls, onMouseDown: (e) => e.preventDefault(), onClick: () => {
+                    const color = prompt("Text color (hex or name):", "#ff0000");
+                    if (color && range)
+                        applyFormat(range, "foreColor", color);
+                }, children: "A" }), _jsx("button", { className: btnCls, onMouseDown: (e) => e.preventDefault(), onClick: () => {
+                    const url = prompt("Link URL:");
+                    if (url && range)
+                        applyFormat(range, "createLink", url);
+                }, children: "\uD83D\uDD17" })] }));
+}

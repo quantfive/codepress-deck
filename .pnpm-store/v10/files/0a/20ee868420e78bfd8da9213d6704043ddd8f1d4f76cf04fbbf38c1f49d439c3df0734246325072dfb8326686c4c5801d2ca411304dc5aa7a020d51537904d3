@@ -1,0 +1,10 @@
+import React from "react";
+interface SaveBarProps {
+    onSave: (branchName: string, commitMessage?: string) => Promise<boolean>;
+    onCancel: () => void;
+    unsavedChanges: number;
+    isSaving: boolean;
+}
+declare const SaveBar: React.FC<SaveBarProps>;
+export default SaveBar;
+//# sourceMappingURL=SaveBar.d.ts.map

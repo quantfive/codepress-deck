@@ -1,0 +1,23 @@
+import { getDefaultIntegrations as n } from "./index92.js";
+import { BrowserClient as o } from "./index93.js";
+import { defaultStackParser as s } from "./index94.js";
+import { makeFetchTransport as i } from "./index95.js";
+import { Scope as a } from "./index96.js";
+const m = n().filter(
+  (t) => !["BrowserApiErrors", "Breadcrumbs", "GlobalHandlers"].includes(
+    t.name
+  )
+), r = new o({
+  dsn: void 0,
+  transport: i,
+  stackParser: s,
+  integrations: m,
+  environment: "production",
+  debug: !1
+}), e = new a();
+e.setClient(r);
+r.init();
+const u = e;
+export {
+  u as default
+};

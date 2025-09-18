@@ -1,6 +1,8 @@
 import SlideLayout from "@/slides/components/SlideLayout";
+import "@/styles/codepress.css";
 import { fontVars } from "@/styles/fonts";
 import "@/styles/globals.css";
+
 import type { AppProps } from "next/app";
 import { useRouter } from "next/router";
 

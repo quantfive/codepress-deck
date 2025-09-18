@@ -1,0 +1,1 @@
+{"version":3,"file":"OrgRepoSelector.d.ts","sourceRoot":"","sources":["../../../components/OrgRepoSelector.tsx"],"names":[],"mappings":"AAEA,OAAO,EAEL,UAAU,EAEX,MAAM,cAAc,CAAC;AAYtB,UAAU,oBAAoB;IAC5B,kBAAkB,EAAE,CAAC,UAAU,EAAE,UAAU,KAAK,IAAI,CAAC;IACrD,UAAU,EAAE,MAAM,CAAC;CACpB;AAiLD,QAAA,MAAM,eAAe,2EACkB,oBAAoB,6CAsL1D,CAAC;AAIF,eAAe,eAAe,CAAC"}

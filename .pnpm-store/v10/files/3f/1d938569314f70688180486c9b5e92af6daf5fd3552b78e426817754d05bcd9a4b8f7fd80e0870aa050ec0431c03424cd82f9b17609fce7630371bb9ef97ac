@@ -1,0 +1,172 @@
+import { API_BASE_URL as w } from "./index26.js";
+import d from "./index40.js";
+import { logger as a } from "./index12.js";
+import { getBrowserAPI as h } from "./index29.js";
+import { getProvidedToken as k } from "./index25.js";
+function S(e) {
+  const t = e.startsWith("/") ? e.slice(1) : e;
+  return `${w}/${t}`;
+}
+async function l() {
+  try {
+    const e = await k();
+    if (e) return e;
+    const t = h();
+    if (t && t.storage) {
+      const n = (await t.storage.local.get("codepress.auth"))["codepress.auth"];
+      if (!n)
+        return null;
+      const { access_token: o, exp: s } = n;
+      return o ? Date.now() >= s ? (a.info("Token expired, clearing from storage"), await t.storage.local.remove([
+        "codepress.auth",
+        "github_user_data"
+      ]), null) : o : null;
+    }
+    return null;
+  } catch (e) {
+    return a.error("Error getting auth token:", e), d.captureException(e), null;
+  }
+}
+async function p(e = {}) {
+  const {
+    includeAuth: t = !0,
+    contentType: r = "application/json",
+    additionalHeaders: n = {},
+    token: o
+  } = e, s = {};
+  if (r && (s["Content-Type"] = r), t) {
+    const i = o || await l();
+    i && (s.Authorization = `Bearer ${i}`);
+  }
+  return { ...s, ...n };
+}
+async function I(e = {}) {
+  return {
+    method: "GET",
+    headers: await p(e)
+  };
+}
+function f(e) {
+  return Array.isArray(e) ? e.map((t) => f(t)) : e !== null && typeof e == "object" ? Object.keys(e).reduce(
+    (t, r) => {
+      const n = r.replace(
+        /[A-Z]/g,
+        (o) => `_${o.toLowerCase()}`
+      );
+      return t[n] = f(e[r]), t;
+    },
+    {}
+  ) : e;
+}
+async function _(e = {}) {
+  const { data: t, ...r } = e;
+  return {
+    method: "POST",
+    ...t && { body: JSON.stringify(f(t)) },
+    headers: await p(r)
+  };
+}
+function y(e) {
+  if (!e)
+    throw new Error(
+      "Background fetch returned no response (check onMessage handler)"
+    );
+  const t = new Headers(e.headers || {});
+  return {
+    ok: e.ok,
+    status: e.status,
+    statusText: e.statusText,
+    headers: t,
+    async json() {
+      return JSON.parse(e.bodyText || "null");
+    },
+    async text() {
+      return e.bodyText ?? "";
+    }
+  };
+}
+function m() {
+  if (typeof globalThis > "u") return !1;
+  const e = globalThis;
+  return typeof e.registration < "u" && typeof e.clients < "u";
+}
+function T(e) {
+  return e?.headers && e.headers?.Accept === "text/event-stream";
+}
+async function u(e, t) {
+  try {
+    const r = await l(), n = { ...t?.headers };
+    r && (n.Authorization = `Bearer ${r}`);
+    const o = await fetch(e, {
+      ...t,
+      headers: n
+    }), s = o.headers.get("X-New-Token");
+    return s && (await g(s), a.info("🔄 Extension JWT refreshed (direct fetch)")), o;
+  } catch (r) {
+    throw a.error("Direct API fetch error:", r), d.captureException(r), r;
+  }
+}
+async function O(e, t) {
+  if (T(t))
+    return a.info("Using direct fetch for streaming request:", e), u(e, t);
+  try {
+    const r = h();
+    if (!r || m())
+      return u(e, t);
+    let n;
+    try {
+      n = await r.runtime.sendMessage({
+        type: "API_FETCH",
+        url: e,
+        config: {
+          method: t?.method,
+          headers: t?.headers,
+          body: t?.body ?? null
+        }
+      });
+    } catch (i) {
+      const c = i?.message ?? "";
+      if (typeof c == "string" && (c.includes("Could not establish connection") || c.includes("Receiving end does not exist")))
+        return a.debug(
+          "Background messaging unavailable, falling back to direct fetch",
+          c
+        ), u(e, t);
+      throw i;
+    }
+    if (!n)
+      return a.warn(
+        "Background message returned no payload, falling back to direct fetch",
+        e
+      ), u(e, t);
+    if (n?.error)
+      throw new Error(n.error);
+    const o = y(n), s = o.headers.get("X-New-Token");
+    return s && (await g(s), a.info("🔄 Extension JWT refreshed")), o;
+  } catch (r) {
+    throw a.error("API fetch error:", r), d.captureException(r), r;
+  }
+}
+async function g(e) {
+  const t = h();
+  if (t?.storage)
+    try {
+      const { exp: r } = JSON.parse(atob(e.split(".")[1]));
+      await t.storage.local.set({
+        "codepress.auth": {
+          access_token: e,
+          exp: r * 1e3
+          // Convert to milliseconds
+        }
+      });
+    } catch (r) {
+      a.error("Failed to update stored token:", r), d.captureException(r);
+    }
+}
+export {
+  I as GET_CONFIG,
+  _ as POST_CONFIG,
+  O as apiFetch,
+  p as buildHeaders,
+  S as generateDirectApiUrl,
+  l as getAuthToken
+};

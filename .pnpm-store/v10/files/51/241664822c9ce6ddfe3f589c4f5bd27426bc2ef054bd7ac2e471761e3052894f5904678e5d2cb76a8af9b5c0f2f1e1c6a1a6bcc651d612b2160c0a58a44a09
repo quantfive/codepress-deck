@@ -1,0 +1,193 @@
+import A from "./index245.js";
+var i = 255, b = 100, M = (r) => {
+  var {
+    r: a,
+    g: v,
+    b: e,
+    a: h
+  } = r, t = Math.max(a, v, e), s = t - Math.min(a, v, e), n = s ? t === a ? (v - e) / s : t === v ? 2 + (e - a) / s : 4 + (a - v) / s : 0;
+  return {
+    h: 60 * (n < 0 ? n + 6 : n),
+    s: t ? s / t * b : 0,
+    v: t / i * b,
+    a: h
+  };
+}, z = (r) => {
+  var {
+    h: a,
+    s: v,
+    l: e,
+    a: h
+  } = f(r);
+  return "hsla(" + a + ", " + v + "%, " + e + "%, " + h + ")";
+}, C = (r) => {
+  var {
+    h: a,
+    s: v,
+    l: e,
+    a: h
+  } = r;
+  return v *= (e < 50 ? e : b - e) / b, {
+    h: a,
+    s: v > 0 ? 2 * v / (e + v) * b : 0,
+    v: e + v,
+    a: h
+  };
+}, f = (r) => {
+  var {
+    h: a,
+    s: v,
+    v: e,
+    a: h
+  } = r, t = (200 - v) * e / b;
+  return {
+    h: a,
+    s: t > 0 && t < 200 ? v * e / b / (t <= b ? t : 200 - t) * b : 0,
+    l: t / 2,
+    a: h
+  };
+}, p = (r) => {
+  var {
+    r: a,
+    g: v,
+    b: e
+  } = r, h = a << 16 | v << 8 | e;
+  return "#" + ((t) => new Array(7 - t.length).join("0") + t)(h.toString(16));
+}, H = (r) => {
+  var {
+    r: a,
+    g: v,
+    b: e,
+    a: h
+  } = r, t = typeof h == "number" && (h * 255 | 256).toString(16).slice(1);
+  return "" + p({
+    r: a,
+    g: v,
+    b: e
+  }) + (t || "");
+}, m = (r) => M(_(r)), _ = (r) => {
+  var a = r.replace("#", "");
+  /^#?/.test(r) && a.length === 3 && (r = "#" + a.charAt(0) + a.charAt(0) + a.charAt(1) + a.charAt(1) + a.charAt(2) + a.charAt(2));
+  var v = new RegExp("[A-Za-z0-9]{2}", "g"), [e, h, t = 0, s] = r.match(v).map((n) => parseInt(n, 16));
+  return {
+    r: e,
+    g: h,
+    b: t,
+    a: (s ?? 255) / i
+  };
+}, c = (r) => {
+  var {
+    h: a,
+    s: v,
+    v: e,
+    a: h
+  } = r, t = a / 60, s = v / b, n = e / b, o = Math.floor(t) % 6, u = t - Math.floor(t), l = i * n * (1 - s), T = i * n * (1 - s * u), x = i * n * (1 - s * (1 - u));
+  n *= i;
+  var g = {};
+  switch (o) {
+    case 0:
+      g.r = n, g.g = x, g.b = l;
+      break;
+    case 1:
+      g.r = T, g.g = n, g.b = l;
+      break;
+    case 2:
+      g.r = l, g.g = n, g.b = x;
+      break;
+    case 3:
+      g.r = l, g.g = T, g.b = n;
+      break;
+    case 4:
+      g.r = x, g.g = l, g.b = n;
+      break;
+    case 5:
+      g.r = n, g.g = l, g.b = T;
+      break;
+  }
+  return g.r = Math.round(g.r), g.g = Math.round(g.g), g.b = Math.round(g.b), A({}, g, {
+    a: h
+  });
+}, j = (r) => {
+  var {
+    r: a,
+    g: v,
+    b: e,
+    a: h
+  } = c(r);
+  return "rgba(" + a + ", " + v + ", " + e + ", " + h + ")";
+}, d = (r) => {
+  var {
+    r: a,
+    g: v,
+    b: e
+  } = r;
+  return {
+    r: a,
+    g: v,
+    b: e
+  };
+}, y = (r) => {
+  var {
+    h: a,
+    s: v,
+    l: e
+  } = r;
+  return {
+    h: a,
+    s: v,
+    l: e
+  };
+}, k = (r) => p(c(r)), q = (r) => H(c(r)), R = (r) => {
+  var {
+    h: a,
+    s: v,
+    v: e
+  } = r;
+  return {
+    h: a,
+    s: v,
+    v: e
+  };
+}, S = (r) => {
+  var {
+    r: a,
+    g: v,
+    b: e
+  } = r, h = function(l) {
+    return l <= 0.04045 ? l / 12.92 : Math.pow((l + 0.055) / 1.055, 2.4);
+  }, t = h(a / 255), s = h(v / 255), n = h(e / 255), o = {};
+  return o.x = t * 0.4124 + s * 0.3576 + n * 0.1805, o.y = t * 0.2126 + s * 0.7152 + n * 0.0722, o.bri = t * 0.0193 + s * 0.1192 + n * 0.9505, o;
+}, B = (r) => {
+  var a, v, e, h, t, s, n, o, u;
+  return typeof r == "string" && w(r) ? (s = m(r), o = r) : typeof r != "string" && (s = r), s && (e = R(s), t = f(s), h = c(s), u = H(h), o = k(s), v = y(t), a = d(h), n = S(a)), {
+    rgb: a,
+    hsl: v,
+    hsv: e,
+    rgba: h,
+    hsla: t,
+    hsva: s,
+    hex: o,
+    hexa: u,
+    xy: n
+  };
+}, w = (r) => /^#?([A-Fa-f0-9]{3,4}){1,2}$/.test(r);
+export {
+  B as color,
+  m as hexToHsva,
+  _ as hexToRgba,
+  y as hslaToHsl,
+  C as hslaToHsva,
+  k as hsvaToHex,
+  q as hsvaToHexa,
+  f as hsvaToHsla,
+  z as hsvaToHslaString,
+  R as hsvaToHsv,
+  c as hsvaToRgba,
+  j as hsvaToRgbaString,
+  p as rgbToHex,
+  S as rgbToXY,
+  H as rgbaToHexa,
+  M as rgbaToHsva,
+  d as rgbaToRgb,
+  w as validHex
+};

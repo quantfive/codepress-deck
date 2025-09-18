@@ -1,0 +1,23 @@
+import { dsnToString as d } from "./index194.js";
+import { getSdkMetadataForEnvelopeHeader as p, createEventEnvelopeHeaders as c, createEnvelope as i } from "./index198.js";
+function k(e, t) {
+  return t && (e.sdk = e.sdk || {}, e.sdk.name = e.sdk.name || t.name, e.sdk.version = e.sdk.version || t.version, e.sdk.integrations = [...e.sdk.integrations || [], ...t.integrations || []], e.sdk.packages = [...e.sdk.packages || [], ...t.packages || []]), e;
+}
+function y(e, t, s, o) {
+  const n = p(s), r = {
+    sent_at: (/* @__PURE__ */ new Date()).toISOString(),
+    ...n && { sdk: n },
+    ...!!o && t && { dsn: d(t) }
+  }, a = "aggregates" in e ? [{ type: "sessions" }, e] : [{ type: "session" }, e.toJSON()];
+  return i(r, [a]);
+}
+function E(e, t, s, o) {
+  const n = p(s), r = e.type && e.type !== "replay_event" ? e.type : "event";
+  k(e, s?.sdk);
+  const a = c(e, n, o, t);
+  return delete e.sdkProcessingMetadata, i(a, [[{ type: r }, e]]);
+}
+export {
+  E as createEventEnvelope,
+  y as createSessionEnvelope
+};

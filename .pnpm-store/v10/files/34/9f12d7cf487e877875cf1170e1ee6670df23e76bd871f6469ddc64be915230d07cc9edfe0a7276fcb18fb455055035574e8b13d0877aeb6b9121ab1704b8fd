@@ -1,0 +1,167 @@
+import { j as i } from "./index7.js";
+import N, { useState as b, useEffect as y } from "react";
+import { useVisualEditor as V } from "./index6.js";
+import { Tabs as $, TabsContent as v } from "./index41.js";
+import q from "./index42.js";
+import z from "./index43.js";
+import _ from "./index44.js";
+import F from "./index45.js";
+import K from "./index46.js";
+import J from "./index47.js";
+import Q from "./index48.js";
+const Z = `
+@keyframes fadeInPopover {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}`;
+if (typeof document < "u") {
+  const w = "codepress-designbar-fadein";
+  if (!document.getElementById(w)) {
+    const r = document.createElement("style");
+    r.id = w, r.textContent = Z, document.head.appendChild(r);
+  }
+}
+const p = (w, r, B) => Math.max(r, Math.min(B, w)), dt = ({
+  onClose: w,
+  popoverContainer: r,
+  onOpenDesignPanel: B
+}) => {
+  const { activeElementFpId: H, trackedElements: C, updateActiveElementStyle: L } = V(), e = H ? C[H]?.element : null;
+  H && C[H]?.currentValues;
+  const X = e && e.tagName?.toLowerCase() === "img" ? "image" : "text", [P, M] = b(X), [R, E] = b({ x: 0, y: 0 }), [x, O] = b(!1), n = N.useRef(null), [W, D] = b(!1), j = N.useRef({ x: 0, y: 0 }), [G, k] = b(!1), Y = (t) => k(t), S = (t) => {
+    if (!(t.button !== 0 || t.target.closest(
+      "button, input, select, textarea, label, [role='button']"
+    ))) {
+      if (n.current) {
+        const a = n.current.getBoundingClientRect();
+        E({ x: a.left, y: a.top }), j.current = {
+          x: t.clientX - a.left,
+          y: t.clientY - a.top
+        };
+      } else
+        j.current = { x: 0, y: 0 };
+      O(!0), D(!0), t.preventDefault();
+    }
+  };
+  y(() => {
+    if (!W) return;
+    const t = (a) => {
+      const g = n.current?.offsetWidth || 520, d = n.current?.offsetHeight || 60;
+      let c = a.clientX - j.current.x, o = a.clientY - j.current.y;
+      c = p(c, 0, window.innerWidth - g), o = p(o, 0, window.innerHeight - d), E({ x: c, y: o });
+    }, s = () => {
+      D(!1);
+    };
+    return window.addEventListener("mousemove", t), window.addEventListener("mouseup", s, { once: !0 }), () => {
+      window.removeEventListener("mousemove", t), window.removeEventListener("mouseup", s);
+    };
+  }, [W]), y(() => {
+    if (e) {
+      const t = e?.nodeType === 1 && e.tagName?.toLowerCase() === "img";
+      if (M(t ? "image" : "text"), x) return;
+      const s = e.getBoundingClientRect(), d = n.current?.offsetHeight || 60, c = n.current?.offsetWidth || 520, o = 16, h = 16, l = window.scrollX, f = window.scrollY, I = s.top, T = window.innerHeight - s.bottom, m = d + h + o;
+      let u;
+      I >= m ? u = s.top - d - h + f : T >= m ? u = s.bottom + h + f : u = p(
+        s.top - d - h + f,
+        o + f,
+        window.innerHeight - d - o + f
+      );
+      let A = s.left + l;
+      A = p(
+        A,
+        o + l,
+        window.innerWidth - c - o + l
+      ), u = p(
+        u,
+        o + f,
+        window.innerHeight - d - o + f
+      ), E({ x: A, y: u });
+    }
+  }, [e, x]), y(() => {
+    if (!x && e && n.current) {
+      const t = e.getBoundingClientRect(), s = n.current.offsetHeight, a = n.current.offsetWidth, g = s, d = a, c = 16, o = 16, h = window.scrollX, l = window.scrollY, f = t.top, I = window.innerHeight - t.bottom, T = g + o + c;
+      let m;
+      f >= T ? m = t.top - g - o + l : I >= T ? m = t.bottom + o + l : m = p(
+        t.top - g - o + l,
+        c + l,
+        window.innerHeight - g - c + l
+      );
+      let u = t.left + h;
+      u = p(
+        u,
+        c + h,
+        window.innerWidth - d - c + h
+      ), m = p(
+        m,
+        c + l,
+        window.innerHeight - g - c + l
+      ), E({ x: u, y: m });
+    }
+  }, [e, x, n.current?.offsetHeight]), y(() => {
+    const t = (s) => {
+      const a = s.target.innerText;
+      L({ text: a });
+    };
+    return e && e.addEventListener("input", t), () => {
+      e && e.removeEventListener("input", t);
+    };
+  }, [e, L]), y(() => (n.current && r && r.appendChild(n.current), () => {
+    n.current && r && r.contains(n.current) && r.removeChild(n.current);
+  }), [r]);
+  const U = (t) => {
+    t.stopPropagation();
+  };
+  return e ? /* @__PURE__ */ i.jsxs(
+    "div",
+    {
+      ref: n,
+      className: `${x ? "fixed" : "absolute"} bg-white rounded-lg shadow-2xl p-3 flex flex-col z-[2147483646] min-w-[520px] max-h-[100px]`,
+      style: {
+        top: `${R.y}px`,
+        left: `${R.x}px`,
+        animation: "fadeInPopover 0.15s ease-out forwards"
+      },
+      onClick: U,
+      onMouseDown: (t) => {
+        const a = t.target.tagName;
+        ["INPUT", "SELECT", "TEXTAREA", "BUTTON"].includes(a) || t.preventDefault();
+      },
+      children: [
+        /* @__PURE__ */ i.jsxs(
+          $,
+          {
+            value: P,
+            onValueChange: (t) => M(t),
+            className: "flex flex-col",
+            children: [
+              /* @__PURE__ */ i.jsx(
+                Q,
+                {
+                  onClose: w,
+                  onOpenDesignPanel: B,
+                  onOpenAgentChat: () => Y(!0),
+                  onDragMouseDown: S
+                }
+              ),
+              /* @__PURE__ */ i.jsx(v, { value: "image", children: /* @__PURE__ */ i.jsx(_, { popoverContainer: r }) }),
+              /* @__PURE__ */ i.jsx(v, { value: "text", children: /* @__PURE__ */ i.jsx(J, { popoverContainer: r, onClose: w }) }),
+              /* @__PURE__ */ i.jsx(v, { value: "container", children: /* @__PURE__ */ i.jsx(z, { popoverContainer: r }) }),
+              /* @__PURE__ */ i.jsx(v, { value: "layout", children: /* @__PURE__ */ i.jsx(F, {}) }),
+              /* @__PURE__ */ i.jsx(v, { value: "statesMotion", children: /* @__PURE__ */ i.jsx(K, {}) })
+            ]
+          }
+        ),
+        G && /* @__PURE__ */ i.jsx("div", { className: "absolute top-0 left-full ml-3 z-10", children: /* @__PURE__ */ i.jsx(q, { onClose: () => Y(!1) }) })
+      ]
+    }
+  ) : null;
+};
+export {
+  dt as default
+};

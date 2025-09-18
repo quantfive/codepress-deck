@@ -1,0 +1,12 @@
+import { getGlobalSingleton as e } from "./index202.js";
+import { Scope as t } from "./index96.js";
+function r() {
+  return e("defaultCurrentScope", () => new t());
+}
+function u() {
+  return e("defaultIsolationScope", () => new t());
+}
+export {
+  r as getDefaultCurrentScope,
+  u as getDefaultIsolationScope
+};

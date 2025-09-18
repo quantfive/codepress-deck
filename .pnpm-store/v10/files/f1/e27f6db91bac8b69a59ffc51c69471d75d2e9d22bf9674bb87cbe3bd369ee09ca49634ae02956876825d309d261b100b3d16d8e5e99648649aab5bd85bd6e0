@@ -1,0 +1,87 @@
+import r from "./index245.js";
+import R from "./index247.js";
+import v from "react";
+import f from "./index253.js";
+import { hsvaToRgba as N, color as m, rgbaToHsva as p } from "./index244.js";
+import { j as l } from "./index7.js";
+var _ = ["prefixCls", "hsva", "placement", "rProps", "gProps", "bProps", "aProps", "className", "style", "onChange"], E = /* @__PURE__ */ v.forwardRef((c, x) => {
+  var {
+    prefixCls: y = "w-color-editable-input-rgba",
+    hsva: d,
+    placement: s = "bottom",
+    rProps: g = {},
+    gProps: j = {},
+    bProps: u = {},
+    aProps: b = {},
+    className: B,
+    style: C,
+    onChange: o
+  } = c, P = R(c, _), t = d ? N(d) : {};
+  function n(e) {
+    var a = Number(e.target.value);
+    a && a > 255 && (e.target.value = "255"), a && a < 0 && (e.target.value = "0");
+  }
+  var i = (e, a, h) => {
+    typeof e == "number" && (a === "a" && (e < 0 && (e = 0), e > 100 && (e = 100), o && o(m(p(r({}, t, {
+      a: e / 100
+    }))))), e > 255 && (e = 255, h.target.value = "255"), e < 0 && (e = 0, h.target.value = "0"), a === "r" && o && o(m(p(r({}, t, {
+      r: e
+    })))), a === "g" && o && o(m(p(r({}, t, {
+      g: e
+    })))), a === "b" && o && o(m(p(r({}, t, {
+      b: e
+    })))));
+  };
+  return /* @__PURE__ */ l.jsxs("div", r({
+    ref: x,
+    className: [y, B || ""].filter(Boolean).join(" ")
+  }, P, {
+    style: r({
+      fontSize: 11,
+      display: "flex"
+    }, C),
+    children: [/* @__PURE__ */ l.jsx(f, r({
+      label: "R",
+      value: t.r || 0,
+      onBlur: n,
+      placement: s,
+      onChange: (e, a) => i(a, "r", e)
+    }, g, {
+      style: r({}, g.style)
+    })), /* @__PURE__ */ l.jsx(f, r({
+      label: "G",
+      value: t.g || 0,
+      onBlur: n,
+      placement: s,
+      onChange: (e, a) => i(a, "g", e)
+    }, j, {
+      style: r({
+        marginLeft: 5
+      }, g.style)
+    })), /* @__PURE__ */ l.jsx(f, r({
+      label: "B",
+      value: t.b || 0,
+      onBlur: n,
+      placement: s,
+      onChange: (e, a) => i(a, "b", e)
+    }, u, {
+      style: r({
+        marginLeft: 5
+      }, u.style)
+    })), b && /* @__PURE__ */ l.jsx(f, r({
+      label: "A",
+      value: t.a ? parseInt(String(t.a * 100), 10) : 0,
+      onBlur: n,
+      placement: s,
+      onChange: (e, a) => i(a, "a", e)
+    }, b, {
+      style: r({
+        marginLeft: 5
+      }, b.style)
+    }))]
+  }));
+});
+E.displayName = "EditableInputRGBA";
+export {
+  E as default
+};

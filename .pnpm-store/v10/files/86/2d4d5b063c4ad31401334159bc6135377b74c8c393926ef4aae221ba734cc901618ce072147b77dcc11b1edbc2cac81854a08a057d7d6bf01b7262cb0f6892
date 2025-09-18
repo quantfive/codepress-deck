@@ -1,0 +1,8 @@
+// Styles (bundled by Vite lib build)
+import "react-fontpicker-ts/dist/index.css";
+import "../styles/globals.css";
+// Core visual editor components
+export { default as Editor } from "../components/Editor.js";
+export { default as CodepressEditor, CodepressEditor as ShadowEditor, } from "./CodepressEditor.js";
+// Essential providers for visual editing
+export { useVisualEditor, VisualEditorProvider, } from "../context/VisualEditorContext.js";

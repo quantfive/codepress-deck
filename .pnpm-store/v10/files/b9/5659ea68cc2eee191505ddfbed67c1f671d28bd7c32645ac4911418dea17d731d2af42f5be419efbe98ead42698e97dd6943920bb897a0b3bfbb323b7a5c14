@@ -1,0 +1,93 @@
+import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger, } from "@/components/ui/popover";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { checkIsOnCodepressBranch, addBranchPrefix, stripBranchPrefix, } from "@/lib/deployment";
+import { useDeployment } from "@/context/DeploymentContext";
+import BranchInput from "@/components/ui/BranchInput";
+const SaveButton = ({ open, onOpenChange, branchName, onSave, isSaving, }) => {
+    const { shouldShowSaveDialog } = useDeployment();
+    const [newBranchInput, setNewBranchInput] = useState("");
+    const [initialized, setInitialized] = useState(false);
+    // const repoInfo = detectRepositoryInfo();
+    // const currentBranch = repoInfo?.branch || '';
+    const isMainBranch = [
+        "main",
+        "master",
+        "develop",
+        "dev",
+        "staging",
+        "development",
+        "stage",
+    ].includes(branchName);
+    const isFirstTimeOnBranch = shouldShowSaveDialog(branchName);
+    const [saveChoice, setSaveChoice] = useState(isFirstTimeOnBranch ? "new" : "existing");
+    // Generate random 8-letter phrase
+    const generateRandomPhrase = () => {
+        const adjectives = [
+            "swift",
+            "bright",
+            "clean",
+            "smart",
+            "quick",
+            "fresh",
+            "bold",
+            "calm",
+            "neat",
+            "cool",
+        ];
+        const nouns = [
+            "tree",
+            "rock",
+            "wave",
+            "star",
+            "moon",
+            "fire",
+            "leaf",
+            "song",
+            "path",
+            "dawn",
+        ];
+        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+        const noun = nouns[Math.floor(Math.random() * nouns.length)];
+        return `${adj}-${noun}`;
+    };
+    // Initialize form state when popover opens
+    React.useEffect(() => {
+        if (open && !initialized) {
+            // Always default to 'new' branch
+            setSaveChoice("new");
+            const randomPhrase = generateRandomPhrase();
+            setNewBranchInput(randomPhrase);
+            setInitialized(true);
+        }
+        else if (!open) {
+            setInitialized(false);
+        }
+    }, [open, initialized]);
+    return (_jsxs("div", { className: "flex items-stretch rounded-md overflow-hidden", children: [_jsx(Button, { onClick: () => onSave(), disabled: isSaving, className: "flex items-center justify-center px-3 py-2 bg-gray-900 hover:bg-gray-800 text-sm text-white rounded-none", children: isSaving ? (_jsxs(_Fragment, { children: ["Saving", _jsx(Loader2, { className: "ml-2 h-4 w-4 animate-spin" })] })) : ("Save") }), _jsxs(Popover, { open: open, onOpenChange: onOpenChange, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(Button, { disabled: isSaving, className: "px-2 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-none border-l border-gray-700", children: open ? (_jsx(ChevronUp, { className: "h-4 w-4" })) : (_jsx(ChevronDown, { className: "h-4 w-4" })) }) }), _jsxs(PopoverContent, { className: "z-[10050] w-[480px] p-4 shadow-xl border border-gray-200 bg-white rounded-xl", side: "top", sideOffset: 24, align: "center", children: [_jsx("h4", { className: "text-base font-semibold mb-1", children: "Where would you like to save?" }), _jsx("p", { className: "text-sm text-gray-600 mb-4", children: "When you save, CodePress will generate a shareable link with your updates." }), _jsxs("div", { className: "space-y-3 mb-4", children: [_jsxs("div", { className: "flex items-center space-x-3", children: [_jsx("input", { type: "radio", id: "newBranch", name: "saveChoice", checked: saveChoice === "new", onChange: () => setSaveChoice("new"), className: "w-4 h-4 text-gray-900 focus:ring-gray-900" }), _jsxs("label", { htmlFor: "newBranch", className: "text-sm font-medium text-gray-900", children: ["New branch ", isFirstTimeOnBranch ? "(recommended)" : ""] })] }), _jsxs("div", { className: "flex items-center space-x-3", children: [_jsx("input", { type: "radio", id: "existingBranch", name: "saveChoice", checked: saveChoice === "existing", onChange: () => setSaveChoice("existing"), className: "w-4 h-4 text-gray-900 focus:ring-gray-900" }), _jsxs("label", { htmlFor: "existingBranch", className: "text-sm font-medium text-gray-900", children: ["Existing branch", isMainBranch && (_jsx("span", { className: "text-amber-600 ml-1", children: "(main branch)" }))] })] })] }), _jsx("label", { htmlFor: "branchName", className: "text-sm text-gray-600 mb-1 block", children: saveChoice === "new" ? "New branch name" : "Branch name" }), _jsx("div", { className: "mb-4", children: _jsx(BranchInput, { id: "branchName", showPrefix: saveChoice === "new" ||
+                                        (saveChoice === "existing" &&
+                                            checkIsOnCodepressBranch(branchName)), placeholder: saveChoice === "new" ? "Enter branch name" : branchName, value: saveChoice === "new"
+                                        ? newBranchInput
+                                        : checkIsOnCodepressBranch(branchName)
+                                            ? stripBranchPrefix(branchName)
+                                            : branchName, onChange: (value) => {
+                                        if (saveChoice === "new") {
+                                            setNewBranchInput(value);
+                                        }
+                                        else {
+                                            setSaveChoice("new");
+                                            setNewBranchInput(value);
+                                        }
+                                    } }) }), _jsx(Button, { className: "w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-normal", onClick: () => {
+                                    // Set the branch name based on choice before saving
+                                    if (saveChoice === "new") {
+                                        onSave(addBranchPrefix(newBranchInput));
+                                    }
+                                    else {
+                                        onSave();
+                                    }
+                                }, disabled: isSaving || (saveChoice === "new" && !newBranchInput.trim()), children: isSaving ? (_jsxs(_Fragment, { children: ["Saving", _jsx(Loader2, { className: "ml-2 h-4 w-4 animate-spin" })] })) : (`Save to ${saveChoice === "new" ? "new" : "existing"} branch`) })] })] })] }));
+};
+export default SaveButton;

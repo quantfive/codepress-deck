@@ -1,0 +1,11 @@
+export interface ColorPickerContentProps {
+    type: "background" | "text";
+    color: string;
+    tempColor: string;
+    onColorChange: (color: string) => void;
+    onClose: () => void;
+    onSave: (type: "background" | "text", color: string) => void;
+    element: HTMLElement;
+}
+export declare const ColorPickerContent: ({ type, color, tempColor, onColorChange, onClose, onSave, element, }: ColorPickerContentProps) => import("react/jsx-runtime").JSX.Element;
+//# sourceMappingURL=ColorPickerContent.d.ts.map

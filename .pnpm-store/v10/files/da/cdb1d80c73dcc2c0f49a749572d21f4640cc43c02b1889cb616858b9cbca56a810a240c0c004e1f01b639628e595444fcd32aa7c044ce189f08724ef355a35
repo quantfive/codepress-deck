@@ -1,0 +1,39 @@
+import React from "react";
+import { Branch, DeploymentState } from "@/lib/deployment";
+export declare const POLL_MS_IDLE = 60000;
+export declare const POLL_MS_DEPLOY = 5000;
+type PreviewData = {
+    branch_name?: string;
+    preview_url: string;
+    commit_date: string;
+    commit_hash: string;
+    state: DeploymentState;
+};
+export type DeploymentContextValue = {
+    branchName: string;
+    setBranchName: (v: string) => void;
+    previewUrl: string;
+    lastSaved: string;
+    lastUpdatedText: string;
+    currentDeployment: DeploymentState;
+    branches: Branch[];
+    fetchBranches: () => Promise<void>;
+    isBranchesLoading: boolean;
+    deleteBranch: (branchName: string) => Promise<void>;
+    showDeploymentPopover: boolean;
+    deploymentPopover: PreviewData | undefined;
+    setShowDeploymentPopover: (data: PreviewData | null) => void;
+    viewingStaleVersion: boolean;
+    isStaticDeployUrl: boolean;
+    savedBranches: Set<string>;
+    addSavedBranch: (branchName: string) => void;
+    hasSavedToBranch: (branchName: string) => boolean;
+    shouldShowSaveDialog: (branchName: string) => boolean;
+};
+export type DeploymentProviderProps = {
+    children: React.ReactNode;
+};
+export declare const DeploymentProvider: React.FC<DeploymentProviderProps>;
+export declare const useDeployment: () => DeploymentContextValue;
+export {};
+//# sourceMappingURL=DeploymentContext.d.ts.map

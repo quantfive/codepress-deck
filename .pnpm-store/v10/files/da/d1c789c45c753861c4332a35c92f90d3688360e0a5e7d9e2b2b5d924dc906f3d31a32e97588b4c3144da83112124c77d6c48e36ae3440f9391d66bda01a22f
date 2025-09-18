@@ -1,0 +1,20 @@
+import { CONSOLE_LEVELS as e, originalConsoleMethods as i } from "./index151.js";
+import { fill as s } from "./index119.js";
+import { GLOBAL_OBJ as t } from "./index117.js";
+import { addHandler as a, maybeInstrument as c, triggerHandlers as f } from "./index222.js";
+function h(o) {
+  const n = "console";
+  a(n, o), c(n, l);
+}
+function l() {
+  "console" in t && e.forEach(function(o) {
+    o in t.console && s(t.console, o, function(n) {
+      return i[o] = n, function(...r) {
+        f("console", { args: r, level: o }), i[o]?.apply(t.console, r);
+      };
+    });
+  });
+}
+export {
+  h as addConsoleInstrumentationHandler
+};

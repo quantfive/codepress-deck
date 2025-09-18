@@ -1,0 +1,531 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React, { useState, useEffect } from "react";
+import { Input } from "../../ui/input.js";
+import { Label } from "../../ui/label.js";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover.js";
+import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify, ALargeSmall, } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group.js";
+import { useVisualEditor } from "../../../context/VisualEditorContext.js";
+import { getElementValues } from "../../../utils/elementStyles.js";
+import { useRepository } from "../../../context/RepositoryContext.js";
+import { Chrome } from "@uiw/react-color";
+import { v4 as uuidv4 } from "uuid";
+// Helper to generate a unique codepress-data-fp value
+function generateUniqueFpId() {
+    let fpId;
+    do {
+        fpId = `new_span_${uuidv4()}`;
+    } while (document.querySelector(`[codepress-data-fp="${fpId}"]`));
+    return fpId;
+}
+// Separator component for visual grouping
+const Separator = () => _jsx("div", { className: "w-px h-6 bg-slate-300" });
+const TextGroup = ({ popoverContainer, onClose }) => {
+    const { activeElementFpId, trackedElements, updateActiveElementStyle, editingState, } = useVisualEditor();
+    const { colors: repositoryColors } = useRepository();
+    const activeElement = activeElementFpId
+        ? trackedElements[activeElementFpId]?.element
+        : null;
+    const initialValues = activeElementFpId
+        ? trackedElements[activeElementFpId]?.currentValues
+        : null;
+    // Local formatting state
+    const [formatting, setFormatting] = useState({
+        italic: false,
+        underline: false,
+        strikethrough: false,
+        color: "#000000",
+        textAlign: "left",
+        fontSize: "16px",
+        fontWeight: "normal",
+    });
+    // Values selected in the ToggleGroup for text decorations
+    const decorationValues = [
+        formatting.italic && "italic",
+        formatting.underline && "underline",
+        formatting.strikethrough && "strikethrough",
+    ].filter(Boolean);
+    // UI local state
+    const [showColorPicker, setShowColorPicker] = useState(false);
+    const [showCustomColorPicker, setShowCustomColorPicker] = useState(false);
+    const [showLinkPopover, setShowLinkPopover] = useState(false);
+    const [linkUrl, setLinkUrl] = useState("");
+    const [showFontWeightPopover, setShowFontWeightPopover] = useState(false);
+    // Persist last non-collapsed selection that sits inside the active element
+    const savedRangeRef = React.useRef(null);
+    // Refs to always have latest context values/functions inside async callbacks
+    const activeElementFpIdRef = React.useRef(activeElementFpId);
+    const trackedElementsRef = React.useRef(trackedElements);
+    const updateActiveElementStyleRef = React.useRef(updateActiveElementStyle);
+    useEffect(() => {
+        activeElementFpIdRef.current = activeElementFpId;
+    }, [activeElementFpId]);
+    useEffect(() => {
+        trackedElementsRef.current = trackedElements;
+    }, [trackedElements]);
+    useEffect(() => {
+        updateActiveElementStyleRef.current = updateActiveElementStyle;
+    }, [updateActiveElementStyle]);
+    // Update savedRange whenever user changes selection inside active element
+    useEffect(() => {
+        const handler = () => {
+            if (!activeElement)
+                return;
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) {
+                // keep previous saved range
+                return;
+            }
+            const range = sel.getRangeAt(0);
+            if (activeElement.contains(range.commonAncestorContainer)) {
+                // persist last in-element range; even if collapsed we keep previous non-collapsed
+                if (!sel.isCollapsed) {
+                    savedRangeRef.current = range.cloneRange();
+                }
+            }
+            else {
+                // selection moved outside
+                savedRangeRef.current = null;
+            }
+        };
+        document.addEventListener("selectionchange", handler);
+        return () => document.removeEventListener("selectionchange", handler);
+    }, [activeElement]);
+    // Determine if font weight should show active (bold) state
+    const boldActive = React.useMemo(() => {
+        const fw = formatting.fontWeight;
+        if (!fw || fw === "normal")
+            return false;
+        const num = parseInt(fw, 10);
+        if (!isNaN(num)) {
+            return num >= 500;
+        }
+        return true; // non-numeric but not "normal"
+    }, [formatting.fontWeight]);
+    // Initialise / refresh formatting state whenever the active element, its values,
+    // or the pseudo-state being edited (normal / hover / active) changes.
+    useEffect(() => {
+        if (!activeElement || !initialValues)
+            return;
+        // Helper to resolve the correct value for the current editing state. For
+        // example, when editing the hover state we prefer `hover_color` but fall
+        // back to the base `color` if no override exists.
+        const resolve = (prop) => {
+            if (editingState === "normal") {
+                return initialValues[prop] ?? "";
+            }
+            const pseudoKey = `${editingState}_${prop}`;
+            const override = initialValues[pseudoKey];
+            return override !== undefined && override !== ""
+                ? override
+                : (initialValues[prop] ?? "");
+        };
+        const fontWeight = resolve("fontWeight");
+        const fontStyle = resolve("fontStyle");
+        const textDecoration = resolve("textDecoration");
+        const isBold = fontWeight === "bold" || parseInt(fontWeight, 10) >= 600;
+        setFormatting({
+            italic: fontStyle === "italic",
+            underline: textDecoration.includes("underline"),
+            strikethrough: textDecoration.includes("line-through"),
+            color: resolve("color"),
+            textAlign: resolve("textAlign"),
+            fontSize: resolve("fontSize"),
+            fontWeight: fontWeight || "normal",
+        });
+    }, [activeElement, initialValues, editingState]);
+    // Helper: apply style to current selection range if it lives inside `el`,
+    // otherwise fall back to styling the whole element as before.
+    const applyTextFormatting = (el, property, value) => {
+        if (!el)
+            return false;
+        // use saved range so click on toolbar doesn't lose selection
+        const range = savedRangeRef.current;
+        const selectionInsideEl = range && el.contains(range.commonAncestorContainer);
+        // Helper: does this range cover the entire contents of element?
+        const isFullElementSelected = (r, targetEl) => {
+            if (!r)
+                return false;
+            const full = document.createRange();
+            full.selectNodeContents(targetEl);
+            return (full.compareBoundaryPoints(Range.START_TO_START, r) === 0 &&
+                full.compareBoundaryPoints(Range.END_TO_END, r) === 0);
+        };
+        // Try to reuse an existing span wrapper if the entire selection already
+        // matches a span. This prevents the creation of deeply-nested spans when
+        // the user repeatedly applies formatting such as underline.
+        // Walk up from the common ancestor to find the nearest span element.
+        const findExistingSpan = () => {
+            if (!range)
+                return null;
+            let node = range.commonAncestorContainer;
+            // If the commonAncestor is a text node we need its parent element
+            if (node.nodeType === Node.TEXT_NODE) {
+                node = node.parentElement;
+            }
+            while (node && node !== el) {
+                if (node.nodeType === Node.ELEMENT_NODE &&
+                    node.tagName === "SPAN") {
+                    return node;
+                }
+                node = node.parentNode;
+            }
+            return null;
+        };
+        // Helper to check if the current range exactly covers the contents of a node
+        const selectionMatchesNode = (node, r) => {
+            if (!r)
+                return false;
+            const full = document.createRange();
+            full.selectNodeContents(node);
+            return (full.compareBoundaryPoints(Range.START_TO_START, r) === 0 &&
+                full.compareBoundaryPoints(Range.END_TO_END, r) === 0);
+        };
+        if (!range) {
+            return false;
+        }
+        // We'll determine whether to reuse an existing span or create a new one
+        let span;
+        const candidate = findExistingSpan();
+        if (candidate && selectionMatchesNode(candidate, range)) {
+            // Reuse the existing span when the selection exactly matches it
+            span = candidate;
+        }
+        else {
+            // Build a new span wrapper without any initial custom styles
+            span = document.createElement("span");
+            // Assign a unique codepress-data-fp attribute
+            span.setAttribute("codepress-data-fp", generateUniqueFpId());
+            // Insert the span around the current selection
+            range.surroundContents(span);
+        }
+        try {
+            // Re-select the newly created span so subsequent operations apply to it
+            const newRange = document.createRange();
+            newRange.selectNodeContents(span);
+            const selAfter = window.getSelection();
+            if (selAfter) {
+                selAfter.removeAllRanges();
+                selAfter.addRange(newRange);
+            }
+            // Persist the new selection for toolbar actions
+            savedRangeRef.current = newRange.cloneRange();
+            // Inform the editor/context that the active element is now this span
+            const initialValues = getElementValues(span);
+            const evt = new CustomEvent("codepress-select-element", {
+                detail: { element: span, initialValues },
+            });
+            document.dispatchEvent(evt);
+            const safeUpdate = (updates) => {
+                const attempt = (retriesLeft) => {
+                    try {
+                        const currentActiveFpId = activeElementFpIdRef.current;
+                        const currentTracked = trackedElementsRef.current;
+                        const updateFn = updateActiveElementStyleRef.current;
+                        const currentActive = currentActiveFpId
+                            ? currentTracked[currentActiveFpId]?.element
+                            : null;
+                        if (currentActive === span) {
+                            updateFn(updates);
+                            return;
+                        }
+                        if (retriesLeft > 0) {
+                            setTimeout(() => attempt(retriesLeft - 1), 16);
+                        }
+                    }
+                    catch (_) {
+                        // no-op
+                    }
+                };
+                attempt(10);
+            };
+            const applyAfterSelection = () => {
+                switch (property) {
+                    case "italic":
+                        span.style.fontStyle = value ? "italic" : "normal";
+                        safeUpdate({ fontStyle: value ? "italic" : "normal" });
+                        break;
+                    case "underline": {
+                        const existing = window.getComputedStyle(span).textDecorationLine || "";
+                        const hasLineThrough = existing.includes("line-through");
+                        const newDecor = value
+                            ? hasLineThrough
+                                ? "underline line-through"
+                                : "underline"
+                            : hasLineThrough
+                                ? "line-through"
+                                : "none";
+                        span.style.textDecoration = newDecor;
+                        safeUpdate({ textDecoration: newDecor });
+                        break;
+                    }
+                    case "strikethrough": {
+                        const existing = window.getComputedStyle(span).textDecorationLine || "";
+                        const hasUnderline = existing.includes("underline");
+                        const newDecor = value
+                            ? hasUnderline
+                                ? "underline line-through"
+                                : "line-through"
+                            : hasUnderline
+                                ? "underline"
+                                : "none";
+                        span.style.textDecoration = newDecor;
+                        safeUpdate({ textDecoration: newDecor });
+                        break;
+                    }
+                    case "fontWeight":
+                        span.style.fontWeight = value;
+                        safeUpdate({ fontWeight: value });
+                        break;
+                    case "color":
+                        span.style.color = value;
+                        safeUpdate({ color: value });
+                        break;
+                    case "fontSize":
+                        span.style.fontSize = value;
+                        safeUpdate({ fontSize: value });
+                        break;
+                }
+            };
+            // Defer to ensure context processes the selection change first
+            requestAnimationFrame(() => requestAnimationFrame(applyAfterSelection));
+        }
+        catch (e) {
+            // Fallback: execCommand for simple toggles if surround fails
+            const cmdMap = {
+                italic: "italic",
+                underline: "underline",
+                strikethrough: "strikeThrough",
+                fontWeight: "bold",
+            };
+            const cmd = cmdMap[property];
+            if (cmd)
+                document.execCommand(cmd, false);
+        }
+        return true; // handled on selection only
+    };
+    // ---------- Handlers ---------- //
+    const handleDecorationChange = (values) => {
+        if (!activeElement)
+            return;
+        const isItalic = values.includes("italic");
+        const isUnderline = values.includes("underline");
+        const isStrike = values.includes("strikethrough");
+        // Apply italic directly via helper
+        if (formatting.italic !== isItalic) {
+            const selOnlyItalic = applyTextFormatting(activeElement, "italic", isItalic);
+            if (!selOnlyItalic) {
+                updateActiveElementStyle({ fontStyle: isItalic ? "italic" : "normal" });
+            }
+        }
+        // Handle text-decoration (underline / strikethrough can coexist)
+        if (formatting.underline !== isUnderline ||
+            formatting.strikethrough !== isStrike) {
+            const textDecorationParts = [];
+            if (isUnderline)
+                textDecorationParts.push("underline");
+            if (isStrike)
+                textDecorationParts.push("line-through");
+            const selOnlyUnderline = applyTextFormatting(activeElement, "underline", isUnderline);
+            const selOnlyStrike = applyTextFormatting(activeElement, "strikethrough", isStrike);
+            if (!selOnlyUnderline && !selOnlyStrike) {
+                activeElement.style.textDecoration =
+                    textDecorationParts.length > 0 ? textDecorationParts.join(" ") : "none";
+                // Element-level change: sync context
+                const textDecorationPartsForUpdate = [];
+                if (isUnderline)
+                    textDecorationPartsForUpdate.push("underline");
+                if (isStrike)
+                    textDecorationPartsForUpdate.push("line-through");
+                updateActiveElementStyle({
+                    fontStyle: isItalic ? "italic" : "normal",
+                    textDecoration: textDecorationPartsForUpdate.length > 0
+                        ? textDecorationPartsForUpdate.join(" ")
+                        : "none",
+                });
+            }
+        }
+        // Context update is handled above for element-level only
+        setFormatting((prev) => ({
+            ...prev,
+            italic: isItalic,
+            underline: isUnderline,
+            strikethrough: isStrike,
+        }));
+    };
+    const handleColorChange = (color) => {
+        if (!activeElement)
+            return;
+        setFormatting({ ...formatting, color });
+        const selOnly = applyTextFormatting(activeElement, "color", color);
+        if (!selOnly)
+            updateActiveElementStyle({ color });
+    };
+    const handleAlignmentChange = (alignment) => {
+        if (!activeElement)
+            return;
+        setFormatting({ ...formatting, textAlign: alignment });
+        const selOnly = applyTextFormatting(activeElement, "textAlign", alignment);
+        if (!selOnly)
+            updateActiveElementStyle({ textAlign: alignment });
+    };
+    const handleFontSizeChange = (e) => {
+        const newSize = e.target.value;
+        setFormatting({ ...formatting, fontSize: newSize });
+    };
+    // Commit handler so size changes apply (debounced via Input)
+    const handleFontSizeCommit = (newSize) => {
+        if (!activeElement)
+            return;
+        const selOnly = applyTextFormatting(activeElement, "fontSize", newSize);
+        if (!selOnly)
+            updateActiveElementStyle({ fontSize: newSize });
+    };
+    const handleFontSizeKeyDown = (e) => {
+        if (!activeElement)
+            return;
+        const inputEl = e.currentTarget;
+        if (e.key === "Enter") {
+            const newSize = inputEl.value;
+            const selOnly = applyTextFormatting(activeElement, "fontSize", newSize);
+            if (!selOnly)
+                updateActiveElementStyle({ fontSize: newSize });
+            inputEl.blur();
+            return;
+        }
+        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const delta = e.key === "ArrowUp" ? 1 : -1;
+            const match = inputEl.value.trim().match(/^(-?\d+)(.*)$/);
+            if (!match)
+                return;
+            const currentNum = parseInt(match[1], 10);
+            const unit = match[2] || "px";
+            const newNum = Math.max(1, currentNum + delta);
+            const newSize = `${newNum}${unit}`;
+            inputEl.value = newSize;
+            setFormatting((prev) => ({ ...prev, fontSize: newSize }));
+            const selOnly = applyTextFormatting(activeElement, "fontSize", newSize);
+            if (!selOnly)
+                updateActiveElementStyle({ fontSize: newSize });
+        }
+    };
+    const handleFontSizeBlur = (e) => {
+        if (!activeElement)
+            return;
+        const newSize = e.target.value;
+        const selOnly = applyTextFormatting(activeElement, "fontSize", newSize);
+        if (!selOnly)
+            updateActiveElementStyle({ fontSize: newSize });
+    };
+    // Hyperlink management (add / update / remove)
+    const handleHyperlink = (inputUrl) => {
+        if (!activeElement)
+            return;
+        const normalizeUrl = (url) => {
+            const trimmed = url.trim();
+            const hasScheme = /^[a-z][a-z0-9+.+-]*:/i.test(trimmed);
+            const isProtocolRelative = trimmed.startsWith("//");
+            const isRootRelative = trimmed.startsWith("/");
+            const isAnchor = trimmed.startsWith("#");
+            if (hasScheme || isProtocolRelative || isRootRelative || isAnchor) {
+                return trimmed;
+            }
+            return `https://${trimmed}`;
+        };
+        const finalUrl = inputUrl ? normalizeUrl(inputUrl) : "";
+        const anchorEl = activeElement.tagName === "A"
+            ? activeElement
+            : activeElement.closest("a");
+        // Unlink
+        if (!finalUrl) {
+            if (anchorEl) {
+                const frag = document.createDocumentFragment();
+                while (anchorEl.firstChild) {
+                    frag.appendChild(anchorEl.firstChild);
+                }
+                anchorEl.parentNode?.replaceChild(frag, anchorEl);
+            }
+            return;
+        }
+        // Update existing anchor
+        if (anchorEl) {
+            anchorEl.href = finalUrl;
+            updateActiveElementStyle({ href: finalUrl });
+            return;
+        }
+        // Create new anchor
+        const newLink = document.createElement("a");
+        newLink.href = finalUrl;
+        newLink.style.color = "inherit";
+        newLink.style.textDecoration = "inherit";
+        Array.from(activeElement.attributes).forEach((attr) => {
+            if (attr.name.startsWith("codepress-")) {
+                newLink.setAttribute(attr.name, attr.value);
+            }
+        });
+        activeElement.parentNode?.insertBefore(newLink, activeElement);
+        newLink.appendChild(activeElement);
+        updateActiveElementStyle({ href: finalUrl });
+    };
+    const handleFontWeightChange = (weight) => {
+        if (!activeElement)
+            return;
+        setFormatting((prev) => ({
+            ...prev,
+            fontWeight: weight,
+        }));
+        const selOnly = applyTextFormatting(activeElement, "fontWeight", weight);
+        if (!selOnly) {
+            updateActiveElementStyle({ fontWeight: weight });
+        }
+    };
+    // Hide TextGroup when an <img> element is selected
+    if (activeElement && activeElement.tagName.toLowerCase() === "img") {
+        return null;
+    }
+    return (_jsxs("div", { className: "flex items-center space-x-2", children: [_jsx(Input, { id: "font-size", type: "text", className: "w-24 h-8 text-sm", value: formatting.fontSize, onChange: handleFontSizeChange, onCommit: handleFontSizeCommit, onBlur: handleFontSizeBlur, onKeyDown: handleFontSizeKeyDown, defaultUnit: "px", startEnhancer: _jsx(ALargeSmall, { className: "w-4 h-4 text-slate-500" }) }), _jsx(Separator, {}), _jsxs(ToggleGroup, { type: "multiple", value: decorationValues, onValueChange: handleDecorationChange, className: "space-x-1", children: [_jsxs(Popover, { open: showFontWeightPopover, onOpenChange: setShowFontWeightPopover, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(ToggleGroupItem, { value: "fontWeight", "aria-label": "Font Weight", onPointerDown: (e) => {
+                                        // Prevent Radix ToggleGroup toggle behavior while allowing popover to handle open state
+                                        e.preventDefault();
+                                    }, className: boldActive
+                                        ? "bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                                        : "", children: _jsx(Bold, { className: "w-4 h-4" }) }) }), _jsxs(PopoverContent, { className: "w-auto p-2 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", container: popoverContainer, sideOffset: 16, children: [_jsxs("div", { className: "flex items-center justify-between mb-1", children: [_jsx("span", { className: "text-[12px] font-medium text-gray-500", children: "Font Weight" }), formatting.fontWeight && formatting.fontWeight !== "normal" && (_jsx("button", { className: "text-[12px] text-blue-500 hover:underline cursor-pointer", onClick: () => {
+                                                    handleFontWeightChange("normal");
+                                                    setShowFontWeightPopover(false);
+                                                }, children: "Clear" }))] }), _jsx("div", { className: "grid grid-cols-3 gap-1", children: ["400", "500", "600", "700", "800", "900"].map((weight) => (_jsx("button", { className: `px-2 py-1 text-sm rounded-md hover:bg-slate-100 cursor-pointer ${formatting.fontWeight === weight ? "bg-slate-200" : ""}`, style: { fontWeight: parseInt(weight, 10) }, onClick: () => {
+                                                handleFontWeightChange(weight);
+                                                setShowFontWeightPopover(false);
+                                            }, children: weight }, weight))) })] })] }), _jsx(ToggleGroupItem, { value: "italic", "aria-label": "Italic", children: _jsx(Italic, { className: "w-4 h-4" }) }), _jsx(ToggleGroupItem, { value: "underline", "aria-label": "Underline", children: _jsx(Underline, { className: "w-4 h-4" }) }), _jsx(ToggleGroupItem, { value: "strikethrough", "aria-label": "Strikethrough", children: _jsx(Strikethrough, { className: "w-4 h-4" }) })] }), _jsx(Separator, {}), _jsxs(ToggleGroup, { type: "single", value: formatting.textAlign, onValueChange: (v) => v && handleAlignmentChange(v), className: "space-x-1", children: [_jsx(ToggleGroupItem, { value: "left", "aria-label": "Align Left", children: _jsx(AlignLeft, { className: "w-4 h-4" }) }), _jsx(ToggleGroupItem, { value: "center", "aria-label": "Align Center", children: _jsx(AlignCenter, { className: "w-4 h-4" }) }), _jsx(ToggleGroupItem, { value: "right", "aria-label": "Align Right", children: _jsx(AlignRight, { className: "w-4 h-4" }) }), _jsx(ToggleGroupItem, { value: "justify", "aria-label": "Justify", children: _jsx(AlignJustify, { className: "w-4 h-4" }) })] }), _jsx(Separator, {}), _jsxs(Popover, { open: showColorPicker, onOpenChange: setShowColorPicker, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx("button", { className: "p-2 rounded-md hover:bg-slate-100 relative", children: _jsx("div", { className: "w-5 h-5 rounded-full border border-slate-300", style: { backgroundColor: formatting.color } }) }) }), _jsx(PopoverContent, { className: "w-auto p-2 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", container: popoverContainer, sideOffset: 16, children: _jsxs("div", { className: "flex space-x-1", children: [repositoryColors.map((c) => (_jsx("button", { className: "w-6 h-6 rounded-full border border-slate-200 hover:ring-2 hover:ring-blue-400 hover:ring-opacity-60 hover:border-transparent transition-all duration-300 cursor-pointer", style: { backgroundColor: c }, onClick: () => {
+                                        handleColorChange(c);
+                                        setShowColorPicker(false);
+                                    } }, c))), _jsxs(Popover, { open: showCustomColorPicker, onOpenChange: setShowCustomColorPicker, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx("button", { className: "w-6 h-6 rounded-full border border-slate-200 cursor-pointer", style: {
+                                                    background: `conic-gradient(from 0deg, 
+                      hsl(0, 100%, 50%) 0deg,
+                      hsl(60, 100%, 50%) 60deg,
+                      hsl(120, 100%, 50%) 120deg,
+                      hsl(180, 100%, 50%) 180deg,
+                      hsl(240, 100%, 50%) 240deg,
+                      hsl(300, 100%, 50%) 300deg,
+                      hsl(360, 100%, 50%) 360deg)`,
+                                                } }) }), _jsx(PopoverContent, { className: "w-auto p-0 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", container: popoverContainer, sideOffset: 16, children: _jsx(Chrome
+                                            // @ts-ignore
+                                            , { 
+                                                // @ts-ignore
+                                                inputType: "hexa", color: formatting.color, onChange: (color) => {
+                                                    handleColorChange(color.hex);
+                                                } }) })] })] }) })] }), _jsx(Separator, {}), _jsxs(Popover, { open: showLinkPopover, onOpenChange: setShowLinkPopover, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx("button", { className: "p-2 rounded-md hover:bg-slate-100", onClick: () => {
+                                const parentLink = activeElement?.closest("a");
+                                if (parentLink) {
+                                    setLinkUrl(parentLink.href);
+                                }
+                                else {
+                                    setLinkUrl("");
+                                }
+                                setShowLinkPopover(true);
+                            }, children: _jsx(LinkIcon, { className: "w-4 h-4" }) }) }), _jsx(PopoverContent, { className: "w-64 p-3 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", container: popoverContainer, sideOffset: 16, children: _jsxs("div", { className: "space-y-2", children: [_jsx(Label, { htmlFor: "link-url", children: "URL" }), _jsx(Input, { id: "link-url", type: "text", placeholder: "https://example.com", value: linkUrl, onChange: (e) => setLinkUrl(e.target.value) }), _jsx("button", { className: "w-full px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600", onClick: () => {
+                                        handleHyperlink(linkUrl);
+                                        setShowLinkPopover(false);
+                                        onClose();
+                                    }, children: "Apply" })] }) })] })] }));
+};
+export default TextGroup;

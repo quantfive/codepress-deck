@@ -1,0 +1,123 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import * as React from "react";
+import { cn } from "../../lib/utils.js";
+const InputElement = React.forwardRef(({ type, className, onBlur, onKeyDown, onChange, ...props }, ref) => (_jsx("input", { type: type, className: className, ref: ref, onBlur: onBlur, onKeyDown: onKeyDown, onChange: onChange, ...props })));
+InputElement.displayName = "InputElement";
+const Input = React.forwardRef(({ className, type, startEnhancer, endEnhancer, defaultUnit, incrementStep = 1, onBlur, onKeyDown, onChange, onCommit, commitOnChange = true, commitDebounceMs = 500, topLabel, ...props }, ref) => {
+    const internalRef = React.useRef(null);
+    // Merge forwarded ref with internal ref so parent components can still
+    // access the underlying <input> element if needed.
+    React.useImperativeHandle(ref, () => internalRef.current);
+    /* ------------------------------------------------------------------ */
+    /* Helpers                                                            */
+    /* ------------------------------------------------------------------ */
+    const ensureUnit = React.useCallback((val) => {
+        if (!defaultUnit)
+            return val;
+        const match = val.trim().match(/^(-?\d+)(.*)$/);
+        if (!match)
+            return val;
+        const unit = match[2];
+        return unit ? val : `${match[1]}${defaultUnit}`;
+    }, [defaultUnit]);
+    const handleBlur = (e) => {
+        // If the consumer supplied their own onBlur, we defer completely to them.
+        if (!onBlur) {
+            const newVal = ensureUnit(e.target.value);
+            // If ensureUnit adjusted the value, reflect it in the UI & propagate.
+            if (newVal !== e.target.value) {
+                if (internalRef.current)
+                    internalRef.current.value = newVal;
+                if (onChange) {
+                    const syntheticEvent = {
+                        ...e,
+                        target: { ...e.target, value: newVal },
+                    };
+                    onChange(syntheticEvent);
+                }
+            }
+            // Always fire onCommit (if provided) with the final value.
+            if (onCommit)
+                onCommit(newVal);
+        }
+        // Finally, invoke any consumer-supplied blur handler.
+        if (onBlur)
+            onBlur(e);
+    };
+    const handleKeyDown = (e) => {
+        // Skip built-in handling if consumer supplied their own keyDown handler.
+        if (!onKeyDown) {
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                e.preventDefault();
+                const delta = e.key === "ArrowUp" ? incrementStep : -incrementStep;
+                const match = e.currentTarget.value.trim().match(/^(-?\d+)(.*)$/);
+                if (match) {
+                    const currentNum = parseInt(match[1], 10);
+                    const unit = match[2] || defaultUnit || ""; // Fallback to empty string
+                    const newNum = Math.max(0, currentNum + delta);
+                    const newVal = `${newNum}${unit}`;
+                    if (internalRef.current)
+                        internalRef.current.value = newVal;
+                    if (onChange) {
+                        const syntheticEvent = {
+                            ...e,
+                            target: { ...e.target, value: newVal },
+                        };
+                        onChange(syntheticEvent);
+                    }
+                    if (onCommit)
+                        onCommit(newVal);
+                }
+                return; // Skip further processing
+            }
+            if (e.key === "Enter") {
+                const finalVal = ensureUnit(e.currentTarget.value);
+                if (onCommit)
+                    onCommit(finalVal);
+                // Programmatically blur so the blur handler fires immediately.
+                if (internalRef.current)
+                    internalRef.current.blur();
+                return;
+            }
+        }
+        // Call any consumer-supplied keyDown handler last.
+        if (onKeyDown)
+            onKeyDown(e);
+    };
+    /* ------------------------------------------------------------------ */
+    /* Change handling + debounced commit                                 */
+    /* ------------------------------------------------------------------ */
+    // We keep the latest timeout id so we can clear it on subsequent changes.
+    const debounceRef = React.useRef(null);
+    React.useEffect(() => {
+        // Cleanup timeout on unmount so no state updates happen after.
+        return () => {
+            if (debounceRef.current)
+                clearTimeout(debounceRef.current);
+        };
+    }, []);
+    const handleChange = (e) => {
+        // Proxy to consumer onChange first so they receive the raw event.
+        if (onChange)
+            onChange(e);
+        if (commitOnChange && onCommit) {
+            if (debounceRef.current)
+                clearTimeout(debounceRef.current);
+            const valForCommit = e.target.value; // Do not ensure unit while typing
+            debounceRef.current = setTimeout(() => {
+                onCommit(valForCommit);
+            }, commitDebounceMs);
+        }
+    };
+    /* ------------------------------------------------------------------ */
+    /* Rendering                                                          */
+    /* ------------------------------------------------------------------ */
+    // Container carries full input visuals so enhancers appear "inside".
+    const containerClasses = cn("flex h-10 w-full items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 p-2 ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 box-border relative", topLabel && "pt-4", className);
+    // Inner input is stripped of its own visuals.
+    const inputClasses = cn("w-full flex-1 bg-transparent p-0 text-xs placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 box-border");
+    // Always wrap to ensure consistent visuals even without enhancers.
+    return (_jsxs("div", { className: containerClasses, children: [startEnhancer && startEnhancer, topLabel && (_jsx("span", { className: "absolute left-1 top-0.5 text-[8px] text-gray-500", children: topLabel })), _jsx(InputElement, { type: type, className: inputClasses, ref: internalRef, onBlur: handleBlur, onKeyDown: handleKeyDown, onChange: handleChange, ...props }), endEnhancer && _jsx("span", { className: "ml-auto", children: endEnhancer })] }));
+});
+Input.displayName = "Input";
+export { Input };

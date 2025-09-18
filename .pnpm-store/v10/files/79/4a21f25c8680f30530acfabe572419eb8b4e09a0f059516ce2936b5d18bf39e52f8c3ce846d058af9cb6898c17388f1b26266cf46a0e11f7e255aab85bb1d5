@@ -1,0 +1,15 @@
+import { createEnvelope as r } from "./index198.js";
+import { dateTimestampInSeconds as p } from "./index207.js";
+function c(t, e, m) {
+  const o = [
+    { type: "client_report" },
+    {
+      timestamp: p(),
+      discarded_events: t
+    }
+  ];
+  return r(e ? { dsn: e } : {}, [o]);
+}
+export {
+  c as createClientReportEnvelope
+};

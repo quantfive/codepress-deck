@@ -1,0 +1,4 @@
+const o = "production";
+export {
+  o as DEFAULT_ENVIRONMENT
+};

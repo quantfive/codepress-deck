@@ -1,0 +1,74 @@
+var a = /* @__PURE__ */ ((e) => (e.UNSAVED = "unsaved", e.COMMITTED = "committed", e.DEPLOYMENT_STARTED = "deployment_started", e.DEPLOYMENT_FAILED = "deployment_failed", e.DEPLOYMENT_COMPLETED = "deployment_completed", e))(a || {});
+function f(e, t = "", c = "") {
+  const n = e.hostname, o = t.slice(t.indexOf("/") + 1), s = n.endsWith("vercel.app"), i = `${o}-git-${c}`, l = n.startsWith(i);
+  return !(s && !l) || n === "localhost";
+}
+function h(e) {
+  return e === "deployment_started" || e === "committed";
+}
+function m(e) {
+  let t = "bg-gray-400";
+  switch (e) {
+    case "deployment_started":
+    case "committed":
+      t = "bg-yellow-400";
+      break;
+    case "deployment_completed":
+      t = "bg-green-500";
+      break;
+    case "deployment_failed":
+      t = "bg-red-500";
+      break;
+    default:
+      t = "bg-gray-400";
+      break;
+  }
+  return t;
+}
+function y(e) {
+  switch (e) {
+    case "deployment_started":
+    case "committed":
+      return "Deploying";
+    case "deployment_completed":
+      return "Deployed";
+    case "deployment_failed":
+      return "Failed";
+    default:
+      return "Unsaved";
+  }
+}
+function g(e) {
+  let t = e.trim();
+  return t = t.replace(/\\/g, "/"), t = t.replace(/[^a-zA-Z0-9\-._/]/g, "-"), t = t.replace(/\/{2,}/g, "/"), t = t.replace(/^\/+|\/+$/g, ""), t = t.replace(/@\{/g, "-"), t.endsWith(".lock") && (t = t.slice(0, -5) + "-lock"), t || (t = "default-branch"), t;
+}
+const r = "codepress/";
+function _(e) {
+  return e.startsWith(r) ? e.slice(r.length) : e;
+}
+function E(e) {
+  return e.startsWith(r) ? e : `${r}${e}`;
+}
+function d(e) {
+  return e.startsWith(r);
+}
+function p(e) {
+  return e === r;
+}
+function D(e) {
+  return d(e) && !p(e);
+}
+export {
+  r as BRANCH_PREFIX,
+  a as DeploymentState,
+  E as addBranchPrefix,
+  d as checkHasBranchPrefix,
+  h as checkIsDeploying,
+  p as checkIsEmptyBranchPrefix,
+  D as checkIsOnCodepressBranch,
+  f as checkIsStaticDeployUrl,
+  m as deployColor,
+  y as deployStatusString,
+  g as sanitizeBranchName,
+  _ as stripBranchPrefix
+};

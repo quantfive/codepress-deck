@@ -1,0 +1,11 @@
+import React from "react";
+export type GitHubContextValue = {
+    isGitHubMode: boolean;
+    setIsGitHubMode: (v: boolean) => void;
+};
+export type GitHubProviderProps = {
+    children: React.ReactNode;
+};
+export declare const GitHubProvider: React.FC<GitHubProviderProps>;
+export declare const useGitHub: () => GitHubContextValue;
+//# sourceMappingURL=GithubContext.d.ts.map

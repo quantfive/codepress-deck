@@ -1,0 +1,120 @@
+/**
+ * CodePress Drag & Drop Debug Utilities
+ *
+ * Helper functions to debug drag & drop issues and verify setup
+ */
+import logger from "./logger.js";
+export function debugDragDropSetup() {
+    const errors = [];
+    try {
+        // Check for elements with codepress-data-fp
+        const codepressElements = document.querySelectorAll("[codepress-data-fp]");
+        // Check for shadow DOM interference
+        const shadowRoots = document.querySelectorAll("*").length;
+        let shadowDomElements = 0;
+        document.querySelectorAll("*").forEach((el) => {
+            if (el.shadowRoot)
+                shadowDomElements++;
+        });
+        // Check event listeners (basic check)
+        const eventListeners = [];
+        if (document.body.onmousedown !== null)
+            eventListeners.push("mousedown");
+        if (document.body.onmousemove !== null)
+            eventListeners.push("mousemove");
+        if (document.body.onmouseup !== null)
+            eventListeners.push("mouseup");
+        // Check browser extension context
+        const browserExtensionContext = !!(window.chrome?.runtime?.getManifest ||
+            window.browser?.runtime?.getManifest);
+        // Check DOM ready state
+        const domReady = document.readyState === "complete";
+        return {
+            elementsWithCodePressData: codepressElements.length,
+            shadowDomElements,
+            eventListeners,
+            browserExtensionContext,
+            domReady,
+            errors,
+        };
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        errors.push(errorMessage);
+        logger.error("Error during drag & drop debug:", error);
+        return {
+            elementsWithCodePressData: 0,
+            shadowDomElements: 0,
+            eventListeners: [],
+            browserExtensionContext: false,
+            domReady: false,
+            errors,
+        };
+    }
+}
+export function testDragHandlePositioning() {
+    const elements = document.querySelectorAll("[codepress-data-fp]");
+    elements.forEach((element, index) => {
+        const rect = element.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        // Create a test drag handle
+        const testHandle = document.createElement("div");
+        testHandle.style.cssText = `
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #ff0000;
+      color: white;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+      pointer-events: auto;
+      border-radius: 3px;
+      left: ${rect.left + scrollLeft - 10}px;
+      top: ${rect.top + scrollTop - 10}px;
+    `;
+        testHandle.textContent = String(index + 1);
+        testHandle.title = `Test handle for ${element.tagName}`;
+        // Add click handler to test interactivity
+        testHandle.addEventListener("click", () => {
+            logger.info(`Test handle ${index + 1} clicked for element:`, element);
+            testHandle.style.background = "#00ff00";
+            setTimeout(() => {
+                testHandle.style.background = "#ff0000";
+            }, 500);
+        });
+        document.body.appendChild(testHandle);
+        // Remove after 10 seconds
+        setTimeout(() => {
+            testHandle.remove();
+        }, 10000);
+    });
+    console.log(`[CodePress Debug] Created ${elements.length} test drag handles. They will disappear in 10 seconds.`);
+}
+export function logCodePressElementsStructure() {
+    const elements = document.querySelectorAll("[codepress-data-fp]");
+    const structure = Array.from(elements).map((el) => ({
+        tagName: el.tagName,
+        codepressDataFp: el.getAttribute("codepress-data-fp"),
+        textContent: el.textContent?.substring(0, 50) + "...",
+        className: el.className,
+        id: el.id,
+        children: el.children.length,
+        parent: el.parentElement?.tagName,
+        boundingRect: el.getBoundingClientRect(),
+    }));
+    logger.info("CodePress Elements Structure:", structure);
+    console.table(structure);
+}
+// Setup global debug functions for manual testing (no auto-run)
+if (typeof window !== "undefined") {
+    // Add global debug functions for manual testing
+    window.codepressDebug = {
+        debugDragDropSetup,
+        testDragHandlePositioning,
+        logCodePressElementsStructure,
+    };
+}

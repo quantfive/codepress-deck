@@ -1,0 +1,39 @@
+import r from "./index245.js";
+import m from "./index247.js";
+import "react";
+import { j as a } from "./index7.js";
+var c = ["className", "prefixCls", "left", "top", "style", "fillProps"], b = (o) => {
+  var {
+    className: l,
+    prefixCls: t,
+    left: s,
+    top: i,
+    style: p,
+    fillProps: e
+  } = o, n = m(o, c), x = r({}, p, {
+    position: "absolute",
+    left: s,
+    top: i
+  }), d = r({
+    width: 18,
+    height: 18,
+    boxShadow: "var(--alpha-pointer-box-shadow)",
+    borderRadius: "50%",
+    backgroundColor: "var(--alpha-pointer-background-color)"
+  }, e?.style, {
+    transform: s ? "translate(-9px, -1px)" : "translate(-1px, -9px)"
+  });
+  return /* @__PURE__ */ a.jsx("div", r({
+    className: t + "-pointer " + (l || ""),
+    style: x
+  }, n, {
+    children: /* @__PURE__ */ a.jsx("div", r({
+      className: t + "-fill"
+    }, e, {
+      style: d
+    }))
+  }));
+};
+export {
+  b as Pointer
+};

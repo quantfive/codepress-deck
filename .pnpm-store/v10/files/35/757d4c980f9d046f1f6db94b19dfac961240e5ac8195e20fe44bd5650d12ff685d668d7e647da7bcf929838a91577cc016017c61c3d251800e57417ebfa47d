@@ -1,0 +1,86 @@
+import { j as n } from "./index7.js";
+import { useState as g, useEffect as $ } from "react";
+import { Input as y } from "./index51.js";
+import { Select as C, SelectTrigger as E, SelectValue as b, SelectContent as I, SelectItem as U } from "./index56.js";
+const h = [
+  "px",
+  "rem",
+  "em",
+  "%",
+  "vh",
+  "vw",
+  "vmin",
+  "vmax",
+  "ex",
+  "ch",
+  "fr",
+  "auto",
+  "inherit",
+  "initial",
+  "unset"
+], w = (s) => {
+  if (!s || s.trim() === "")
+    return { numeric: "", unit: "px" };
+  const t = s.trim();
+  if (h.includes(t) && !t.match(/^\d/))
+    return { numeric: "", unit: t };
+  const i = t.match(/^(-?\d*\.?\d*)(.*)$/);
+  if (i) {
+    const l = i[1] || "", c = i[2] || "px";
+    return { numeric: l, unit: h.includes(c) ? c : "px" };
+  }
+  return { numeric: t, unit: "px" };
+}, R = ({
+  id: s,
+  className: t,
+  value: i,
+  placeholder: l,
+  onChange: c,
+  onCommit: d,
+  container: v,
+  startEnhancer: S
+}) => {
+  const [o, x] = g(""), [a, p] = g("px");
+  $(() => {
+    const { numeric: e, unit: r } = w(i);
+    x(e), p(r);
+  }, [i]);
+  const j = (e) => {
+    const r = e.target.value;
+    x(r);
+    const u = r === "" ? "" : `${r}${a}`, f = {
+      ...e,
+      target: { ...e.target, value: u }
+    };
+    c(f);
+  }, V = (e) => {
+    p(e);
+    const u = !!e.match(/^(auto|inherit|initial|unset)$/) ? e : o === "" ? "" : `${o}${e}`;
+    c({
+      target: { value: u },
+      currentTarget: { value: u }
+    });
+  }, N = (e) => {
+    d && d(e);
+  }, m = !!a.match(/^(auto|inherit|initial|unset)$/);
+  return /* @__PURE__ */ n.jsx("div", { className: "flex items-center gap-1", children: /* @__PURE__ */ n.jsx(
+    y,
+    {
+      id: s,
+      className: t,
+      value: m ? "" : o,
+      placeholder: m ? a : l,
+      onChange: j,
+      onCommit: N,
+      disabled: m,
+      startEnhancer: S,
+      endEnhancer: /* @__PURE__ */ n.jsxs(C, { value: a, onValueChange: V, children: [
+        /* @__PURE__ */ n.jsx(E, { size: "sm", className: "w-16 h-6 px-1 text-xs border-none bg-transparent hover:bg-slate-100", children: /* @__PURE__ */ n.jsx(b, {}) }),
+        /* @__PURE__ */ n.jsx(I, { container: v, children: h.map((e) => /* @__PURE__ */ n.jsx(U, { value: e, className: "text-xs", children: e }, e)) })
+      ] })
+    }
+  ) });
+};
+export {
+  R as InputWithUnitSelect
+};

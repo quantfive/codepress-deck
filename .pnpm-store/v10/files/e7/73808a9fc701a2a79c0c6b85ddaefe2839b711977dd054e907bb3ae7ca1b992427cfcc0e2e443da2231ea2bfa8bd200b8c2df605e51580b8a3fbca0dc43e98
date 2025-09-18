@@ -1,0 +1,10 @@
+const S = "_sentryScope", e = "_sentryIsolationScope";
+function t(o) {
+  return {
+    scope: o[S],
+    isolationScope: o[e]
+  };
+}
+export {
+  t as getCapturedScopesOnSpan
+};

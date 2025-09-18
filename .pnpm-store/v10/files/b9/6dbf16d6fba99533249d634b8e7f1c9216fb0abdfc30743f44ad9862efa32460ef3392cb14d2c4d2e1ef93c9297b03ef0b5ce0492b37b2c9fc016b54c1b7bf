@@ -1,0 +1,37 @@
+import { j as e } from "./index7.js";
+import * as d from "react";
+import { Input as m } from "./index51.js";
+import { Popover as p, PopoverAnchor as l, PopoverTrigger as h, PopoverContent as f } from "./index57.js";
+import { usePopoverContainer as x } from "./index9.js";
+import u from "./index88.js";
+const v = d.forwardRef(
+  ({ popoverContent: o, triggerIcon: r, container: t, className: s, ...n }, i) => {
+    const a = x(), c = /* @__PURE__ */ e.jsx("div", { className: "flex items-center justify-center hover:bg-slate-100 rounded-md cursor-pointer w-5 h-5", children: /* @__PURE__ */ e.jsx(u, { className: "w-4 h-4 text-slate-500" }) });
+    return /* @__PURE__ */ e.jsxs(p, { children: [
+      /* @__PURE__ */ e.jsx(l, { className: "block", children: /* @__PURE__ */ e.jsx(
+        m,
+        {
+          ref: i,
+          className: s,
+          ...n,
+          endEnhancer: /* @__PURE__ */ e.jsx(h, { asChild: !0, children: r || c })
+        }
+      ) }),
+      /* @__PURE__ */ e.jsx(
+        f,
+        {
+          side: "bottom",
+          align: "start",
+          sideOffset: 16,
+          className: "w-72 p-3 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]",
+          container: t ?? a ?? void 0,
+          children: o
+        }
+      )
+    ] });
+  }
+);
+v.displayName = "InputWithPopover";
+export {
+  v as InputWithPopover
+};

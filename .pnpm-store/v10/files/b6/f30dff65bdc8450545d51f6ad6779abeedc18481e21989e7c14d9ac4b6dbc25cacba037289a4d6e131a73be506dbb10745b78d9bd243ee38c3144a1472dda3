@@ -1,0 +1,36 @@
+import { j as e } from "./index7.js";
+import c from "react";
+import { cn as f } from "./index29.js";
+const u = c.forwardRef(
+  ({
+    icon: t,
+    onClick: r,
+    isActive: n = !1,
+    className: s = "",
+    children: a,
+    disabled: o = !1,
+    tooltip: i
+  }, l) => /* @__PURE__ */ e.jsxs(
+    "button",
+    {
+      ref: l,
+      className: f(
+        "px-3 py-2 border-none rounded-md cursor-pointer flex items-center justify-center text-base font-bold transition-colors duration-200",
+        n ? "bg-slate-200" : "bg-transparent hover:bg-slate-100",
+        o && "cursor-not-allowed opacity-50",
+        s
+      ),
+      onClick: r,
+      disabled: o,
+      title: i,
+      children: [
+        t && /* @__PURE__ */ e.jsx(t, { size: 16 }),
+        a
+      ]
+    }
+  )
+);
+u.displayName = "ActionButton";
+export {
+  u as default
+};

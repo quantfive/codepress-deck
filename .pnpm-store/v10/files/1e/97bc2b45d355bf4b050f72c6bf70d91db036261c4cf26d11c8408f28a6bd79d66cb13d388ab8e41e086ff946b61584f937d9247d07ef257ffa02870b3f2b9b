@@ -1,0 +1,158 @@
+import { j as S } from "./index7.js";
+import b from "react";
+import k from "./index22.js";
+import { Toaster as R } from "./index23.js";
+import q from "./index4.js";
+import { PortalProvider as L } from "./index24.js";
+import { setTokenProvider as j, setToken as O } from "./index25.js";
+import { setApiBaseUrlOverride as T } from "./index26.js";
+import w from "./index27.js";
+function M(t) {
+  const e = () => {
+    t.querySelector("style[data-sonner-style]") || document.head.querySelectorAll("style").forEach((o) => {
+      if ((o.textContent || "").includes("[data-sonner-toaster]")) {
+        const i = o.cloneNode(!0);
+        i.setAttribute("data-sonner-style", ""), (t.querySelector("head") ?? t).appendChild(i);
+      }
+    });
+  };
+  e();
+  const d = new MutationObserver(() => e());
+  return d.observe(document.head, { childList: !0, subtree: !0 }), () => d.disconnect();
+}
+function N(t) {
+  try {
+    let e = t;
+    return e = e.replace(/:root(?![\w-])/g, ":host"), e = e.replace(/(^|[\s,{])html(?![\w-])/g, "$1:host"), e = e.replace(/(^|[\s,{])body(?![\w-])/g, "$1:host"), e;
+  } catch {
+    return t;
+  }
+}
+function P(t, e) {
+  const d = "codepress:globals", o = (s) => {
+    if (t.querySelector('style[data-codepress-style="globals"]')) return;
+    const l = s.textContent || "", n = document.createElement("style");
+    n.textContent = N(l), n.setAttribute("data-codepress-style", "globals"), (e ?? t).appendChild(n);
+  }, u = async (s) => {
+    const l = s.getAttribute("href");
+    if (!l || t.querySelector(
+      'link[data-codepress-style="globals-link"][href="' + l + '"]'
+    ) || t.querySelector('style[data-codepress-style="globals"]'))
+      return;
+    const n = document.createElement("link");
+    n.rel = "stylesheet", n.href = l, n.setAttribute("data-codepress-style", "globals-link"), (e ?? t).appendChild(n);
+  }, i = () => {
+    if (e.dataset?.codepressGlobals === "true") return;
+    const s = Array.from(document.head.querySelectorAll("style"));
+    for (const a of s) {
+      const y = a.textContent || "";
+      if (y.includes(d) || y.includes("[data-codepress-editing")) {
+        o(a);
+        return;
+      }
+    }
+    const l = Array.from(
+      document.head.querySelectorAll('link[rel="stylesheet"]')
+    ), n = l.find(
+      (a) => (a.getAttribute("href") || "").includes("/style.css")
+    );
+    if (n) {
+      u(n);
+      return;
+    }
+    l.forEach((a) => u(a));
+  };
+  i();
+  const p = new MutationObserver(() => i());
+  return p.observe(document.head, { childList: !0, subtree: !0 }), () => p.disconnect();
+}
+function _(t, e) {
+  try {
+    const d = new URL("../style.css", import.meta.url).toString();
+    if (!t.querySelector(
+      'link[data-codepress-style="globals-link"][href="' + d + '"]'
+    ) && !t.querySelector('style[data-codepress-style="globals"]')) {
+      const o = document.createElement("link");
+      o.rel = "stylesheet", o.href = d, o.setAttribute("data-codepress-style", "globals-link"), (e ?? t).appendChild(o);
+    }
+  } catch {
+  }
+}
+function K({
+  container: t,
+  apiBaseUrl: e,
+  oauthBaseUrl: d,
+  token: o,
+  tokenProvider: u,
+  demo: i = !1,
+  useShadow: p = !1
+}) {
+  const s = b.useRef(null), l = b.useRef(null), n = b.useRef(
+    null
+  );
+  return b.useEffect(() => {
+    if (typeof window > "u") return;
+    e && T(e), u && j(u), typeof o < "u" && O(o);
+    const a = t ?? document.body, y = document.createElement("div");
+    s.current = y, a.appendChild(y);
+    const r = p ? y.attachShadow({ mode: "open" }) : null;
+    r && (l.current = r);
+    const c = r ? document.createElement("head") : null;
+    if (c && r && r.appendChild(c), p && c && r) {
+      const f = `${w}`;
+      try {
+        const m = r.adoptedStyleSheets;
+        if (m && typeof CSSStyleSheet < "u") {
+          const h = new CSSStyleSheet();
+          h.replaceSync(f), r.adoptedStyleSheets = [...m, h];
+        } else {
+          const h = document.createElement("style");
+          h.textContent = f, h.setAttribute("data-codepress-style", "deps"), c.appendChild(h);
+        }
+      } catch {
+        const m = document.createElement("style");
+        m.textContent = f, m.setAttribute("data-codepress-style", "deps"), c.appendChild(m);
+      }
+    }
+    const x = p && c && r ? (_(r, c), P(r, c)) : null;
+    if (c) {
+      const f = document.createElement("style");
+      f.textContent = `
+        [data-codepress-root] {
+          position: relative;
+        }
+      `, c.appendChild(f);
+    }
+    const C = r ? document.createElement("div") : y;
+    r && r.appendChild(C);
+    const E = document.createElement("div");
+    E.setAttribute("data-codepress-portal", ""), C.appendChild(E);
+    const g = document.createElement("div");
+    g.id = "codepress-ui-editor", C.appendChild(g);
+    const A = r ? M(r) : void 0, v = k.createRoot(g);
+    return n.current = v, v.render(
+      /* @__PURE__ */ S.jsxs(L, { container: E, children: [
+        /* @__PURE__ */ S.jsx("div", { "data-codepress-portal": "", children: /* @__PURE__ */ S.jsx(R, { richColors: !0, position: "top-center", closeButton: !0 }) }),
+        /* @__PURE__ */ S.jsx(q, { demo: i })
+      ] })
+    ), () => {
+      try {
+        A?.();
+      } catch {
+      }
+      try {
+        x?.();
+      } catch {
+      }
+      try {
+        n.current?.unmount();
+      } catch {
+      }
+      s.current && s.current.parentNode && s.current.parentNode.removeChild(s.current), s.current = null, l.current = null, n.current = null;
+    };
+  }, [t, e, d, o, u, i]), null;
+}
+export {
+  K as CodepressEditor,
+  K as default
+};

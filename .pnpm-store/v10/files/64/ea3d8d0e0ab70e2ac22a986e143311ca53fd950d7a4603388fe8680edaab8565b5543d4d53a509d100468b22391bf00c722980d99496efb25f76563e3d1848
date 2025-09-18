@@ -1,0 +1,27 @@
+import { j as e } from "./index7.js";
+import { BRANCH_PREFIX as l } from "./index60.js";
+const c = ({
+  value: n,
+  onChange: t,
+  placeholder: a = "Enter branch name",
+  showPrefix: r = !1,
+  className: o = "",
+  id: s,
+  onKeyDown: d
+}) => /* @__PURE__ */ e.jsxs("div", { className: "flex", children: [
+  r && /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center px-3 text-sm font-mono bg-gray-100 text-gray-700 border border-gray-300 border-r-0 rounded-l-md", children: l }),
+  /* @__PURE__ */ e.jsx(
+    "input",
+    {
+      id: s,
+      className: `w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none ${r ? "rounded-r-md" : "rounded-md"} ${o}`,
+      placeholder: a,
+      value: n,
+      onChange: (m) => t(m.target.value),
+      onKeyDown: d
+    }
+  )
+] });
+export {
+  c as default
+};

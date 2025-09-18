@@ -1,0 +1,42 @@
+import { isString as s } from "./index132.js";
+const f = "sentry-", d = /^sentry-/;
+function p(r) {
+  const n = m(r);
+  if (!n)
+    return;
+  const t = Object.entries(n).reduce((e, [i, c]) => {
+    if (i.match(d)) {
+      const u = i.slice(f.length);
+      e[u] = c;
+    }
+    return e;
+  }, {});
+  if (Object.keys(t).length > 0)
+    return t;
+}
+function m(r) {
+  if (!(!r || !s(r) && !Array.isArray(r)))
+    return Array.isArray(r) ? r.reduce((n, t) => {
+      const e = o(t);
+      return Object.entries(e).forEach(([i, c]) => {
+        n[i] = c;
+      }), n;
+    }, {}) : o(r);
+}
+function o(r) {
+  return r.split(",").map(
+    (n) => n.split("=").map((t) => {
+      try {
+        return decodeURIComponent(t.trim());
+      } catch {
+        return;
+      }
+    })
+  ).reduce((n, [t, e]) => (t && e && (n[t] = e), n), {});
+}
+export {
+  f as SENTRY_BAGGAGE_KEY_PREFIX,
+  d as SENTRY_BAGGAGE_KEY_PREFIX_REGEX,
+  p as baggageHeaderToDynamicSamplingContext,
+  m as parseBaggageHeader
+};

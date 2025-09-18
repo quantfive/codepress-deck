@@ -1,0 +1,17 @@
+import * as React from "react";
+export interface LabelWrapperProps extends React.HTMLAttributes<HTMLDivElement> {
+    /** Text or node to display as the label */
+    label: React.ReactNode;
+    /** Render the label to the left of the child instead of above */
+    inline?: boolean;
+    /** Additional Tailwind / class names to apply to the label */
+    labelClassName?: string;
+    /** Pass-through htmlFor to associate the label with a form control */
+    htmlFor?: string;
+}
+/**
+ * Arrange a label with its child either inline (label on the left) or stacked
+ * (label above). Useful for form inputs and other labelled elements.
+ */
+export declare const LabelWrapper: React.ForwardRefExoticComponent<LabelWrapperProps & React.RefAttributes<HTMLDivElement>>;
+//# sourceMappingURL=LabelWrapper.d.ts.map

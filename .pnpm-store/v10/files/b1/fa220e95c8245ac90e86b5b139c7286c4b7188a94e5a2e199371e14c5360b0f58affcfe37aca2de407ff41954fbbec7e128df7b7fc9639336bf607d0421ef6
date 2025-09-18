@@ -1,0 +1,793 @@
+/**
+ * Simple Drag & Drop System for CodePress
+ *
+ * A straightforward implementation that integrates directly with the existing
+ * hover/selection system without the complexity of @dnd-kit.
+ */
+export class SimpleDragDrop {
+    constructor(options = {}) {
+        this.isDragging = false;
+        this.isLongPressActive = false;
+        this.longPressTimer = null;
+        this.longPressStartPos = { x: 0, y: 0 };
+        this.longPressElement = null;
+        this.draggedElement = null;
+        this.ghostElement = null;
+        this.dropIndicator = null;
+        this.currentDropContainer = null;
+        this.dragStartPos = { x: 0, y: 0 };
+        this.currentDropTarget = null;
+        this.currentDropPosition = "inside";
+        this.handleMouseDown = (e) => {
+            const target = e.target;
+            // Skip if clicking on UI elements or already dragging
+            if (this.isDragging || this.isUiElement(target)) {
+                return;
+            }
+            // Find the nearest draggable element
+            const draggableElement = this.findDraggableElement(target);
+            if (!draggableElement) {
+                return;
+            }
+            // Start long-press detection
+            this.startLongPress(draggableElement, e);
+        };
+        this.handleMouseMove = (e) => {
+            // Check for long-press movement first
+            if (this.longPressElement && !this.isLongPressActive) {
+                const movementDetected = this.checkLongPressMovement(e);
+                if (movementDetected) {
+                    return; // Long-press was cancelled due to movement
+                }
+            }
+            // Handle active dragging
+            if (this.isDragging && this.ghostElement && this.draggedElement) {
+                // Update ghost position
+                const rect = this.draggedElement.getBoundingClientRect();
+                this.ghostElement.style.left = `${e.pageX - rect.width / 2}px`;
+                this.ghostElement.style.top = `${e.pageY - rect.height / 2}px`;
+                // Update drop target
+                this.updateDropTarget(e);
+            }
+            // Handle long-press drag activation
+            if (this.isLongPressActive && !this.isDragging && this.longPressElement) {
+                // Start dragging when moving after long-press is active
+                this.startDragging(this.longPressElement, e);
+                this.cancelLongPress(); // Clear long-press state
+            }
+        };
+        this.handleMouseUp = (e) => {
+            // Handle drag completion
+            if (this.isDragging) {
+                // Perform drop if we have a valid target
+                if (this.currentDropTarget) {
+                    this.performDrop();
+                }
+                // Cleanup drag state
+                this.cleanup();
+            }
+            // Cancel any pending long-press
+            if (this.longPressElement && !this.isDragging) {
+                this.cancelLongPress();
+            }
+        };
+        this.options = {
+            onDropElement: options.onDropElement || (() => { }),
+            dropZoneColor: options.dropZoneColor || "#2563eb",
+            ghostOpacity: options.ghostOpacity || 0.6,
+            longPressDuration: options.longPressDuration || 500,
+            movementThreshold: options.movementThreshold || 5,
+        };
+        this.init();
+    }
+    init() {
+        this.createStyles();
+        this.bindGlobalEvents();
+    }
+    createStyles() {
+        const styleId = "simple-drag-drop-styles";
+        if (document.getElementById(styleId))
+            return;
+        const styles = `
+      .simple-long-press-active {
+        cursor: grabbing !important;
+        background: rgba(37, 99, 235, 0.1) !important;
+        outline: 2px solid ${this.options.dropZoneColor} !important;
+        outline-offset: 1px !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
+        transition: all 0.2s ease !important;
+        position: relative !important;
+      }
+      
+      .simple-long-press-active::after {
+        content: "Drag mode activated - move to drag";
+        position: absolute;
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 1000000;
+        animation: simple-tooltip-appear 0.2s ease;
+      }
+      
+      @keyframes simple-tooltip-appear {
+        from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+      
+      .simple-ghost-element {
+        position: absolute;
+        opacity: ${this.options.ghostOpacity};
+        pointer-events: none;
+        z-index: 1000000;
+        border: 2px dashed ${this.options.dropZoneColor};
+        background: rgba(37, 99, 235, 0.1);
+        border-radius: 4px;
+        transform: rotate(2deg);
+      }
+      
+      .simple-drop-indicator {
+        position: absolute;
+        background: ${this.options.dropZoneColor};
+        pointer-events: none;
+        z-index: 999998;
+        border-radius: 2px;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.2);
+        transition: all 0.1s ease;
+      }
+      
+      .simple-drop-indicator.horizontal {
+        height: 2px;
+        min-width: 20px;
+      }
+      
+      .simple-drop-indicator.vertical {
+        width: 4px;
+        min-height: 40px;
+      }
+      
+      .simple-drop-target-highlight {
+        outline: 2px solid ${this.options.dropZoneColor} !important;
+        outline-offset: 2px !important;
+        background: rgba(37, 99, 235, 0.05) !important;
+      }
+      
+      .simple-drop-container-highlight {
+        background: rgba(37, 99, 235, 0.08) !important;
+        outline: 2px dashed ${this.options.dropZoneColor} !important;
+        outline-offset: 4px !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+        position: relative !important;
+      }
+      
+      .simple-drop-container-highlight::before {
+        content: "Drop Container";
+        position: absolute !important;
+        top: -8px !important;
+        left: 8px !important;
+        background: ${this.options.dropZoneColor} !important;
+        color: white !important;
+        padding: 2px 8px !important;
+        border-radius: 4px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+        z-index: 999999 !important;
+        pointer-events: none !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+      }
+      
+      .simple-dragging-source {
+        opacity: 0.3 !important;
+        transition: opacity 0.2s ease !important;
+      }
+      
+      body.simple-dragging {
+        cursor: grabbing !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
+      
+      body.simple-dragging * {
+        pointer-events: none !important;
+      }
+    `;
+        const styleElement = document.createElement("style");
+        styleElement.id = styleId;
+        styleElement.textContent = styles;
+        document.head.appendChild(styleElement);
+    }
+    bindGlobalEvents() {
+        document.addEventListener("mousemove", this.handleMouseMove);
+        document.addEventListener("mouseup", this.handleMouseUp);
+        document.addEventListener("mousedown", this.handleMouseDown);
+    }
+    enableDragOnElement(element) {
+        // Elements are now draggable via long-press automatically
+        // No need to add visual handles - the long-press will activate drag mode
+    }
+    disableDragOnElement(element) {
+        // Clear any active long-press state for this element
+        if (this.longPressElement === element) {
+            this.cancelLongPress();
+        }
+        // Remove visual feedback
+        element.classList.remove("simple-long-press-active");
+    }
+    startLongPress(element, e) {
+        // Cancel any existing long-press
+        this.cancelLongPress();
+        this.longPressElement = element;
+        this.longPressStartPos = { x: e.clientX, y: e.clientY };
+        this.isLongPressActive = false;
+        this.longPressTimer = window.setTimeout(() => {
+            if (this.longPressElement === element) {
+                this.activateLongPress();
+            }
+        }, this.options.longPressDuration);
+    }
+    cancelLongPress() {
+        if (this.longPressTimer) {
+            clearTimeout(this.longPressTimer);
+            this.longPressTimer = null;
+        }
+        if (this.longPressElement) {
+            this.longPressElement.classList.remove("simple-long-press-active");
+        }
+        this.longPressElement = null;
+        this.isLongPressActive = false;
+    }
+    activateLongPress() {
+        if (!this.longPressElement)
+            return;
+        this.isLongPressActive = true;
+        this.longPressElement.classList.add("simple-long-press-active");
+        // Provide haptic feedback if available
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+    }
+    checkLongPressMovement(e) {
+        if (!this.longPressElement || this.isLongPressActive)
+            return false;
+        const deltaX = Math.abs(e.clientX - this.longPressStartPos.x);
+        const deltaY = Math.abs(e.clientY - this.longPressStartPos.y);
+        const totalMovement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        if (totalMovement > this.options.movementThreshold) {
+            this.cancelLongPress();
+            return true; // Movement detected, cancel long-press
+        }
+        return false; // No significant movement
+    }
+    getElementId(element) {
+        return element.getAttribute("codepress-data-fp") || `element-${Date.now()}`;
+    }
+    findDraggableElement(element) {
+        // Look for an element that's reasonable to drag (same logic as findValidDropTarget)
+        let current = element;
+        let depth = 0;
+        while (current && current !== document.body && depth < 10) {
+            // Skip UI elements
+            if (this.isUiElement(current)) {
+                current = current.parentElement;
+                depth++;
+                continue;
+            }
+            // Accept any reasonable HTML element as draggable
+            if (current.tagName &&
+                current.tagName !== "HTML" &&
+                current.tagName !== "HEAD" &&
+                current.tagName !== "SCRIPT" &&
+                current.tagName !== "STYLE" &&
+                current.tagName !== "META" &&
+                current.tagName !== "LINK") {
+                return current;
+            }
+            current = current.parentElement;
+            depth++;
+        }
+        return null;
+    }
+    isUiElement(element) {
+        return !!(element.closest("[data-codepress-root], [data-codepress-portal]") ||
+            element.classList.contains("simple-long-press-active") ||
+            element.classList.contains("simple-ghost-element") ||
+            element.classList.contains("simple-drop-indicator"));
+    }
+    startDragging(element, e) {
+        this.isDragging = true;
+        this.draggedElement = element;
+        this.dragStartPos = { x: e.clientX, y: e.clientY };
+        // Add dragging state
+        document.body.classList.add("simple-dragging");
+        element.classList.add("simple-dragging-source");
+        // Create ghost element
+        this.createGhostElement(element, e);
+    }
+    createGhostElement(element, e) {
+        const rect = element.getBoundingClientRect();
+        this.ghostElement = element.cloneNode(true);
+        this.ghostElement.className += " simple-ghost-element";
+        // Position and size ghost
+        this.ghostElement.style.width = `${rect.width}px`;
+        this.ghostElement.style.height = `${rect.height}px`;
+        this.ghostElement.style.left = `${e.pageX - rect.width / 2}px`;
+        this.ghostElement.style.top = `${e.pageY - rect.height / 2}px`;
+        // Remove any drag handles from ghost
+        const ghostHandles = this.ghostElement.querySelectorAll(".simple-drag-handle");
+        ghostHandles.forEach((handle) => handle.remove());
+        document.body.appendChild(this.ghostElement);
+    }
+    updateDropTarget(e) {
+        // Temporarily enable pointer events to detect elements under cursor
+        document.body.classList.remove("simple-dragging");
+        // Hide ghost temporarily to get element under cursor
+        if (this.ghostElement) {
+            this.ghostElement.style.display = "none";
+        }
+        const elementUnder = document.elementFromPoint(e.clientX, e.clientY);
+        // Restore dragging state and ghost
+        if (this.ghostElement) {
+            this.ghostElement.style.display = "block";
+        }
+        document.body.classList.add("simple-dragging");
+        // Find valid drop target
+        const dropTarget = this.findValidDropTarget(elementUnder, e);
+        if (dropTarget && dropTarget !== this.draggedElement) {
+            if (dropTarget !== this.currentDropTarget) {
+                this.currentDropTarget = dropTarget;
+                this.showDropIndicator(dropTarget, e);
+            }
+        }
+        else {
+            this.clearDropIndicator();
+            this.currentDropTarget = null;
+            this.currentDropContainer = null;
+        }
+    }
+    findValidDropTarget(element, e) {
+        if (!element) {
+            return null;
+        }
+        let current = element;
+        let depth = 0;
+        while (current && current !== document.body && depth < 20) {
+            // Skip the dragged element and its children
+            if (current === this.draggedElement ||
+                (this.draggedElement && this.draggedElement.contains(current))) {
+                current = current.parentElement;
+                depth++;
+                continue;
+            }
+            // Skip our own UI elements
+            if (this.isUiElement(current)) {
+                current = current.parentElement;
+                depth++;
+                continue;
+            }
+            // Special handling for flex/grid containers with children
+            // Instead of targeting the container, find the nearest child
+            if (this.isFlexOrGridContainer(current) && current.children.length > 0) {
+                const nearestChild = this.findNearestChild(current, e);
+                if (nearestChild && nearestChild !== this.draggedElement) {
+                    return nearestChild;
+                }
+            }
+            // Accept any reasonable HTML element as a drop target
+            if (current.tagName &&
+                current.tagName !== "HTML" &&
+                current.tagName !== "HEAD" &&
+                current.tagName !== "SCRIPT" &&
+                current.tagName !== "STYLE" &&
+                current.tagName !== "META" &&
+                current.tagName !== "LINK") {
+                return current;
+            }
+            current = current.parentElement;
+            depth++;
+        }
+        return null;
+    }
+    findNearestChild(container, e) {
+        const children = Array.from(container.children).filter((child) => child instanceof HTMLElement &&
+            child !== this.draggedElement &&
+            !this.draggedElement?.contains(child));
+        if (children.length === 0) {
+            return null;
+        }
+        let nearestChild = null;
+        let minDistance = Infinity;
+        children.forEach((child) => {
+            const rect = child.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            // Calculate distance from mouse to center of child
+            const distance = Math.sqrt(Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2));
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestChild = child;
+            }
+        });
+        return nearestChild;
+    }
+    showDropIndicator(target, e) {
+        this.clearDropIndicator();
+        const rect = target.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        // Check if the parent container uses flex, grid, or has inline children
+        const parentElement = target.parentElement;
+        const isFlexOrGrid = this.isFlexOrGridContainer(parentElement);
+        const isInlineElement = this.isInlineElement(target);
+        const isGridItem = this.isGridItem(target, parentElement);
+        const isFlexItem = this.isFlexItem(target, parentElement);
+        // Calculate relative positions
+        const relativeX = e.clientX - rect.left;
+        const relativeY = e.clientY - rect.top;
+        // Determine drop position based on layout type
+        const shouldUseHorizontal = (isFlexOrGrid && this.shouldUseHorizontalDropping(parentElement)) ||
+            isInlineElement ||
+            isGridItem ||
+            isFlexItem;
+        // Make thresholds more forgiving based on layout type
+        const xThreshold = shouldUseHorizontal
+            ? Math.max(rect.width * 0.4, 60)
+            : rect.width * 0.25;
+        const yThreshold = shouldUseHorizontal
+            ? rect.height * 0.2
+            : rect.height * 0.25;
+        if (shouldUseHorizontal) {
+            // For flex/grid layouts, prioritize left/right positioning with generous zones
+            const leftZone = relativeX < xThreshold;
+            const rightZone = relativeX > rect.width - xThreshold;
+            const topZone = relativeY < yThreshold;
+            const bottomZone = relativeY > rect.height - yThreshold;
+            // Prioritize horizontal zones for better UX in grid/flex layouts
+            if (leftZone) {
+                this.currentDropPosition = "left";
+            }
+            else if (rightZone) {
+                this.currentDropPosition = "right";
+            }
+            else if (topZone && !leftZone && !rightZone) {
+                this.currentDropPosition = "before";
+            }
+            else if (bottomZone && !leftZone && !rightZone) {
+                this.currentDropPosition = "after";
+            }
+            else {
+                this.currentDropPosition = "inside";
+            }
+        }
+        else {
+            // Traditional vertical layout - use before/after/inside
+            if (relativeY < yThreshold) {
+                this.currentDropPosition = "before";
+            }
+            else if (relativeY > rect.height - yThreshold) {
+                this.currentDropPosition = "after";
+            }
+            else {
+                this.currentDropPosition = "inside";
+            }
+        }
+        // Highlight the drop container
+        this.highlightDropContainer(target);
+        // Create visual indicator
+        this.createDropIndicator(target, rect, scrollTop, scrollLeft);
+    }
+    isFlexOrGridContainer(element) {
+        if (!element)
+            return false;
+        const computedStyle = window.getComputedStyle(element);
+        const display = computedStyle.display;
+        return (display === "flex" ||
+            display === "inline-flex" ||
+            display === "grid" ||
+            display === "inline-grid");
+    }
+    isInlineElement(element) {
+        // Check if the element is naturally inline or inline-block
+        const computedStyle = window.getComputedStyle(element);
+        const display = computedStyle.display;
+        // Check for inline elements
+        const isInlineDisplay = display === "inline" ||
+            display === "inline-block" ||
+            display === "inline-flex" ||
+            display === "inline-grid";
+        // Check for common inline tags
+        const inlineTags = [
+            "SPAN",
+            "A",
+            "EM",
+            "STRONG",
+            "B",
+            "I",
+            "U",
+            "CODE",
+            "SMALL",
+            "SUB",
+            "SUP",
+            "MARK",
+            "TIME",
+            "KBD",
+            "SAMP",
+            "VAR",
+        ];
+        const isInlineTag = inlineTags.includes(element.tagName);
+        return isInlineDisplay || isInlineTag;
+    }
+    isGridItem(element, parentElement) {
+        if (!parentElement)
+            return false;
+        const parentStyle = window.getComputedStyle(parentElement);
+        // Check if parent has grid display
+        const hasGridDisplay = parentStyle.display === "grid" || parentStyle.display === "inline-grid";
+        if (!hasGridDisplay)
+            return false;
+        // Check if grid has multiple columns (indicating horizontal layout)
+        const gridTemplateColumns = parentStyle.gridTemplateColumns;
+        const gridAutoFlow = parentStyle.gridAutoFlow || "row";
+        // Multiple columns defined means we have a horizontal grid
+        const hasMultipleColumns = gridTemplateColumns !== "none" &&
+            gridTemplateColumns !== "1fr" &&
+            (gridTemplateColumns.includes(" ") || gridTemplateColumns.includes("fr"));
+        // Check if grid flows horizontally
+        const isRowFlow = gridAutoFlow === "row" || gridAutoFlow === "row dense";
+        const result = hasGridDisplay && hasMultipleColumns && isRowFlow;
+        return result;
+    }
+    isFlexItem(element, parentElement) {
+        if (!parentElement)
+            return false;
+        const parentStyle = window.getComputedStyle(parentElement);
+        // Check if parent has flex display
+        const hasFlexDisplay = parentStyle.display === "flex" || parentStyle.display === "inline-flex";
+        if (!hasFlexDisplay)
+            return false;
+        // Check flex direction - only enable horizontal dropping for row layouts
+        const flexDirection = parentStyle.flexDirection || "row";
+        const isRowLayout = flexDirection === "row" || flexDirection === "row-reverse";
+        const result = hasFlexDisplay && isRowLayout;
+        return result;
+    }
+    shouldUseHorizontalDropping(parentElement) {
+        if (!parentElement)
+            return false;
+        const computedStyle = window.getComputedStyle(parentElement);
+        // Check flex direction - only enable horizontal dropping for row layouts
+        if (computedStyle.display === "flex" ||
+            computedStyle.display === "inline-flex") {
+            const flexDirection = computedStyle.flexDirection || "row"; // Default is row
+            const isRowLayout = flexDirection === "row" || flexDirection === "row-reverse";
+            return isRowLayout;
+        }
+        // For grid, check if it has multiple columns and is actually using them
+        if (computedStyle.display === "grid" ||
+            computedStyle.display === "inline-grid") {
+            const gridTemplateColumns = computedStyle.gridTemplateColumns;
+            const gridAutoFlow = computedStyle.gridAutoFlow || "row";
+            // Check if there are multiple columns defined
+            const hasMultipleColumns = gridTemplateColumns !== "none" &&
+                gridTemplateColumns !== "1fr" &&
+                (gridTemplateColumns.includes(" ") ||
+                    gridTemplateColumns.includes("fr"));
+            // Also check if grid flows in row direction (default)
+            const isRowFlow = gridAutoFlow === "row" || gridAutoFlow === "row dense";
+            return hasMultipleColumns && isRowFlow;
+        }
+        return false;
+    }
+    highlightDropContainer(target) {
+        // Clear previous container highlight
+        if (this.currentDropContainer) {
+            this.currentDropContainer.classList.remove("simple-drop-container-highlight");
+        }
+        // Determine the drop container based on drop position
+        let dropContainer = null;
+        switch (this.currentDropPosition) {
+            case "inside":
+                // Element will be dropped inside the target
+                dropContainer = target;
+                break;
+            case "before":
+            case "after":
+            case "left":
+            case "right":
+                // Element will be dropped as a sibling of the target
+                dropContainer = target.parentElement;
+                break;
+        }
+        if (dropContainer && dropContainer !== this.draggedElement) {
+            dropContainer.classList.add("simple-drop-container-highlight");
+            this.currentDropContainer = dropContainer;
+        }
+        else {
+            this.currentDropContainer = null;
+        }
+    }
+    createDropIndicator(target, rect, scrollTop, scrollLeft) {
+        switch (this.currentDropPosition) {
+            case "before":
+                this.dropIndicator = this.createHorizontalIndicator(rect.left + scrollLeft, rect.top + scrollTop - 1, rect.width, "BEFORE");
+                break;
+            case "after":
+                this.dropIndicator = this.createHorizontalIndicator(rect.left + scrollLeft, rect.bottom + scrollTop - 1, rect.width, "AFTER");
+                break;
+            case "left":
+                const parentElement = target.parentElement;
+                const isInGridOrFlexContainer = parentElement && this.isFlexOrGridContainer(parentElement);
+                if (isInGridOrFlexContainer) {
+                    this.dropIndicator = this.createSiblingIndicator(target, "left", scrollTop, scrollLeft);
+                }
+                else {
+                    this.dropIndicator = this.createVerticalIndicator(rect.left + scrollLeft - 3, rect.top + scrollTop - 10, rect.height + 20, "LEFT");
+                }
+                break;
+            case "right":
+                const parentElementRight = target.parentElement;
+                const isInGridOrFlexContainerRight = parentElementRight && this.isFlexOrGridContainer(parentElementRight);
+                if (isInGridOrFlexContainerRight) {
+                    this.dropIndicator = this.createSiblingIndicator(target, "right", scrollTop, scrollLeft);
+                }
+                else {
+                    this.dropIndicator = this.createVerticalIndicator(rect.right + scrollLeft - 1, rect.top + scrollTop - 10, rect.height + 20, "RIGHT");
+                }
+                break;
+            case "inside":
+                target.classList.add("simple-drop-target-highlight");
+                return; // No indicator element to add to DOM
+        }
+        if (this.dropIndicator) {
+            document.body.appendChild(this.dropIndicator);
+        }
+    }
+    createHorizontalIndicator(left, top, width, logLabel) {
+        const indicator = document.createElement("div");
+        indicator.className = "simple-drop-indicator horizontal";
+        indicator.style.left = `${left}px`;
+        indicator.style.top = `${top}px`;
+        indicator.style.width = `${width}px`;
+        return indicator;
+    }
+    createVerticalIndicator(left, top, height, logLabel) {
+        const indicator = document.createElement("div");
+        indicator.className = "simple-drop-indicator vertical";
+        indicator.style.left = `${left}px`;
+        indicator.style.top = `${top}px`;
+        indicator.style.height = `${height}px`;
+        return indicator;
+    }
+    createSiblingIndicator(target, direction, scrollTop, scrollLeft) {
+        const parentElement = target.parentElement;
+        if (!parentElement)
+            return null;
+        const siblings = Array.from(parentElement.children).filter((child) => child !== this.draggedElement && child instanceof HTMLElement);
+        const targetIndex = siblings.indexOf(target);
+        if (targetIndex === -1)
+            return null;
+        let indicatorTarget;
+        let position;
+        if (direction === "left") {
+            // Position between target and previous sibling (or at start)
+            if (targetIndex === 0) {
+                // First child - show at the left edge of the container
+                indicatorTarget = target;
+                position = "before";
+            }
+            else {
+                // Between previous sibling and target
+                const prevSibling = siblings[targetIndex - 1];
+                const targetRect = target.getBoundingClientRect();
+                const prevRect = prevSibling.getBoundingClientRect();
+                const midPoint = (prevRect.right + targetRect.left) / 2;
+                return this.createVerticalIndicator(midPoint + scrollLeft - 2, Math.min(prevRect.top, targetRect.top) + scrollTop - 10, Math.max(prevRect.height, targetRect.height) + 20, "BETWEEN");
+            }
+        }
+        else {
+            // direction === "right"
+            // Position between target and next sibling (or at end)
+            if (targetIndex === siblings.length - 1) {
+                // Last child - show at the right edge of the target
+                indicatorTarget = target;
+                position = "after";
+            }
+            else {
+                // Between target and next sibling
+                const nextSibling = siblings[targetIndex + 1];
+                const targetRect = target.getBoundingClientRect();
+                const nextRect = nextSibling.getBoundingClientRect();
+                const midPoint = (targetRect.right + nextRect.left) / 2;
+                return this.createVerticalIndicator(midPoint + scrollLeft - 2, Math.min(targetRect.top, nextRect.top) + scrollTop - 10, Math.max(targetRect.height, nextRect.height) + 20, "BETWEEN");
+            }
+        }
+        // Fallback to edge positioning
+        const rect = indicatorTarget.getBoundingClientRect();
+        if (position === "before") {
+            return this.createVerticalIndicator(rect.left + scrollLeft - 3, rect.top + scrollTop - 10, rect.height + 20, "LEFT");
+        }
+        else {
+            return this.createVerticalIndicator(rect.right + scrollLeft - 1, rect.top + scrollTop - 10, rect.height + 20, "RIGHT");
+        }
+    }
+    clearDropIndicator() {
+        if (this.dropIndicator) {
+            this.dropIndicator.remove();
+            this.dropIndicator = null;
+        }
+        // Remove highlights
+        document.querySelectorAll(".simple-drop-target-highlight").forEach((el) => {
+            el.classList.remove("simple-drop-target-highlight");
+        });
+        // Remove container highlights
+        document
+            .querySelectorAll(".simple-drop-container-highlight")
+            .forEach((el) => {
+            el.classList.remove("simple-drop-container-highlight");
+        });
+    }
+    performDrop() {
+        if (!this.currentDropTarget || !this.draggedElement)
+            return;
+        const moveOperation = {
+            source: {
+                element: this.draggedElement,
+                location: this.draggedElement.getAttribute("codepress-data-fp"),
+                tagName: this.draggedElement.tagName,
+            },
+            target: {
+                element: this.currentDropTarget,
+                location: this.currentDropTarget.getAttribute("codepress-data-fp"),
+                tagName: this.currentDropTarget.tagName,
+            },
+            position: this.currentDropPosition,
+        };
+        this.options.onDropElement(moveOperation);
+    }
+    cleanup() {
+        this.isDragging = false;
+        // Remove ghost
+        if (this.ghostElement) {
+            this.ghostElement.remove();
+            this.ghostElement = null;
+        }
+        // Clear drop indicator
+        this.clearDropIndicator();
+        // Remove dragging state
+        document.body.classList.remove("simple-dragging");
+        if (this.draggedElement) {
+            this.draggedElement.classList.remove("simple-dragging-source");
+            this.draggedElement.classList.remove("simple-long-press-active");
+        }
+        // Reset state
+        this.draggedElement = null;
+        this.currentDropTarget = null;
+        this.currentDropPosition = "inside";
+        this.currentDropContainer = null;
+    }
+    destroy() {
+        this.cleanup();
+        this.cancelLongPress();
+        // Remove global event listeners
+        document.removeEventListener("mousemove", this.handleMouseMove);
+        document.removeEventListener("mouseup", this.handleMouseUp);
+        document.removeEventListener("mousedown", this.handleMouseDown);
+        // Remove long-press styling from any elements
+        document.querySelectorAll(".simple-long-press-active").forEach((el) => {
+            el.classList.remove("simple-long-press-active");
+        });
+        // Remove styles
+        const styleElement = document.getElementById("simple-drag-drop-styles");
+        if (styleElement) {
+            styleElement.remove();
+        }
+    }
+}

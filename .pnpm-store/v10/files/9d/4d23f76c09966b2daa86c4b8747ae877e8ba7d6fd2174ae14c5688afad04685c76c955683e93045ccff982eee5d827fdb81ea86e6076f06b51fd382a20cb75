@@ -1,0 +1,53 @@
+import { j as o } from "./index7.js";
+import * as n from "react";
+import { Item as i, Header as c, Trigger as m, Content as d, Root as l } from "./index82.js";
+import { cn as s } from "./index29.js";
+import { FontAwesomeIcon as f } from "@fortawesome/react-fontawesome";
+import { faChevronDown as p } from "@fortawesome/pro-regular-svg-icons";
+const u = l, x = n.forwardRef(({ className: e, ...t }, r) => /* @__PURE__ */ o.jsx(
+  i,
+  {
+    ref: r,
+    className: s("border-b", e),
+    ...t
+  }
+));
+x.displayName = "AccordionItem";
+const g = n.forwardRef(({ className: e, children: t, ...r }, a) => /* @__PURE__ */ o.jsx(c, { className: "flex", children: /* @__PURE__ */ o.jsxs(
+  m,
+  {
+    ref: a,
+    className: s(
+      "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+      e
+    ),
+    ...r,
+    children: [
+      t,
+      /* @__PURE__ */ o.jsx(
+        f,
+        {
+          icon: p,
+          className: "h-4 w-4 shrink-0 transition-transform duration-200"
+        }
+      )
+    ]
+  }
+) }));
+g.displayName = "AccordionTrigger";
+const j = n.forwardRef(({ className: e, children: t, ...r }, a) => /* @__PURE__ */ o.jsx(
+  d,
+  {
+    ref: a,
+    className: "overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+    ...r,
+    children: /* @__PURE__ */ o.jsx("div", { className: s("pb-4 pt-0", e), children: t })
+  }
+));
+j.displayName = "AccordionContent";
+export {
+  u as Accordion,
+  j as AccordionContent,
+  x as AccordionItem,
+  g as AccordionTrigger
+};

@@ -1,0 +1,66 @@
+const A = "?", m = /\(error: (.*)\)/, E = /captureMessage|captureException/;
+function F(...t) {
+  const e = t.sort((n, r) => n[0] - r[0]).map((n) => n[1]);
+  return (n, r = 0, f = 0) => {
+    const s = [], u = n.split(`
+`);
+    for (let i = r; i < u.length; i++) {
+      let c = u[i];
+      c.length > 1024 && (c = c.slice(0, 1024));
+      const p = m.test(c) ? c.replace(m, "$1") : c;
+      if (!p.match(/\S*Error: /)) {
+        for (const R of e) {
+          const l = R(p);
+          if (l) {
+            s.push(l);
+            break;
+          }
+        }
+        if (s.length >= 50 + f)
+          break;
+      }
+    }
+    return h(s.slice(f));
+  };
+}
+function h(t) {
+  if (!t.length)
+    return [];
+  const e = Array.from(t);
+  return /sentryWrapped/.test(o(e).function || "") && e.pop(), e.reverse(), E.test(o(e).function || "") && (e.pop(), E.test(o(e).function || "") && e.pop()), e.slice(0, 50).map((n) => ({
+    ...n,
+    filename: n.filename || o(e).filename,
+    function: n.function || A
+  }));
+}
+function o(t) {
+  return t[t.length - 1] || {};
+}
+const a = "<anonymous>";
+function _(t) {
+  try {
+    return !t || typeof t != "function" ? a : t.name || a;
+  } catch {
+    return a;
+  }
+}
+function T(t) {
+  const e = t.exception;
+  if (e) {
+    const n = [];
+    try {
+      return e.values.forEach((r) => {
+        r.stacktrace.frames && n.push(...r.stacktrace.frames);
+      }), n;
+    } catch {
+      return;
+    }
+  }
+}
+export {
+  A as UNKNOWN_FUNCTION,
+  F as createStackParser,
+  T as getFramesFromEvent,
+  _ as getFunctionName,
+  h as stripSentryFramesAndReverse
+};

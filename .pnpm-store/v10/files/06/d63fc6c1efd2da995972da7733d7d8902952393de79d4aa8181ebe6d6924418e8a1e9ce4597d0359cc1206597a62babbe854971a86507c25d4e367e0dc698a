@@ -1,0 +1,85 @@
+import { isError as l, isRequest as g } from "./index132.js";
+import { fill as y, addNonEnumerableProperty as E } from "./index119.js";
+import { supportsNativeFetch as F } from "./index223.js";
+import { timestampInSeconds as i } from "./index207.js";
+import { GLOBAL_OBJ as f } from "./index117.js";
+import { addHandler as T, maybeInstrument as w, triggerHandlers as s } from "./index222.js";
+function I(t, n) {
+  const r = "fetch";
+  T(r, t), w(r, () => H(void 0, n));
+}
+function H(t, n = !1) {
+  n && !F() || y(f, "fetch", function(r) {
+    return function(...o) {
+      const u = new Error(), { method: c, url: h } = S(o), a = {
+        args: o,
+        fetchData: {
+          method: c,
+          url: h
+        },
+        startTimestamp: i() * 1e3,
+        // // Adding the error to be able to fingerprint the failed fetch event in HttpClient instrumentation
+        virtualError: u,
+        headers: k(o)
+      };
+      return s("fetch", {
+        ...a
+      }), r.apply(f, o).then(
+        async (e) => (s("fetch", {
+          ...a,
+          endTimestamp: i() * 1e3,
+          response: e
+        }), e),
+        (e) => {
+          if (s("fetch", {
+            ...a,
+            endTimestamp: i() * 1e3,
+            error: e
+          }), l(e) && e.stack === void 0 && (e.stack = u.stack, E(e, "framesToPop", 1)), e instanceof TypeError && (e.message === "Failed to fetch" || e.message === "Load failed" || e.message === "NetworkError when attempting to fetch resource."))
+            try {
+              const p = new URL(a.fetchData.url);
+              e.message = `${e.message} (${p.host})`;
+            } catch {
+            }
+          throw e;
+        }
+      );
+    };
+  });
+}
+function m(t, n) {
+  return !!t && typeof t == "object" && !!t[n];
+}
+function d(t) {
+  return typeof t == "string" ? t : t ? m(t, "url") ? t.url : t.toString ? t.toString() : "" : "";
+}
+function S(t) {
+  if (t.length === 0)
+    return { method: "GET", url: "" };
+  if (t.length === 2) {
+    const [r, o] = t;
+    return {
+      url: d(r),
+      method: m(o, "method") ? String(o.method).toUpperCase() : "GET"
+    };
+  }
+  const n = t[0];
+  return {
+    url: d(n),
+    method: m(n, "method") ? String(n.method).toUpperCase() : "GET"
+  };
+}
+function k(t) {
+  const [n, r] = t;
+  try {
+    if (typeof r == "object" && r !== null && "headers" in r && r.headers)
+      return new Headers(r.headers);
+    if (g(n))
+      return new Headers(n.headers);
+  } catch {
+  }
+}
+export {
+  I as addFetchInstrumentationHandler,
+  S as parseFetchArgs
+};

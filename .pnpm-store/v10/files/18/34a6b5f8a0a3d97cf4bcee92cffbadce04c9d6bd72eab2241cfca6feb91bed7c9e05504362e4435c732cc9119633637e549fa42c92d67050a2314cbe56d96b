@@ -1,0 +1,49 @@
+import * as l from "react";
+import { composeRefs as m } from "./index98.js";
+import { j as u } from "./index7.js";
+// @__NO_SIDE_EFFECTS__
+function x(e) {
+  const r = /* @__PURE__ */ y(e), t = l.forwardRef((o, n) => {
+    const { children: i, ...c } = o, s = l.Children.toArray(i), a = s.find(g);
+    if (a) {
+      const f = a.props.children, d = s.map((p) => p === a ? l.Children.count(f) > 1 ? l.Children.only(null) : l.isValidElement(f) ? f.props.children : null : p);
+      return /* @__PURE__ */ u.jsx(r, { ...c, ref: n, children: l.isValidElement(f) ? l.cloneElement(f, void 0, d) : null });
+    }
+    return /* @__PURE__ */ u.jsx(r, { ...c, ref: n, children: i });
+  });
+  return t.displayName = `${e}.Slot`, t;
+}
+// @__NO_SIDE_EFFECTS__
+function y(e) {
+  const r = l.forwardRef((t, o) => {
+    const { children: n, ...i } = t;
+    if (l.isValidElement(n)) {
+      const c = R(n), s = C(i, n.props);
+      return n.type !== l.Fragment && (s.ref = o ? m(o, c) : c), l.cloneElement(n, s);
+    }
+    return l.Children.count(n) > 1 ? l.Children.only(null) : null;
+  });
+  return r.displayName = `${e}.SlotClone`, r;
+}
+var E = Symbol("radix.slottable");
+function g(e) {
+  return l.isValidElement(e) && typeof e.type == "function" && "__radixId" in e.type && e.type.__radixId === E;
+}
+function C(e, r) {
+  const t = { ...r };
+  for (const o in r) {
+    const n = e[o], i = r[o];
+    /^on[A-Z]/.test(o) ? n && i ? t[o] = (...s) => {
+      const a = i(...s);
+      return n(...s), a;
+    } : n && (t[o] = n) : o === "style" ? t[o] = { ...n, ...i } : o === "className" && (t[o] = [n, i].filter(Boolean).join(" "));
+  }
+  return { ...e, ...t };
+}
+function R(e) {
+  let r = Object.getOwnPropertyDescriptor(e.props, "ref")?.get, t = r && "isReactWarning" in r && r.isReactWarning;
+  return t ? e.ref : (r = Object.getOwnPropertyDescriptor(e, "ref")?.get, t = r && "isReactWarning" in r && r.isReactWarning, t ? e.props.ref : e.props.ref || e.ref);
+}
+export {
+  x as createSlot
+};

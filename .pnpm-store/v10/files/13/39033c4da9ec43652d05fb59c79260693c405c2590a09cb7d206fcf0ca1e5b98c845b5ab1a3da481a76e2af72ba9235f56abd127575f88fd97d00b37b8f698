@@ -1,0 +1,6 @@
+declare const MenuOverlay: ({ onToggleEditing, isEditing, }: {
+    onToggleEditing: () => void;
+    isEditing: boolean;
+}) => import("react/jsx-runtime").JSX.Element;
+export default MenuOverlay;
+//# sourceMappingURL=MenuOverlay.d.ts.map

@@ -1,0 +1,7 @@
+import { RemoveScrollSideCar as r } from "./index265.js";
+import { effectCar as o } from "./index263.js";
+import { exportSidecar as e } from "./index266.js";
+const f = e(o, r);
+export {
+  f as default
+};

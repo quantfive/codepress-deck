@@ -1,0 +1,42 @@
+import { DEBUG_BUILD as i } from "./index208.js";
+import { debug as c } from "./index151.js";
+import { GLOBAL_OBJ as f } from "./index117.js";
+const r = f;
+function h() {
+  return "history" in r && !!r.history;
+}
+function s() {
+  if (!("fetch" in r))
+    return !1;
+  try {
+    return new Headers(), new Request("http://www.example.com"), new Response(), !0;
+  } catch {
+    return !1;
+  }
+}
+function o(t) {
+  return t && /^function\s+\w+\(\)\s+\{\s+\[native code\]\s+\}$/.test(t.toString());
+}
+function p() {
+  if (typeof EdgeRuntime == "string")
+    return !0;
+  if (!s())
+    return !1;
+  if (o(r.fetch))
+    return !0;
+  let t = !1;
+  const n = r.document;
+  if (n && typeof n.createElement == "function")
+    try {
+      const e = n.createElement("iframe");
+      e.hidden = !0, n.head.appendChild(e), e.contentWindow?.fetch && (t = o(e.contentWindow.fetch)), n.head.removeChild(e);
+    } catch (e) {
+      i && c.warn("Could not create sandbox iframe for pure fetch check, bailing to window.fetch: ", e);
+    }
+  return t;
+}
+export {
+  o as isNativeFunction,
+  h as supportsHistory,
+  p as supportsNativeFetch
+};

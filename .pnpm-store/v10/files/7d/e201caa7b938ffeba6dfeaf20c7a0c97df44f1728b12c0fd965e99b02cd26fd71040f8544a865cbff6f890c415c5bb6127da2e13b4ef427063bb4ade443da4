@@ -1,0 +1,19 @@
+import { getGlobalSingleton as r } from "./index202.js";
+import { createLogEnvelope as g } from "./index221.js";
+function l(e, s) {
+  const o = u(e) ?? [];
+  if (o.length === 0)
+    return;
+  const t = e.getOptions(), f = g(o, t._metadata, t.tunnel, e.getDsn());
+  n().set(e, []), e.emit("flushLogs"), e.sendEnvelope(f);
+}
+function u(e) {
+  return n().get(e);
+}
+function n() {
+  return r("clientToLogBufferMap", () => /* @__PURE__ */ new WeakMap());
+}
+export {
+  l as _INTERNAL_flushLogsBuffer,
+  u as _INTERNAL_getLogBuffer
+};

@@ -1,0 +1,78 @@
+/**
+ * Simple Drag & Drop System for CodePress
+ *
+ * A straightforward implementation that integrates directly with the existing
+ * hover/selection system without the complexity of @dnd-kit.
+ */
+export interface MoveOperation {
+    source: {
+        element: HTMLElement;
+        location: string | null;
+        tagName: string;
+    };
+    target: {
+        element: HTMLElement;
+        location: string | null;
+        tagName: string;
+    };
+    position: "before" | "after" | "inside" | "left" | "right";
+}
+export interface SimpleDragDropOptions {
+    onDropElement?: (moveOperation: MoveOperation) => void;
+    dropZoneColor?: string;
+    ghostOpacity?: number;
+    longPressDuration?: number;
+    movementThreshold?: number;
+}
+export declare class SimpleDragDrop {
+    private options;
+    private isDragging;
+    private isLongPressActive;
+    private longPressTimer;
+    private longPressStartPos;
+    private longPressElement;
+    private draggedElement;
+    private ghostElement;
+    private dropIndicator;
+    private currentDropContainer;
+    private dragStartPos;
+    private currentDropTarget;
+    private currentDropPosition;
+    constructor(options?: SimpleDragDropOptions);
+    private init;
+    private createStyles;
+    private bindGlobalEvents;
+    enableDragOnElement(element: HTMLElement): void;
+    disableDragOnElement(element: HTMLElement): void;
+    private startLongPress;
+    private cancelLongPress;
+    private activateLongPress;
+    private checkLongPressMovement;
+    private getElementId;
+    private handleMouseDown;
+    private findDraggableElement;
+    private isUiElement;
+    private startDragging;
+    private handleMouseMove;
+    private handleMouseUp;
+    private createGhostElement;
+    private updateDropTarget;
+    private findValidDropTarget;
+    private findNearestChild;
+    private showDropIndicator;
+    private isFlexOrGridContainer;
+    private isInlineElement;
+    private isGridItem;
+    private isFlexItem;
+    private shouldUseHorizontalDropping;
+    private highlightDropContainer;
+    private createDropIndicator;
+    private createHorizontalIndicator;
+    private createVerticalIndicator;
+    private createSiblingIndicator;
+    private clearDropIndicator;
+    private performDrop;
+    private cleanup;
+    destroy(): void;
+}
+//# sourceMappingURL=simple-drag-drop.d.ts.map

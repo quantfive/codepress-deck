@@ -1,0 +1,75 @@
+import { j as e } from "./index7.js";
+import { usePopoverContainer as u } from "./index9.js";
+import { useVisualEditor as f } from "./index6.js";
+import { Select as b, SelectTrigger as g, SelectValue as v, SelectContent as j, SelectItem as r } from "./index56.js";
+import { TabsList as h, TabsTrigger as C } from "./index41.js";
+import o from "./index228.js";
+import S from "./index167.js";
+import E from "./index181.js";
+import N from "./index65.js";
+const O = ({
+  onClose: s,
+  onOpenDesignPanel: l,
+  onOpenAgentChat: n,
+  onDragMouseDown: a
+}) => {
+  const { editingState: m, setEditingState: c, activeElementFpId: i, trackedElements: d } = f(), x = u(), p = [
+    ...(i ? d[i]?.element : null)?.tagName.toLowerCase() === "img" ? [{ id: "image", label: "Image" }] : [{ id: "text", label: "Text" }],
+    { id: "container", label: "Container" },
+    { id: "layout", label: "Layout" }
+    // { id: "statesMotion", label: "States & Motion" },
+  ];
+  return /* @__PURE__ */ e.jsxs(
+    "div",
+    {
+      className: "flex items-center border-b border-gray-200",
+      onMouseDown: a,
+      children: [
+        /* @__PURE__ */ e.jsx(h, { className: "mr-2 -mb-1.5", children: p.map((t) => /* @__PURE__ */ e.jsx(C, { value: t.id, className: "text-xs", children: t.label }, t.id)) }),
+        /* @__PURE__ */ e.jsxs("div", { className: "flex items-center space-x-1 ml-auto", children: [
+          /* @__PURE__ */ e.jsxs(b, { value: m, onValueChange: c, children: [
+            /* @__PURE__ */ e.jsx(
+              g,
+              {
+                size: "sm",
+                className: "h-7 text-xs min-w-[80px] border-none focus-visible:!ring-0 focus-visible:!ring-transparent focus-visible:!border-transparent focus-visible:!shadow-none",
+                children: /* @__PURE__ */ e.jsx(v, { placeholder: "State" })
+              }
+            ),
+            /* @__PURE__ */ e.jsxs(
+              j,
+              {
+                container: x ?? void 0,
+                sideOffset: 4,
+                children: [
+                  /* @__PURE__ */ e.jsx(r, { value: "normal", children: "Normal" }),
+                  /* @__PURE__ */ e.jsx(r, { value: "hover", children: "Hover" })
+                ]
+              }
+            )
+          ] }),
+          /* @__PURE__ */ e.jsx(
+            o,
+            {
+              icon: S,
+              tooltip: "AI Edit",
+              onClick: n
+            }
+          ),
+          /* @__PURE__ */ e.jsx(
+            o,
+            {
+              icon: E,
+              tooltip: "More Options",
+              onClick: l
+            }
+          ),
+          /* @__PURE__ */ e.jsx(o, { icon: N, tooltip: "Close", onClick: s })
+        ] })
+      ]
+    }
+  );
+};
+export {
+  O as default
+};

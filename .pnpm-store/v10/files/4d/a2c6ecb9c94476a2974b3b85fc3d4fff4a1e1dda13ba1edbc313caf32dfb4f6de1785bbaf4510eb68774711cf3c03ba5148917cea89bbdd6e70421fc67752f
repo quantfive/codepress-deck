@@ -1,0 +1,31 @@
+import * as n from "react";
+import { composeEventHandlers as f } from "./index97.js";
+import { useControllableState as m } from "./index109.js";
+import { Primitive as p } from "./index107.js";
+import { j as u } from "./index7.js";
+var r = "Toggle", b = n.forwardRef((e, t) => {
+  const { pressed: s, defaultPressed: a, onPressedChange: d, ...i } = e, [o, l] = m({
+    prop: s,
+    onChange: d,
+    defaultProp: a ?? !1,
+    caller: r
+  });
+  return /* @__PURE__ */ u.jsx(
+    p.button,
+    {
+      type: "button",
+      "aria-pressed": o,
+      "data-state": o ? "on" : "off",
+      "data-disabled": e.disabled ? "" : void 0,
+      ...i,
+      ref: t,
+      onClick: f(e.onClick, () => {
+        e.disabled || l(!o);
+      })
+    }
+  );
+});
+b.displayName = r;
+export {
+  b as Toggle
+};

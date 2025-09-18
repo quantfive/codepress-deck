@@ -1,0 +1,9 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+import * as React from "react";
+import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group";
+import { cn } from "../../lib/utils.js";
+const ToggleGroup = React.forwardRef(({ className, ...props }, ref) => (_jsx(ToggleGroupPrimitive.Root, { ref: ref, className: cn("inline-flex bg-muted rounded-lg border divide-x divide-border h-8", className), ...props })));
+ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName;
+const ToggleGroupItem = React.forwardRef(({ className, children, ...props }, ref) => (_jsx(ToggleGroupPrimitive.Item, { ref: ref, className: cn("inline-flex items-center justify-center whitespace-nowrap px-3 h-8 text-sm font-medium ring-offset-background transition-all flex-1 mr-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 first:rounded-l-lg last:rounded-r-lg data-[state=on]:bg-gray-300 dark:data-[state=on]:bg-gray-700 data-[state=on]:text-gray-900 dark:data-[state=on]:text-gray-100 data-[state=on]:shadow-sm cursor-pointer", className), ...props, children: children })));
+ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName;
+export { ToggleGroup, ToggleGroupItem };

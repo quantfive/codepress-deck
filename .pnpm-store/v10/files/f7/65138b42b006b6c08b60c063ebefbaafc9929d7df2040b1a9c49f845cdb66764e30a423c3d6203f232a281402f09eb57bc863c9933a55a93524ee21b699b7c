@@ -1,0 +1,5 @@
+// No CSS side-effects. Use this entry in SSR frameworks (e.g., Next.js)
+// and import the package CSS separately only when needed.
+export { default as Editor } from "../components/Editor.js";
+export { default as CodepressEditor, CodepressEditor as ShadowEditor, } from "./CodepressEditor.js";
+export { useVisualEditor, VisualEditorProvider, } from "../context/VisualEditorContext.js";

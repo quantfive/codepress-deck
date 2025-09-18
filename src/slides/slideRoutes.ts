@@ -5,6 +5,7 @@ export const slideRoutes = [
   "/slides/how-it-works",
   "/slides/competitive",
   "/slides/target-market",
+  "/slides/demo",
   "/slides/ask",
   "/slides/thank-you",
   // add new slides here to include in navigation order

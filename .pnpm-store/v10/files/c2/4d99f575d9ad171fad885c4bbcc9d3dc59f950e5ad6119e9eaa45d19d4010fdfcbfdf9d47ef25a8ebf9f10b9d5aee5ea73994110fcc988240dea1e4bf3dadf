@@ -1,0 +1,20 @@
+import React from "react";
+/**
+ * Context that holds an HTMLElement to be used as the default portal container
+ * for Radix UI popovers (and other portal-based primitives).
+ */
+export declare const PopoverContainerContext: React.Context<HTMLElement>;
+export interface PopoverContainerProviderProps {
+    container: HTMLElement | null;
+    children: React.ReactNode;
+}
+/**
+ * Provides a DOM element to be used as the default `container` for
+ * Radix `PopoverPrimitive.Portal`.
+ */
+export declare const PopoverContainerProvider: React.FC<PopoverContainerProviderProps>;
+/**
+ * Hook to consume the current `popoverContainer`.
+ */
+export declare const usePopoverContainer: () => HTMLElement;
+//# sourceMappingURL=PopoverContainerContext.d.ts.map

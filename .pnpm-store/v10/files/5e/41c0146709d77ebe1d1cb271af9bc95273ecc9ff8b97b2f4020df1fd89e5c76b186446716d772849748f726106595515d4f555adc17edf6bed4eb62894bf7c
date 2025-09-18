@@ -1,0 +1,5 @@
+import { j as t } from "./index7.js";
+const s = () => /* @__PURE__ */ t.jsx("div", { className: "text-sm text-slate-500 italic", children: "States & Motion controls coming soon..." });
+export {
+  s as default
+};

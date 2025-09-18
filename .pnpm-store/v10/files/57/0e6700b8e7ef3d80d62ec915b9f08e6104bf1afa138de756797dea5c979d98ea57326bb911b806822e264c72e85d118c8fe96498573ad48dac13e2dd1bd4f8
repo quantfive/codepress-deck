@@ -1,0 +1,66 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from "react";
+import { Input } from "../../ui/input.js";
+import { useVisualEditor } from "../../../context/VisualEditorContext.js";
+import { Upload, Loader2 } from "lucide-react";
+// Simple Image editing group: src & alt plus width/height.
+const ImageGroup = ({ popoverContainer }) => {
+    const { activeElementFpId, trackedElements, updateActiveElementStyle, editingState, } = useVisualEditor();
+    const activeElement = activeElementFpId
+        ? trackedElements[activeElementFpId]?.element
+        : null;
+    const initialValues = activeElementFpId
+        ? trackedElements[activeElementFpId]?.currentValues
+        : null;
+    const [src, setSrc] = useState("");
+    const [alt, setAlt] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
+    useEffect(() => {
+        if (!initialValues)
+            return;
+        setSrc(initialValues.imageSrc || "");
+        setAlt(initialValues.imageAlt || "");
+    }, [initialValues]);
+    if (!activeElement || activeElement.tagName.toLowerCase() !== "img") {
+        return null;
+    }
+    const handleSrcChange = (val) => {
+        setSrc(val);
+        updateActiveElementStyle({ imageSrc: val });
+    };
+    const handleAltChange = (val) => {
+        setAlt(val);
+        updateActiveElementStyle({ imageAlt: val });
+    };
+    const handleImageUpload = async (e) => {
+        const files = e.target.files;
+        if (!files || files.length === 0)
+            return;
+        const file = files[0];
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file");
+            return;
+        }
+        try {
+            setIsUploading(true);
+            const reader = new FileReader();
+            const dataUrl = await new Promise((resolve, reject) => {
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error("Failed to read file"));
+                reader.readAsDataURL(file);
+            });
+            setSrc(dataUrl);
+            updateActiveElementStyle({ imageSrc: dataUrl });
+        }
+        catch (err) {
+            console.error(err);
+            alert("Failed to process image. Please try again.");
+        }
+        finally {
+            setIsUploading(false);
+            e.target.value = "";
+        }
+    };
+    return (_jsxs("div", { className: "flex items-center space-x-2", children: [_jsx(Input, { id: "image-src", type: "text", value: src, placeholder: "Image src", onChange: (e) => handleSrcChange(e.target.value), startEnhancer: _jsx("div", { className: "text-xs font-normal border-r border-slate-400 pr-1", children: "Src" }), endEnhancer: _jsxs("label", { className: "cursor-pointer flex items-center", children: [isUploading ? (_jsx(Loader2, { className: "w-4 h-4 animate-spin text-slate-600" })) : (_jsx(Upload, { className: "w-4 h-4 text-slate-600" })), _jsx("input", { type: "file", accept: "image/*", className: "hidden", onChange: handleImageUpload, disabled: isUploading })] }) }), _jsx(Input, { id: "image-alt", type: "text", value: alt, placeholder: "Alt text", startEnhancer: _jsx("div", { className: "text-xs font-normal border-r border-slate-400 pr-1", children: "Alt Text" }), onChange: (e) => handleAltChange(e.target.value) })] }));
+};
+export default ImageGroup;

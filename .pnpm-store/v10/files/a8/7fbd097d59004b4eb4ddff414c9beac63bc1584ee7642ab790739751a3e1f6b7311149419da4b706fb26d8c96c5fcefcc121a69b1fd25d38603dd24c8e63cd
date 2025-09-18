@@ -1,0 +1,134 @@
+/**
+ * Enhanced CodePress Selection with Integrated Drag Handles
+ *
+ * Adds drag handles to the existing hover/click selection system
+ * without disrupting the current UX patterns.
+ */
+export function addDragHandleToElement(element, isSelected = false) {
+    // Remove existing handle if any
+    removeDragHandleFromElement(element);
+    const handle = document.createElement("div");
+    handle.className = "codepress-selection-drag-handle";
+    handle.dataset.codepressHandle = "true";
+    handle.innerHTML = "⋮⋮";
+    handle.title = "Drag to move element";
+    // Style the handle
+    const rect = element.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    handle.style.cssText = `
+    position: absolute;
+    top: ${rect.top + scrollTop - 12}px;
+    left: ${rect.left + scrollLeft - 12}px;
+    width: 24px;
+    height: 24px;
+    background: ${isSelected ? "#2563eb" : "#6b7280"};
+    color: white;
+    border-radius: 6px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 999999;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    pointer-events: auto;
+  `;
+    // Add hover effects
+    handle.addEventListener("mouseenter", () => {
+        handle.style.transform = "scale(1.1)";
+        handle.style.background = "#1d4ed8";
+    });
+    handle.addEventListener("mouseleave", () => {
+        handle.style.transform = "scale(1)";
+        handle.style.background = isSelected ? "#2563eb" : "#6b7280";
+    });
+    // Add to DOM
+    document.body.appendChild(handle);
+    // Store reference on element
+    element.dataset.codepressDragHandle = handle.id = `handle-${Date.now()}`;
+    // Update position on scroll/resize
+    const updatePosition = () => {
+        const newRect = element.getBoundingClientRect();
+        const newScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const newScrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        handle.style.top = `${newRect.top + newScrollTop - 12}px`;
+        handle.style.left = `${newRect.left + newScrollLeft - 12}px`;
+    };
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    // Store cleanup function
+    handle.cleanup = () => {
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+    };
+}
+export function removeDragHandleFromElement(element) {
+    const handleId = element.dataset.codepressDragHandle;
+    if (handleId) {
+        const handle = document.getElementById(handleId);
+        if (handle) {
+            // Run cleanup if available
+            if (handle.cleanup) {
+                handle.cleanup();
+            }
+            handle.remove();
+        }
+        delete element.dataset.codepressDragHandle;
+    }
+}
+export function updateDragHandleSelection(element, isSelected) {
+    const handleId = element.dataset.codepressDragHandle;
+    if (handleId) {
+        const handle = document.getElementById(handleId);
+        if (handle) {
+            handle.style.background = isSelected ? "#2563eb" : "#6b7280";
+        }
+    }
+}
+// CSS styles for the enhanced selection system
+export function injectEnhancedSelectionStyles() {
+    const styleId = "codepress-enhanced-selection-styles";
+    if (document.getElementById(styleId))
+        return;
+    const styles = `
+    .codepress-selection-drag-handle {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    .codepress-selection-drag-handle:active {
+      cursor: grabbing !important;
+      transform: scale(0.95) !important;
+    }
+    
+    /* Add a subtle hint tooltip */
+    .codepress-selection-drag-handle::after {
+      content: "Drag to move";
+      position: absolute;
+      top: -32px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 1000000;
+    }
+    
+    .codepress-selection-drag-handle:hover::after {
+      opacity: 1;
+    }
+  `;
+    const styleElement = document.createElement("style");
+    styleElement.id = styleId;
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
+}

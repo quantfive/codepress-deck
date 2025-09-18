@@ -1,0 +1,180 @@
+import s from "./index245.js";
+import L from "./index247.js";
+import P, { useState as T, useEffect as H, Fragment as _ } from "react";
+import D from "./index251.js";
+import x from "./index246.js";
+import N from "./index253.js";
+import I from "./index254.js";
+import O from "./index252.js";
+import { validHex as g, hexToHsva as c, hsvaToRgbaString as W, hsvaToHex as b, color as G } from "./index244.js";
+import M from "./index259.js";
+import { j as a } from "./index7.js";
+var U = ["prefixCls", "className", "onChange", "width", "presetColors", "color", "editableDisable", "disableAlpha", "style"], $ = ["#D0021B", "#F5A623", "#f8e61b", "#8B572A", "#7ED321", "#417505", "#BD10E0", "#9013FE", "#4A90E2", "#50E3C2", "#B8E986", "#000000", "#4A4A4A", "#9B9B9B", "#FFFFFF"], f = (i) => /* @__PURE__ */ a.jsx("div", {
+  style: {
+    boxShadow: "rgb(0 0 0 / 60%) 0px 0px 2px",
+    width: 4,
+    top: 1,
+    bottom: 1,
+    left: i.left,
+    borderRadius: 1,
+    position: "absolute",
+    backgroundColor: "#fff"
+  }
+}), q = /* @__PURE__ */ P.forwardRef((i, m) => {
+  var {
+    prefixCls: v = "w-color-sketch",
+    className: y,
+    onChange: n,
+    width: u = 218,
+    presetColors: h = $,
+    color: r,
+    editableDisable: w = !0,
+    disableAlpha: p = !1,
+    style: k
+  } = i, C = L(i, U), [t, l] = T({
+    h: 209,
+    s: 36,
+    v: 90,
+    a: 1
+  });
+  H(() => {
+    typeof r == "string" && g(r) && l(c(r)), typeof r == "object" && l(r);
+  }, [r]);
+  var o = (e) => {
+    l(e), n && n(G(e));
+  }, j = (e, d) => {
+    typeof e == "string" && g(e) && /(3|6)/.test(String(e.length)) && o(c(e));
+  }, S = (e) => o(s({}, t, {
+    a: e.a
+  })), R = (e) => o(s({}, t, e, {
+    a: t.a
+  })), A = s({
+    "--sketch-background": "rgb(255, 255, 255)",
+    "--sketch-box-shadow": "rgb(0 0 0 / 15%) 0px 0px 0px 1px, rgb(0 0 0 / 15%) 0px 8px 16px",
+    "--sketch-swatch-box-shadow": "rgb(0 0 0 / 15%) 0px 0px 0px 1px inset",
+    "--sketch-alpha-box-shadow": "rgb(0 0 0 / 15%) 0px 0px 0px 1px inset, rgb(0 0 0 / 25%) 0px 0px 4px inset",
+    "--sketch-swatch-border-top": "1px solid rgb(238, 238, 238)",
+    background: "var(--sketch-background)",
+    borderRadius: 4,
+    boxShadow: "var(--sketch-box-shadow)",
+    width: u
+  }, k), E = {
+    borderRadius: 2,
+    background: W(t),
+    boxShadow: "var(--sketch-alpha-box-shadow)"
+  }, B = {
+    borderTop: "var(--sketch-swatch-border-top)",
+    paddingTop: 10,
+    paddingLeft: 10
+  }, F = {
+    marginRight: 10,
+    marginBottom: 10,
+    borderRadius: 3,
+    boxShadow: "var(--sketch-swatch-box-shadow)"
+  };
+  return /* @__PURE__ */ a.jsxs("div", s({}, C, {
+    className: v + " " + (y || ""),
+    ref: m,
+    style: A,
+    children: [/* @__PURE__ */ a.jsxs("div", {
+      style: {
+        padding: "10px 10px 8px"
+      },
+      children: [/* @__PURE__ */ a.jsx(D, {
+        hsva: t,
+        style: {
+          width: "auto",
+          height: 150
+        },
+        onChange: R
+      }), /* @__PURE__ */ a.jsxs("div", {
+        style: {
+          display: "flex",
+          marginTop: 4
+        },
+        children: [/* @__PURE__ */ a.jsxs("div", {
+          style: {
+            flex: 1
+          },
+          children: [/* @__PURE__ */ a.jsx(O, {
+            width: "auto",
+            height: 10,
+            hue: t.h,
+            pointer: f,
+            innerProps: {
+              style: {
+                marginLeft: 1,
+                marginRight: 5
+              }
+            },
+            onChange: (e) => o(s({}, t, e))
+          }), !p && /* @__PURE__ */ a.jsx(x, {
+            width: "auto",
+            height: 10,
+            hsva: t,
+            pointer: f,
+            style: {
+              marginTop: 4
+            },
+            innerProps: {
+              style: {
+                marginLeft: 1,
+                marginRight: 5
+              }
+            },
+            onChange: S
+          })]
+        }), !p && /* @__PURE__ */ a.jsx(x, {
+          width: 24,
+          height: 24,
+          hsva: t,
+          radius: 2,
+          style: {
+            marginLeft: 4
+          },
+          bgProps: {
+            style: {
+              background: "transparent"
+            }
+          },
+          innerProps: {
+            style: E
+          },
+          pointer: () => /* @__PURE__ */ a.jsx(_, {})
+        })]
+      })]
+    }), w && /* @__PURE__ */ a.jsxs("div", {
+      style: {
+        display: "flex",
+        margin: "0 10px 3px 10px"
+      },
+      children: [/* @__PURE__ */ a.jsx(N, {
+        label: "Hex",
+        value: b(t).replace(/^#/, "").toLocaleUpperCase(),
+        onChange: (e, d) => j(d),
+        style: {
+          minWidth: 58
+        }
+      }), /* @__PURE__ */ a.jsx(I, {
+        hsva: t,
+        style: {
+          marginLeft: 6
+        },
+        aProps: p ? !1 : {},
+        onChange: (e) => o(e.hsva)
+      })]
+    }), h && h.length > 0 && /* @__PURE__ */ a.jsx(M, {
+      style: B,
+      colors: h,
+      color: b(t),
+      onChange: (e) => o(e),
+      rectProps: {
+        style: F
+      }
+    })]
+  }));
+});
+q.displayName = "Sketch";
+export {
+  q as default
+};

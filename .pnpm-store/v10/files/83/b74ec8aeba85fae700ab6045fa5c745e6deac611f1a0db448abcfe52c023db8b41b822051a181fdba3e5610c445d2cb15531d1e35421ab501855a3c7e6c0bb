@@ -1,0 +1,73 @@
+import { j as h } from "./index7.js";
+import { createContext as x, useState as p, useEffect as w, useContext as E } from "react";
+import { detectRepositoryInfo as b, parseRepositoryName as v } from "./index29.js";
+import { GET_CONFIG as F, apiFetch as C, generateDirectApiUrl as j } from "./index38.js";
+import { logger as t } from "./index12.js";
+const l = x(
+  void 0
+), D = [
+  "#2563eb",
+  // blue
+  "#ffffff",
+  // white
+  "#f1c2c7",
+  // pink
+  "#000000",
+  // black
+  "#d97706"
+  // orange
+], T = ({ children: s }) => {
+  const [i, d] = p(null), [u, f] = p(!1), [m, n] = p(null), y = async () => {
+    const a = b();
+    if (!a?.repository) {
+      t.debug("No repository info detected");
+      return;
+    }
+    const c = v(a.repository);
+    if (!c) {
+      t.error("Failed to parse repository name:", a.repository);
+      return;
+    }
+    f(!0), n(null);
+    try {
+      const r = await F(), o = await C(
+        j(
+          `github/by-name/${c.owner}/${c.repo}`
+        ),
+        r
+      );
+      if (o.ok) {
+        const e = await o.json();
+        d(e), t.debug("Repository data fetched:", e);
+      } else {
+        const e = await o.text();
+        n(`Failed to fetch repository: ${e}`), t.error("Failed to fetch repository:", o.status, e);
+      }
+    } catch (r) {
+      const o = r instanceof Error ? r.message : "Unknown error";
+      n(o), t.error("Error fetching repository data:", r);
+    } finally {
+      f(!1);
+    }
+  };
+  w(() => {
+    y();
+  }, []);
+  const g = i?.colors && i.colors.length > 0 ? i.colors : D, R = {
+    repository: i,
+    colors: g,
+    isLoading: u,
+    error: m,
+    refetch: y
+  };
+  return /* @__PURE__ */ h.jsx(l.Provider, { value: R, children: s });
+}, U = () => {
+  const s = E(l);
+  if (s === void 0)
+    throw new Error("useRepository must be used within a RepositoryProvider");
+  return s;
+};
+export {
+  T as RepositoryProvider,
+  U as useRepository
+};

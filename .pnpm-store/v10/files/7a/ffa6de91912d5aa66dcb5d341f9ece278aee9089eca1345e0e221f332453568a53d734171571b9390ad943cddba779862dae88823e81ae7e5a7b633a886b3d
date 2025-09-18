@@ -1,0 +1,351 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from "react";
+import { Input } from "../../../ui/input.js";
+import { InputWithPopover } from "../../../block/InputWithPopover.js";
+import { InputWithUnitSelect } from "../../../ui/InputWithUnitSelect.js";
+import { Label } from "../../../ui/label.js";
+import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js";
+import { SquareDashed as BorderIcon, Image as BackgroundIcon, SquareParking as PaddingIcon, SquareM as MarginIcon, } from "lucide-react";
+import { useVisualEditor } from "../../../../context/VisualEditorContext.js";
+import ActionButton from "../../ActionButton.js";
+import logger from "../../../../lib/logger.js";
+// A slim separator element for grouping controls visually.
+const Separator = () => _jsx("div", { className: "w-px h-6 bg-slate-300" });
+// Ensures px unit if only a number is entered
+const ensurePx = (value) => {
+    if (value === "")
+        return "";
+    const trimmed = value.trim();
+    // Already has unit or is keyword
+    if (/[^0-9.-]/.test(trimmed.slice(-1)))
+        return trimmed;
+    return `${trimmed}px`;
+};
+const ContainerGroup = ({ popoverContainer, }) => {
+    const { activeElementFpId, trackedElements, updateActiveElementStyle, editingState, } = useVisualEditor();
+    const activeElement = activeElementFpId
+        ? trackedElements[activeElementFpId]?.element
+        : null;
+    const initialValues = activeElementFpId
+        ? trackedElements[activeElementFpId]?.currentValues
+        : null;
+    const [styles, setStyles] = useState({
+        width: "",
+        height: "",
+        minWidth: "",
+        maxWidth: "",
+        minHeight: "",
+        maxHeight: "",
+        padding: "",
+        paddingTop: "",
+        paddingRight: "",
+        paddingBottom: "",
+        paddingLeft: "",
+        margin: "",
+        marginTop: "",
+        marginRight: "",
+        marginBottom: "",
+        marginLeft: "",
+        border: "",
+        cornerRadius: "",
+        borderTop: "",
+        borderRight: "",
+        borderBottom: "",
+        borderLeft: "",
+        borderTopLeftRadius: "",
+        borderTopRightRadius: "",
+        borderBottomRightRadius: "",
+        borderBottomLeftRadius: "",
+        backgroundColor: "",
+        backgroundImage: "",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+    });
+    // --- Local UI popover states --- //
+    const [showBorder, setShowBorder] = useState(false);
+    const [showBackground, setShowBackground] = useState(false);
+    // Spacing popover states
+    const [showPadding, setShowPadding] = useState(false);
+    const [showMargin, setShowMargin] = useState(false);
+    // Spacing controls no longer toggle between simple/advanced; individual sides are always shown beneath the all-sides input.
+    useEffect(() => {
+        if (!initialValues)
+            return;
+        const resolve = (prop) => {
+            if (editingState === "normal") {
+                return initialValues[prop] ?? "";
+            }
+            const pseudoKey = `${editingState}_${prop}`;
+            return (initialValues[pseudoKey] ?? initialValues[prop] ?? "");
+        };
+        logger.debug("initialValues (resolved)", { initialValues, editingState });
+        /* ---------------------------- Helper: expand --------------------------- */
+        const expandBoxShorthand = (shorthand) => {
+            const parts = shorthand.trim().split(/\s+/);
+            switch (parts.length) {
+                case 1:
+                    return [parts[0], parts[0], parts[0], parts[0]];
+                case 2:
+                    return [parts[0], parts[1], parts[0], parts[1]];
+                case 3:
+                    return [parts[0], parts[1], parts[2], parts[1]];
+                case 4:
+                    return [parts[0], parts[1], parts[2], parts[3]];
+                default:
+                    return [shorthand, shorthand, shorthand, shorthand];
+            }
+        };
+        /* --------------------- Build initial style object --------------------- */
+        const next = {
+            width: resolve("width"),
+            height: resolve("height"),
+            minWidth: resolve("minWidth"),
+            maxWidth: resolve("maxWidth"),
+            minHeight: resolve("minHeight"),
+            maxHeight: resolve("maxHeight"),
+            padding: resolve("padding"),
+            paddingTop: resolve("paddingTop"),
+            paddingRight: resolve("paddingRight"),
+            paddingBottom: resolve("paddingBottom"),
+            paddingLeft: resolve("paddingLeft"),
+            margin: resolve("margin"),
+            marginTop: resolve("marginTop"),
+            marginRight: resolve("marginRight"),
+            marginBottom: resolve("marginBottom"),
+            marginLeft: resolve("marginLeft"),
+            border: resolve("border"),
+            cornerRadius: resolve("cornerRadius"),
+            borderTop: resolve("borderTop"),
+            borderRight: resolve("borderRight"),
+            borderBottom: resolve("borderBottom"),
+            borderLeft: resolve("borderLeft"),
+            borderTopLeftRadius: resolve("borderTopLeftRadius"),
+            borderTopRightRadius: resolve("borderTopRightRadius"),
+            borderBottomRightRadius: resolve("borderBottomRightRadius"),
+            borderBottomLeftRadius: resolve("borderBottomLeftRadius"),
+            backgroundColor: resolve("backgroundColor"),
+            backgroundImage: resolve("backgroundImage"),
+            backgroundSize: resolve("backgroundSize") || "cover",
+            backgroundPosition: resolve("backgroundPosition") || "center",
+            backgroundRepeat: resolve("backgroundRepeat") || "no-repeat",
+        };
+        /* -------------- If shorthand exists but sides are missing, sync --------- */
+        [
+            { base: "padding", top: "paddingTop", right: "paddingRight", bottom: "paddingBottom", left: "paddingLeft" },
+            { base: "margin", top: "marginTop", right: "marginRight", bottom: "marginBottom", left: "marginLeft" },
+        ].forEach(({ base, top, right, bottom, left }) => {
+            const shorthandVal = next[base];
+            if (shorthandVal) {
+                const [t, r, b, l] = expandBoxShorthand(shorthandVal);
+                if (!next[top])
+                    next[top] = t;
+                if (!next[right])
+                    next[right] = r;
+                if (!next[bottom])
+                    next[bottom] = b;
+                if (!next[left])
+                    next[left] = l;
+            }
+        });
+        setStyles(next);
+    }, [initialValues, editingState]);
+    if (!activeElement) {
+        return null;
+    }
+    // --- Handlers --- //
+    const updateStyle = (partial) => {
+        // Expand shorthand spacing/border values for local UI state so side inputs update in sync
+        const expanded = { ...partial };
+        const parseBoxShorthand = (val) => {
+            const parts = val.trim().split(/\s+/);
+            switch (parts.length) {
+                case 1:
+                    return [parts[0], parts[0], parts[0], parts[0]];
+                case 2:
+                    return [parts[0], parts[1], parts[0], parts[1]];
+                case 3:
+                    return [parts[0], parts[1], parts[2], parts[1]];
+                case 4:
+                    return [parts[0], parts[1], parts[2], parts[3]];
+                default:
+                    return [val, val, val, val];
+            }
+        };
+        Object.entries(partial).forEach(([key, value]) => {
+            if ((key === "padding" || key === "margin") && typeof value === "string") {
+                const [top, right, bottom, left] = parseBoxShorthand(value);
+                ['Top', 'Right', 'Bottom', 'Left'].forEach((side, idx) => {
+                    expanded[`${key}${side}`] = [top, right, bottom, left][idx];
+                });
+            }
+            else if (key === "border") {
+                ['Top', 'Right', 'Bottom', 'Left'].forEach((side) => {
+                    expanded[`${key}${side}`] = value;
+                });
+            }
+        });
+        // Recompute shorthand padding/margin based on updated sides
+        const recomputeShorthand = (base) => {
+            const current = {
+                Top: (expanded[`${base}Top`] ?? styles[`${base}Top`]),
+                Right: (expanded[`${base}Right`] ?? styles[`${base}Right`]),
+                Bottom: (expanded[`${base}Bottom`] ?? styles[`${base}Bottom`]),
+                Left: (expanded[`${base}Left`] ?? styles[`${base}Left`]),
+            };
+            const { Top: top, Right: right, Bottom: bottom, Left: left } = current;
+            let shorthand = "";
+            if (top === right && top === bottom && top === left) {
+                shorthand = top;
+            }
+            else if (top === bottom && right === left) {
+                shorthand = `${top} ${right}`;
+            }
+            else if (right === left) {
+                shorthand = `${top} ${right} ${bottom}`;
+            }
+            else {
+                shorthand = `${top} ${right} ${bottom} ${left}`;
+            }
+            expanded[base] = shorthand;
+        };
+        if (["paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].some((k) => k in partial)) {
+            recomputeShorthand("padding");
+        }
+        if (["marginTop", "marginRight", "marginBottom", "marginLeft"].some((k) => k in partial)) {
+            recomputeShorthand("margin");
+        }
+        // Reflect all computed changes in local state *after* shorthand sync
+        setStyles((prev) => ({ ...prev, ...expanded }));
+        // Forward the (possibly expanded) update to global editor context
+        updateActiveElementStyle(expanded);
+        // Apply styles directly for live preview
+        Object.entries(expanded).forEach(([prop, val]) => {
+            if (!activeElement)
+                return;
+            // Special mapping for corner radius
+            if (prop === "cornerRadius") {
+                activeElement.style.borderRadius = val;
+                return;
+            }
+            activeElement.style[prop] = val;
+        });
+    };
+    const handleDimensionChange = (e, dimension) => {
+        const newValue = e.target.value;
+        setStyles((prev) => ({ ...prev, [dimension]: newValue }));
+    };
+    const handleDimensionBlur = (e, dimension) => {
+        const val = ensurePx(e.target.value);
+        updateStyle({ [dimension]: val });
+    };
+    const handleDimensionKeyDown = (e, dimension) => {
+        const inputEl = e.currentTarget;
+        if (e.key === "Enter") {
+            const val = ensurePx(inputEl.value);
+            updateStyle({ [dimension]: val });
+            inputEl.blur();
+            return;
+        }
+        if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const delta = e.key === "ArrowUp" ? 1 : -1;
+            const match = inputEl.value.trim().match(/^(-?\d+)(.*)$/);
+            if (!match)
+                return;
+            const currentNum = parseInt(match[1], 10);
+            const unit = match[2] || "px";
+            const newNum = Math.max(0, currentNum + delta);
+            const newSize = `${newNum}${unit}`;
+            inputEl.value = newSize;
+            setStyles((prev) => ({ ...prev, [dimension]: newSize }));
+            updateStyle({ [dimension]: newSize });
+        }
+    };
+    // Size popover (width / height) with min/max and presets
+    const renderSizePopoverContent = (dimension) => {
+        const minKey = dimension === "width"
+            ? "minWidth"
+            : "minHeight";
+        const maxKey = dimension === "width"
+            ? "maxWidth"
+            : "maxHeight";
+        const presetValues = [
+            "100%",
+            "max-content",
+            "min-content",
+            "fit-content",
+            "auto",
+            "stretch",
+        ];
+        return (_jsxs("div", { className: "space-y-3", children: [_jsxs("div", { children: [_jsxs("h4", { className: "text-sm font-medium mb-2 capitalize", children: [dimension, " constraints"] }), _jsxs("div", { className: "grid grid-cols-2 gap-2", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: `${dimension}-min`, className: "text-sm", children: "Min" }), _jsx(Input, { id: `${dimension}-min`, value: styles[minKey], onChange: (e) => setStyles((prev) => ({ ...prev, [minKey]: e.target.value })), defaultUnit: "px", onCommit: (val) => updateStyle({ [minKey]: val }) })] }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: `${dimension}-max`, className: "text-sm", children: "Max" }), _jsx(Input, { id: `${dimension}-max`, value: styles[maxKey], onChange: (e) => setStyles((prev) => ({ ...prev, [maxKey]: e.target.value })), defaultUnit: "px", onCommit: (val) => updateStyle({ [maxKey]: val }) })] })] })] }), _jsxs("div", { children: [_jsx("h4", { className: "text-sm font-medium mb-2", children: "Presets" }), _jsx("div", { className: "grid grid-cols-3 gap-2", children: presetValues.map((preset) => (_jsx(ActionButton, { className: "text-xs font-normal px-1 py-1 border border-solid border-slate-300 rounded", isActive: styles[dimension] === preset, onClick: () => {
+                                    const currentVal = styles[dimension];
+                                    logger.debug("currentVal", currentVal);
+                                    logger.debug("preset", preset);
+                                    if (currentVal === preset) {
+                                        // Revert to the original value captured when element was first selected
+                                        const originalVal = trackedElements[activeElementFpId]
+                                            ?.originalValues?.[dimension] ?? "";
+                                        setStyles((prev) => ({
+                                            ...prev,
+                                            [dimension]: originalVal,
+                                        }));
+                                        updateStyle({ [dimension]: originalVal });
+                                    }
+                                    else {
+                                        // Apply preset value
+                                        setStyles((prev) => ({ ...prev, [dimension]: preset }));
+                                        updateStyle({ [dimension]: preset });
+                                    }
+                                }, children: preset }, preset))) })] })] }));
+    };
+    // Spacing (padding / margin) popover content used in InputWithPopover controls
+    const renderSpacingPopoverContent = (type) => {
+        const prefix = type;
+        const allKey = type;
+        const sideKeys = [
+            [`${prefix}Top`, "Top"],
+            [`${prefix}Right`, "Right"],
+            [`${prefix}Bottom`, "Bottom"],
+            [`${prefix}Left`, "Left"],
+        ];
+        return (_jsxs("div", { children: [_jsx("h4", { className: "font-medium capitalize mb-2", children: type }), _jsxs("div", { className: "space-y-2 mb-3", children: [_jsx(Label, { htmlFor: `${type}-all`, className: "text-sm", children: "All sides" }), _jsx(InputWithUnitSelect, { id: `${type}-all`, className: "w-full", value: styles[allKey], container: popoverContainer, onChange: (e) => {
+                                const val = e.target.value;
+                                setStyles((prev) => ({ ...prev, [allKey]: val }));
+                                updateStyle({ [allKey]: val });
+                            } })] }), _jsx("div", { className: "grid grid-cols-2 gap-2", children: sideKeys.map(([key, label]) => (_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: `${key}`, className: "text-sm", children: label }), _jsx(InputWithUnitSelect, { id: `${key}`, className: "w-full", value: styles[key], container: popoverContainer, onChange: (e) => {
+                                    const val = e.target.value;
+                                    setStyles((prev) => ({ ...prev, [key]: val }));
+                                    updateStyle({ [key]: val });
+                                } })] }, key))) })] }));
+    };
+    // Padding Popover (icon)
+    const renderPaddingPopover = () => (_jsxs(Popover, { open: showPadding, onOpenChange: setShowPadding, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(ActionButton, { icon: PaddingIcon, className: "p-2 rounded-md hover:bg-slate-100", tooltip: "Padding" }) }), _jsx(PopoverContent, { container: popoverContainer, className: "w-72 p-3 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", sideOffset: 16, children: renderSpacingPopoverContent("padding") })] }));
+    // Margin Popover (icon)
+    const renderMarginPopover = () => (_jsxs(Popover, { open: showMargin, onOpenChange: setShowMargin, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(ActionButton, { icon: MarginIcon, className: "p-2 rounded-md hover:bg-slate-100", tooltip: "Margin" }) }), _jsx(PopoverContent, { container: popoverContainer, className: "w-72 p-3 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", sideOffset: 16, children: renderSpacingPopoverContent("margin") })] }));
+    // Border Popover
+    const renderBorderPopover = () => (_jsxs(Popover, { open: showBorder, onOpenChange: setShowBorder, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(ActionButton, { icon: BorderIcon, className: "p-2 rounded-md hover:bg-slate-100", tooltip: "Border" }) }), _jsxs(PopoverContent, { container: popoverContainer, className: "w-80 p-3 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", sideOffset: 16, children: [_jsx("h4", { className: "font-medium mb-2", children: "Border" }), _jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "border-all", className: "text-sm", children: "All sides" }), _jsx(Input, { id: "border-all", value: styles.border, placeholder: "1px solid #000", onChange: (e) => setStyles((prev) => ({ ...prev, border: e.target.value })), onCommit: (val) => updateStyle({ border: val }) })] }), _jsx("div", { className: "grid grid-cols-2 gap-2", children: [
+                                    ["borderTop", "Top"],
+                                    ["borderRight", "Right"],
+                                    ["borderBottom", "Bottom"],
+                                    ["borderLeft", "Left"],
+                                ].map(([key, label]) => (_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: key, className: "text-sm", children: label }), _jsx(Input, { id: key, value: styles[key], placeholder: "1px solid #000", onChange: (e) => setStyles((prev) => ({ ...prev, [key]: e.target.value })), onCommit: (val) => updateStyle({ [key]: val }) })] }, key))) }), _jsxs("div", { className: "space-y-2 pt-2 border-t border-slate-200", children: [_jsx("h4", { className: "font-medium", children: "Radius" }), _jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: "radius-all", className: "text-sm", children: "All corners" }), _jsx(Input, { id: "radius-all", value: styles.cornerRadius, placeholder: "4px", onChange: (e) => setStyles((prev) => ({
+                                                    ...prev,
+                                                    cornerRadius: e.target.value,
+                                                })), onCommit: (val) => updateStyle({ cornerRadius: ensurePx(val) }) })] }), _jsx("div", { className: "grid grid-cols-2 gap-2", children: [
+                                            ["borderTopLeftRadius", "Top-left"],
+                                            ["borderTopRightRadius", "Top-right"],
+                                            ["borderBottomRightRadius", "Bottom-right"],
+                                            ["borderBottomLeftRadius", "Bottom-left"],
+                                        ].map(([key, label]) => (_jsxs("div", { className: "flex flex-col space-y-1", children: [_jsx(Label, { htmlFor: key, className: "text-sm", children: label }), _jsx(Input, { id: key, value: styles[key], onChange: (e) => setStyles((prev) => ({ ...prev, [key]: e.target.value })), onCommit: (val) => updateStyle({ [key]: ensurePx(val) }) })] }, key))) })] })] })] })] }));
+    const renderBackgroundPopover = () => (_jsxs(Popover, { open: showBackground, onOpenChange: setShowBackground, children: [_jsx(PopoverTrigger, { asChild: true, children: _jsx(ActionButton, { icon: BackgroundIcon, className: "p-2 rounded-md hover:bg-slate-100", tooltip: "Background" }) }), _jsxs(PopoverContent, { container: popoverContainer, className: "w-72 p-3 bg-white rounded-lg shadow-lg border-slate-200 z-[9999999999]", sideOffset: 16, children: [_jsx("h4", { className: "font-medium mb-2", children: "Background Color" }), _jsxs("div", { className: "flex items-center space-x-2", children: [_jsx("input", { id: "bg-color-picker", type: "color", className: "w-10 h-10 p-0 border-none", value: styles.backgroundColor || "#ffffff", onChange: (e) => {
+                                    const val = e.target.value;
+                                    setStyles((prev) => ({ ...prev, backgroundColor: val }));
+                                    updateStyle({ backgroundColor: val });
+                                } }), _jsx(Input, { id: "bg-color-text", placeholder: "#ffffff", value: styles.backgroundColor, onChange: (e) => setStyles((prev) => ({
+                                    ...prev,
+                                    backgroundColor: e.target.value,
+                                })), onCommit: (val) => updateStyle({ backgroundColor: val }) })] })] })] }));
+    return (_jsxs("div", { className: "flex items-center space-x-2", children: [_jsx(InputWithPopover, { id: "width-input", className: "w-[120px] h-8", value: styles.width, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, width: e.target.value })), onCommit: (val) => updateStyle({ width: val }), startEnhancer: _jsx("span", { className: "text-slate-600", children: "W" }), popoverContent: renderSizePopoverContent("width") }), _jsx(InputWithPopover, { id: "height-input", className: "w-[120px] h-8", value: styles.height, defaultUnit: "px", onChange: (e) => setStyles((prev) => ({ ...prev, height: e.target.value })), onCommit: (val) => updateStyle({ height: val }), startEnhancer: _jsx("span", { className: "text-slate-600", children: "H" }), popoverContent: renderSizePopoverContent("height") }), _jsx(Separator, {}), renderPaddingPopover(), renderMarginPopover(), renderBorderPopover(), renderBackgroundPopover()] }));
+};
+export default ContainerGroup;

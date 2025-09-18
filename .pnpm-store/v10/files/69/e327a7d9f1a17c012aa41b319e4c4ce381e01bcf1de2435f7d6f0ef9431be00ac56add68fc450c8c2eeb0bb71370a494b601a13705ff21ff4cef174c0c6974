@@ -1,0 +1,13 @@
+import React from "react";
+interface BranchInputProps {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    showPrefix?: boolean;
+    className?: string;
+    id?: string;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+}
+declare const BranchInput: React.FC<BranchInputProps>;
+export default BranchInput;
+//# sourceMappingURL=BranchInput.d.ts.map

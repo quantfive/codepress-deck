@@ -1,0 +1,7 @@
+import React from "react";
+interface LayoutGroupProps {
+    popoverContainer?: HTMLElement;
+}
+declare const LayoutGroup: React.FC<LayoutGroupProps>;
+export default LayoutGroup;
+//# sourceMappingURL=LayoutGroup.d.ts.map

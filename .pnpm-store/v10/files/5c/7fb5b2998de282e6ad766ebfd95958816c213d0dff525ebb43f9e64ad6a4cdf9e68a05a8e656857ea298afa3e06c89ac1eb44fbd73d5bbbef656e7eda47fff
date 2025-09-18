@@ -1,0 +1,97 @@
+import { SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN as m, SEMANTIC_ATTRIBUTE_SENTRY_OP as T } from "./index192.js";
+import { SPAN_STATUS_UNSET as _, SPAN_STATUS_OK as I } from "./index189.js";
+import { getCapturedScopesOnSpan as g } from "./index188.js";
+import { generateSpanId as l } from "./index203.js";
+import { timestampInSeconds as A } from "./index207.js";
+import { consoleSandbox as N } from "./index151.js";
+const d = 1;
+let s = !1;
+function U(n) {
+  const { spanId: e, traceId: r, isRemote: t } = n.spanContext(), o = t ? e : C(n).parent_span_id, a = g(n).scope, i = t ? a?.getPropagationContext().propagationSpanId || l() : e;
+  return {
+    parent_span_id: o,
+    span_id: i,
+    trace_id: r
+  };
+}
+function x(n) {
+  if (n && n.length > 0)
+    return n.map(({ context: { spanId: e, traceId: r, traceFlags: t, ...o }, attributes: a }) => ({
+      span_id: e,
+      trace_id: r,
+      sampled: t === d,
+      attributes: a,
+      ...o
+    }));
+}
+function p(n) {
+  return typeof n == "number" ? c(n) : Array.isArray(n) ? n[0] + n[1] / 1e9 : n instanceof Date ? c(n.getTime()) : A();
+}
+function c(n) {
+  return n > 9999999999 ? n / 1e3 : n;
+}
+function C(n) {
+  if (R(n))
+    return n.getSpanJSON();
+  const { spanId: e, traceId: r } = n.spanContext();
+  if (E(n)) {
+    const { attributes: t, startTime: o, name: a, endTime: i, status: S, links: u } = n, f = "parentSpanId" in n ? n.parentSpanId : "parentSpanContext" in n ? n.parentSpanContext?.spanId : void 0;
+    return {
+      span_id: e,
+      trace_id: r,
+      data: t,
+      description: a,
+      parent_span_id: f,
+      start_timestamp: p(o),
+      // This is [0,0] by default in OTEL, in which case we want to interpret this as no end time
+      timestamp: p(i) || void 0,
+      status: O(S),
+      op: t[T],
+      origin: t[m],
+      links: x(u)
+    };
+  }
+  return {
+    span_id: e,
+    trace_id: r,
+    start_timestamp: 0,
+    data: {}
+  };
+}
+function E(n) {
+  const e = n;
+  return !!e.attributes && !!e.startTime && !!e.name && !!e.endTime && !!e.status;
+}
+function R(n) {
+  return typeof n.getSpanJSON == "function";
+}
+function k(n) {
+  const { traceFlags: e } = n.spanContext();
+  return e === d;
+}
+function O(n) {
+  if (!(!n || n.code === _))
+    return n.code === I ? "ok" : n.message || "unknown_error";
+}
+const y = "_sentryRootSpan";
+function F(n) {
+  return n[y] || n;
+}
+function L() {
+  s || (N(() => {
+    console.warn(
+      "[Sentry] Returning null from `beforeSendSpan` is disallowed. To drop certain spans, configure the respective integrations directly."
+    );
+  }), s = !0);
+}
+export {
+  d as TRACE_FLAG_SAMPLED,
+  x as convertSpanLinksForEnvelope,
+  F as getRootSpan,
+  O as getStatusMessage,
+  L as showSpanDropWarning,
+  k as spanIsSampled,
+  p as spanTimeInputToSeconds,
+  C as spanToJSON,
+  U as spanToTraceContext
+};

@@ -1,0 +1,24 @@
+import * as n from "react";
+import { Primitive as p } from "./index107.js";
+import { j as o } from "./index7.js";
+var v = "Arrow", e = n.forwardRef((r, i) => {
+  const { children: t, width: s = 10, height: a = 5, ...m } = r;
+  return /* @__PURE__ */ o.jsx(
+    p.svg,
+    {
+      ...m,
+      ref: i,
+      width: s,
+      height: a,
+      viewBox: "0 0 30 10",
+      preserveAspectRatio: "none",
+      children: r.asChild ? t : /* @__PURE__ */ o.jsx("polygon", { points: "0,0 30,0 15,10" })
+    }
+  );
+});
+e.displayName = v;
+var h = e;
+export {
+  e as Arrow,
+  h as Root
+};

@@ -1,0 +1,65 @@
+import { type ClassValue } from "clsx";
+/**
+ * Get the browser extension API object, supporting both Chrome and Firefox
+ */
+export declare function getBrowserAPI(): typeof chrome;
+/**
+ * Check if browser extension APIs are available
+ */
+export declare function isBrowserExtension(): boolean;
+export declare function cn(...inputs: ClassValue[]): string;
+export declare const getCurrentTabUrl: () => Promise<string | null>;
+export declare const parseGitHubUrl: (url: string | null) => {
+    owner: string;
+    repo: string;
+} | null;
+/**
+ * Checks if an element primarily contains text rather than other HTML elements
+ * @param element The HTML element to check
+ * @returns boolean indicating if the element is primarily text
+ */
+export declare const isPrimarilyTextElement: (element: HTMLElement) => boolean;
+/**
+ * Decodes a hashed value created by the Codepress babel plugin
+ * @param value The Base64 encoded value to decode
+ * @returns The decoded value or null if invalid
+ */
+export declare const decodeHashedValue: (value: string | null) => string | null;
+/**
+ * Scans the DOM for Codepress repository and branch data attributes
+ * @returns Repository info object or null if not found
+ */
+export declare const detectRepositoryInfo: () => {
+    repository: string;
+    branch: string;
+} | null;
+/**
+ * Extracts owner and organization name from a repository string (owner/repo)
+ * @param repoName The repository string in format "owner/repo"
+ * @returns Object with owner and repo properties, or null if invalid
+ */
+export declare const parseRepositoryName: (repoName: string | null) => {
+    owner: string;
+    repo: string;
+} | null;
+/**
+ * Creates a pseudo-organization for API calls when real org data is unavailable
+ * This allows the extension to work with auto-detected repositories without org selection
+ * @param ownerName The owner name from the repository string (owner/repo)
+ * @returns A simplified organization object
+ */
+export declare const createPseudoOrganization: (ownerName: string) => {
+    id: number;
+    name: string;
+};
+/**
+ * Shared DOM traversal logic for extracting repository name from page
+ * This function is designed to be executed in browser context (either directly or via script injection)
+ */
+export declare function extractRepositoryNameFromDOM(): string | null;
+/**
+ * Shared repository access check logic
+ * Makes API call to check if user has access to a specific repository
+ */
+export declare function checkRepositoryAccess(repositoryName: string): Promise<boolean>;
+//# sourceMappingURL=utils.d.ts.map

@@ -1,0 +1,30 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { usePopoverContainer } from "../../context/PopoverContainerContext.js";
+import { useVisualEditor } from "../../context/VisualEditorContext.js";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "../ui/select.js";
+import { TabsList, TabsTrigger } from "../ui/tabs.js";
+import ActionButton from "./ActionButton.js";
+// categories will be computed dynamically based on selected element
+const Header = ({ onClose, onOpenDesignPanel, onOpenAgentChat, onDragMouseDown, }) => {
+    const { editingState, setEditingState, activeElementFpId, trackedElements } = useVisualEditor();
+    const portalContainer = usePopoverContainer();
+    const activeElement = activeElementFpId
+        ? trackedElements[activeElementFpId]?.element
+        : null;
+    const isImage = activeElement?.tagName.toLowerCase() === "img";
+    const categories = [
+        ...(isImage
+            ? [{ id: "image", label: "Image" }]
+            : [{ id: "text", label: "Text" }]),
+        { id: "container", label: "Container" },
+        { id: "layout", label: "Layout" },
+        // { id: "statesMotion", label: "States & Motion" },
+    ];
+    return (_jsxs("div", { className: "flex items-center border-b border-gray-200", 
+        // Forward the mouse down event so that the parent DesignBar can decide
+        // whether or not to start a drag interaction. We don’t enforce any logic
+        // here because the parent needs the event regardless.
+        onMouseDown: onDragMouseDown, children: [_jsx(TabsList, { className: "mr-2 -mb-1.5", children: categories.map((cat) => (_jsx(TabsTrigger, { value: cat.id, className: "text-xs", children: cat.label }, cat.id))) }), _jsxs("div", { className: "flex items-center space-x-1 ml-auto", children: [_jsxs(Select, { value: editingState, onValueChange: setEditingState, children: [_jsx(SelectTrigger, { size: "sm", className: "h-7 text-xs min-w-[80px] border-none focus-visible:!ring-0 focus-visible:!ring-transparent focus-visible:!border-transparent focus-visible:!shadow-none", children: _jsx(SelectValue, { placeholder: "State" }) }), _jsxs(SelectContent, { container: portalContainer ?? undefined, sideOffset: 4, children: [_jsx(SelectItem, { value: "normal", children: "Normal" }), _jsx(SelectItem, { value: "hover", children: "Hover" })] })] }), _jsx(ActionButton, { icon: Sparkles, tooltip: "AI Edit", onClick: onOpenAgentChat }), _jsx(ActionButton, { icon: SlidersHorizontal, tooltip: "More Options", onClick: onOpenDesignPanel }), _jsx(ActionButton, { icon: X, tooltip: "Close", onClick: onClose })] })] }));
+};
+export default Header;

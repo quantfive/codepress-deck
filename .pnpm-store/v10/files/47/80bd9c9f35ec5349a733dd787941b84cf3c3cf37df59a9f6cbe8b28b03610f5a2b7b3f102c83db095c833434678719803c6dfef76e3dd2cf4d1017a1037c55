@@ -1,0 +1,419 @@
+import { jsx as _jsx } from "react/jsx-runtime";
+import { logger } from "@/lib/logger";
+import { detectRepositoryInfo } from "@/lib/utils";
+import { getBranches, getPreviewLink } from "@/utils/saveChanges";
+import * as Sentry from "@sentry/browser";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, } from "react";
+import { toast } from "sonner";
+import { BRANCH_PREFIX, checkIsDeploying, checkIsEmptyBranchPrefix, checkIsStaticDeployUrl, DeploymentState, } from "@/lib/deployment";
+import { checkGithubMode, isLocalDevNonGithub } from "@/lib/env";
+import { deleteGithubBranch } from "@/utils/saveChanges";
+import { useGitHub } from "./GithubContext.js";
+export const POLL_MS_IDLE = 60000;
+export const POLL_MS_DEPLOY = 5000;
+const POPOVER_LS_KEY = "codepress-current-deploy";
+const STALE_TOAST_ID = "staleToast";
+// Branch save history tracking
+const BRANCH_SAVES_KEY_PREFIX = "codepress-branch-saves";
+// TODO: get default + protected branches from github
+const MAIN_BRANCHES = new Set([
+    "main",
+    "master",
+    "develop",
+    "dev",
+    "development",
+    "staging",
+    "stage",
+]);
+function loadPopoverFromStorage() {
+    try {
+        if (typeof window === "undefined")
+            return null;
+        const raw = window.localStorage.getItem(POPOVER_LS_KEY);
+        if (!raw)
+            return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object")
+            return null;
+        return parsed;
+    }
+    catch {
+        return null;
+    }
+}
+function savePopoverToStorage(state) {
+    try {
+        if (typeof window === "undefined")
+            return;
+        if (state) {
+            window.localStorage.setItem(POPOVER_LS_KEY, JSON.stringify(state));
+        }
+        else {
+            window.localStorage.removeItem(POPOVER_LS_KEY);
+        }
+    }
+    catch {
+        /* ignore */
+    }
+}
+const DeploymentContext = createContext(null);
+export const DeploymentProvider = ({ children, }) => {
+    const { isGitHubMode } = useGitHub();
+    const repoInfo = detectRepositoryInfo();
+    const [branchName, setBranchName] = useState(repoInfo?.branch || BRANCH_PREFIX);
+    const [previewUrl, setPreviewUrl] = useState("");
+    const [lastSaved, setLastSaved] = useState("");
+    const [viewingStaleVersion, setViewingStaleVersion] = useState(false);
+    const [currentDeployment, setCurrentDeployment] = useState(DeploymentState.UNSAVED);
+    const [branches, setBranches] = useState([]);
+    const [isBranchesLoading, setIsBranchesLoading] = useState(false);
+    // Branch save history tracking
+    const [savedBranches, setSavedBranches] = useState(new Set());
+    const currentRepoKey = useRef("");
+    const [showDeploymentPopover, _setShowDeploymentPopover] = useState(false);
+    const [deploymentPopover, setDeploymentPopover] = useState(undefined);
+    const setShowDeploymentPopover = useCallback((data) => {
+        const visible = data !== null;
+        _setShowDeploymentPopover(visible);
+        setDeploymentPopover(data ?? undefined);
+        savePopoverToStorage(visible && data ? { ...data, visible: true } : null);
+    }, []);
+    // Branch save history utilities
+    const getBranchSavesStorageKey = useCallback((repoInfo) => {
+        if (!repoInfo)
+            return null;
+        // Repository is in format "owner/repo-name", use as-is for storage key
+        return `${BRANCH_SAVES_KEY_PREFIX}-${repoInfo.repository.replace("/", "-")}`;
+    }, []);
+    const loadSavedBranches = useCallback(async (storageKey) => {
+        try {
+            if (typeof browser !== "undefined" && browser.storage) {
+                const result = await browser.storage.local.get(storageKey);
+                const branches = result[storageKey] || [];
+                return new Set(branches);
+            }
+        }
+        catch (e) {
+            logger.warn("Unable to load saved branches from storage", e);
+        }
+        return new Set();
+    }, []);
+    const saveBranchesToStorage = useCallback(async (storageKey, branches) => {
+        try {
+            if (typeof browser !== "undefined" && browser.storage) {
+                await browser.storage.local.set({
+                    [storageKey]: Array.from(branches),
+                });
+            }
+        }
+        catch (e) {
+            logger.warn("Unable to save branches to storage", e);
+        }
+    }, []);
+    const addSavedBranch = useCallback((branchName) => {
+        const repoInfo = detectRepositoryInfo();
+        const storageKey = getBranchSavesStorageKey(repoInfo);
+        if (!storageKey)
+            return;
+        setSavedBranches((prev) => {
+            const updated = new Set(prev);
+            updated.add(branchName);
+            saveBranchesToStorage(storageKey, updated);
+            return updated;
+        });
+    }, [getBranchSavesStorageKey, saveBranchesToStorage]);
+    const hasSavedToBranch = useCallback((branchName) => {
+        return savedBranches.has(branchName);
+    }, [savedBranches]);
+    const shouldShowSaveDialog = useCallback((branchName) => {
+        // Suppress save dialog when working on localhost and not in GitHub mode
+        if (isLocalDevNonGithub()) {
+            return false;
+        }
+        // Always show dialog for main branches
+        if (MAIN_BRANCHES.has(branchName)) {
+            return true;
+        }
+        // Show dialog if we haven't saved to this branch before
+        return !hasSavedToBranch(branchName);
+    }, [hasSavedToBranch]);
+    const previewRequestSequenceRef = useRef(0);
+    const branchesRequestSequenceRef = useRef(0);
+    const previewPollMs = useMemo(() => (checkIsDeploying(currentDeployment) ? POLL_MS_DEPLOY : POLL_MS_IDLE), [currentDeployment]);
+    const currentUrl = new URL(window.location.href);
+    const isStaticDeployUrl = checkIsStaticDeployUrl(currentUrl, repoInfo?.repository, repoInfo?.branch);
+    const fetchPreviewData = useCallback(async (name) => {
+        if (!checkGithubMode()) {
+            logger.warn("when not in github mode we does not fetch preview data from github");
+            return;
+        }
+        try {
+            const seq = ++previewRequestSequenceRef.current;
+            const data = await getPreviewLink({ branchName: name });
+            if (seq !== previewRequestSequenceRef.current)
+                return null;
+            if (!data) {
+                Sentry.captureException(new Error("Failed to fetch preview data"));
+                logger.error("Failed to fetch preview data");
+                return null;
+            }
+            const stored = loadPopoverFromStorage();
+            if (!isStaticDeployUrl) {
+                try {
+                    const previewOrigin = new URL(data.preview_url).origin;
+                    if (name === branchName && previewOrigin !== currentUrl.origin) {
+                        // old url
+                        logger.info("different preview url", previewOrigin, currentUrl.origin);
+                        setViewingStaleVersion(true);
+                    }
+                }
+                catch (e) {
+                    // ignore localStorage failures (Safari private mode, etc.)
+                    logger.warn("Unable to persist popover state", e);
+                }
+            }
+            else {
+                // Static deploy url
+                if (data.state === DeploymentState.DEPLOYMENT_COMPLETED &&
+                    checkIsDeploying(currentDeployment)) {
+                    logger.info("Stale version detected: url is static, but was deployed recently", currentUrl.origin);
+                    setViewingStaleVersion(true);
+                }
+            }
+            setPreviewUrl(data.preview_url ?? "");
+            setLastSaved(data.commit_date ?? "");
+            setCurrentDeployment(data.state);
+            if (name !== branchName) {
+                // different url
+                logger.info("different branch detected", name, branchName);
+                setViewingStaleVersion(true);
+            }
+            if (name !== repoInfo?.branch) {
+                logger.info("different repo branch detected", name, repoInfo?.branch);
+                setViewingStaleVersion(true);
+            }
+            if (stored?.visible && stored.commit_hash === data.commit_hash) {
+                setShowDeploymentPopover({ ...data, branch_name: name });
+            }
+            if (stored?.visible &&
+                !checkIsDeploying(data.state) &&
+                stored.branch_name !== name) {
+                const storedResp = await getPreviewLink({
+                    branchName: stored.branch_name,
+                });
+                if (storedResp.state === DeploymentState.DEPLOYMENT_COMPLETED &&
+                    storedResp.preview_url) {
+                    toast.error("Stale Version", {
+                        id: "other-branch-deployed",
+                        description: "The version you are looking at is a different branch from where you saved.",
+                        action: {
+                            label: "Load Newest Version",
+                            onClick: () => {
+                                window.location.href = storedResp.preview_url;
+                            },
+                        },
+                        duration: Infinity,
+                    });
+                }
+                setShowDeploymentPopover({
+                    ...storedResp,
+                    branch_name: stored.branch_name,
+                });
+            }
+            setBranches((prev) => {
+                const idx = prev.findIndex((b) => b.name === name);
+                const updated = {
+                    name: name,
+                    preview_url: data.preview_url ?? "",
+                    commit_date: data.commit_date ?? "",
+                    state: data.state,
+                };
+                if (idx === -1) {
+                    return [...prev, updated];
+                }
+                // update in place (immutably)
+                const next = prev.slice();
+                next[idx] = { ...prev[idx], ...updated };
+                return next;
+            });
+            return data;
+        }
+        catch (err) {
+            Sentry.captureException(err);
+            logger.error("Preview fetch failed:", err);
+        }
+        return null;
+    }, [branchName]);
+    useEffect(() => {
+        if (checkGithubMode()) {
+            return;
+        }
+        if (viewingStaleVersion && previewUrl) {
+            if (repoInfo?.branch === branchName) {
+                toast.warning("Stale Version", {
+                    id: STALE_TOAST_ID,
+                    description: "The version you are looking at might not be up to date.",
+                    action: {
+                        label: isStaticDeployUrl ? "Refresh" : "Load Newest Version",
+                        onClick: () => {
+                            if (isStaticDeployUrl) {
+                                window.location.reload();
+                            }
+                            else {
+                                window.location.href = previewUrl;
+                            }
+                        },
+                    },
+                    duration: Infinity,
+                });
+            }
+            else {
+                toast.error("Stale Version", {
+                    id: STALE_TOAST_ID,
+                    description: "The version you are looking at is a different branch from what you selected.",
+                    action: {
+                        label: "Load Newest Version",
+                        onClick: () => {
+                            window.location.href = previewUrl;
+                        },
+                    },
+                    duration: Infinity,
+                });
+            }
+        }
+    }, [viewingStaleVersion, previewUrl, branchName]);
+    const fetchBranches = useCallback(async () => {
+        if (!checkGithubMode()) {
+            logger.warn("when not in github mode we does not fetch branches from github");
+            return;
+        }
+        try {
+            setIsBranchesLoading(true);
+            const seq = ++branchesRequestSequenceRef.current;
+            const data = await getBranches();
+            if (seq !== branchesRequestSequenceRef.current)
+                return;
+            if (!data)
+                throw new Error("Failed to fetch branches data");
+            setBranches(data.branches);
+        }
+        catch (err) {
+            Sentry.captureException(err);
+            logger.error("Branches fetch failed:", err);
+        }
+        finally {
+            setIsBranchesLoading(false);
+        }
+    }, []);
+    const deleteBranch = useCallback(async (branchName) => {
+        const showError = () => toast.error("Branch Deletion", {
+            id: `branch-delete-${branchName}`,
+            description: "Could not delete your branch.",
+            action: {
+                label: "Try Again",
+                onClick: () => deleteBranch(branchName),
+            },
+            duration: Infinity,
+        });
+        try {
+            const { success } = await deleteGithubBranch({ branchName });
+            if (!success) {
+                showError();
+                return;
+            }
+            setBranches((prev) => prev.filter((b) => b.name !== branchName));
+            toast.success("Branch deleted", {
+                id: `branch-delete-${branchName}`,
+                duration: 1500, // 1.5 seconds millis
+            });
+        }
+        catch {
+            showError();
+        }
+    }, [deleteGithubBranch, setBranches]);
+    // Initialize saved branches when repository changes
+    useEffect(() => {
+        const repoKey = repoInfo ? repoInfo.repository : "";
+        // Only reload if repository changed
+        if (repoKey !== currentRepoKey.current) {
+            currentRepoKey.current = repoKey;
+            if (repoInfo) {
+                const storageKey = getBranchSavesStorageKey(repoInfo);
+                if (storageKey) {
+                    loadSavedBranches(storageKey).then(setSavedBranches);
+                }
+            }
+            else {
+                setSavedBranches(new Set());
+            }
+        }
+    }, [getBranchSavesStorageKey, loadSavedBranches]);
+    // Initial pull
+    useEffect(() => {
+        const stored = loadPopoverFromStorage();
+        if (stored?.visible && stored.commit_hash) {
+            _setShowDeploymentPopover(true);
+            setDeploymentPopover(stored);
+        }
+    }, []);
+    useEffect(() => {
+        if (checkGithubMode()) {
+            fetchBranches();
+        }
+    }, [isGitHubMode]);
+    // Poll Deploy Info
+    useEffect(() => {
+        if (checkIsEmptyBranchPrefix(branchName)) {
+            return;
+        }
+        fetchPreviewData(branchName);
+        const id = window.setInterval(() => fetchPreviewData(branchName), previewPollMs);
+        return () => window.clearInterval(id);
+    }, [branchName, previewPollMs, fetchPreviewData]);
+    // Refresh when the tab regains focus.
+    useEffect(() => {
+        const onFocus = () => {
+            if (checkIsEmptyBranchPrefix(branchName)) {
+                return;
+            }
+            fetchPreviewData(branchName);
+        };
+        window.addEventListener("focus", onFocus);
+        return () => window.removeEventListener("focus", onFocus);
+    }, [branchName, fetchPreviewData, isGitHubMode]);
+    const lastUpdatedText = lastSaved
+        ? new Intl.DateTimeFormat(undefined, {
+            dateStyle: "medium",
+            timeStyle: "short",
+        }).format(new Date(lastSaved))
+        : "—";
+    const value = {
+        branchName,
+        setBranchName,
+        previewUrl,
+        lastSaved,
+        lastUpdatedText,
+        currentDeployment,
+        branches,
+        fetchBranches,
+        isBranchesLoading,
+        deleteBranch,
+        showDeploymentPopover,
+        setShowDeploymentPopover,
+        deploymentPopover,
+        viewingStaleVersion,
+        isStaticDeployUrl,
+        // Branch save history
+        savedBranches,
+        addSavedBranch,
+        hasSavedToBranch,
+        shouldShowSaveDialog,
+    };
+    return (_jsx(DeploymentContext.Provider, { value: value, children: children }));
+};
+export const useDeployment = () => {
+    const ctx = useContext(DeploymentContext);
+    if (!ctx)
+        throw new Error("useDeployment must be used within a DeploymentProvider");
+    return ctx;
+};

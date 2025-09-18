@@ -1,0 +1,13 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import * as React from "react";
+import { cn } from "../../lib/utils.js";
+import { Label } from "../ui/label.js";
+/**
+ * Arrange a label with its child either inline (label on the left) or stacked
+ * (label above). Useful for form inputs and other labelled elements.
+ */
+export const LabelWrapper = React.forwardRef(({ label, inline = false, children, className, labelClassName, htmlFor, ...divProps }, ref) => {
+    const wrapperClasses = cn(inline ? "flex items-center gap-1" : "flex flex-col items-start gap-0.5", className);
+    return (_jsxs("div", { ref: ref, className: wrapperClasses, ...divProps, children: [_jsx(Label, { htmlFor: htmlFor, className: cn("text-[10px]", labelClassName, inline && "whitespace-nowrap"), children: label }), children] }));
+});
+LabelWrapper.displayName = "LabelWrapper";

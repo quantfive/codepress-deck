@@ -1,0 +1,13 @@
+function a(e) {
+  const t = [];
+  e.message && t.push(e.message);
+  try {
+    const s = e.exception.values[e.exception.values.length - 1];
+    s?.value && (t.push(s.value), s.type && t.push(`${s.type}: ${s.value}`));
+  } catch {
+  }
+  return t;
+}
+export {
+  a as getPossibleEventMessages
+};

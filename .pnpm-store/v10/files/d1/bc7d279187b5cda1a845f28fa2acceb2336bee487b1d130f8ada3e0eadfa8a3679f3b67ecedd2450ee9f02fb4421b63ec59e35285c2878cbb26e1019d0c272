@@ -1,0 +1,61 @@
+import { eventFromException as u, eventFromMessage as l } from "./index122.js";
+import { WINDOW as s } from "./index116.js";
+import { Client as m } from "./index123.js";
+import { applySdkMetadata as c } from "./index124.js";
+import { _INTERNAL_flushLogsBuffer as n } from "./index125.js";
+import { addAutoIpAddressToUser as f, addAutoIpAddressToSession as _ } from "./index126.js";
+import { getSDKSource as d } from "./index127.js";
+const h = 5e3;
+class F extends m {
+  /**
+   * Creates a new Browser SDK instance.
+   *
+   * @param options Configuration options for this SDK.
+   */
+  constructor(t) {
+    const e = E(t), o = s.SENTRY_SDK_SOURCE || d();
+    c(e, "browser", ["browser"], o), super(e);
+    const { sendDefaultPii: r, sendClientReports: p, enableLogs: i } = this._options;
+    s.document && (p || i) && s.document.addEventListener("visibilitychange", () => {
+      s.document.visibilityState === "hidden" && (p && this._flushOutcomes(), i && n(this));
+    }), i && (this.on("flush", () => {
+      n(this);
+    }), this.on("afterCaptureLog", () => {
+      this._logFlushIdleTimeout && clearTimeout(this._logFlushIdleTimeout), this._logFlushIdleTimeout = setTimeout(() => {
+        n(this);
+      }, h);
+    })), r && (this.on("postprocessEvent", f), this.on("beforeSendSession", _));
+  }
+  /**
+   * @inheritDoc
+   */
+  eventFromException(t, e) {
+    return u(this._options.stackParser, t, e, this._options.attachStacktrace);
+  }
+  /**
+   * @inheritDoc
+   */
+  eventFromMessage(t, e = "info", o) {
+    return l(this._options.stackParser, t, e, o, this._options.attachStacktrace);
+  }
+  /**
+   * @inheritDoc
+   */
+  _prepareEvent(t, e, o, r) {
+    return t.platform = t.platform || "javascript", super._prepareEvent(t, e, o, r);
+  }
+}
+function E(a) {
+  return {
+    release: typeof __SENTRY_RELEASE__ == "string" ? __SENTRY_RELEASE__ : s.SENTRY_RELEASE?.id,
+    // This supports the variable that sentry-webpack-plugin injects
+    sendClientReports: !0,
+    // We default this to true, as it is the safer scenario
+    parentSpanIsAlwaysRootSpan: !0,
+    ...a
+  };
+}
+export {
+  F as BrowserClient,
+  E as applyDefaultOptions
+};

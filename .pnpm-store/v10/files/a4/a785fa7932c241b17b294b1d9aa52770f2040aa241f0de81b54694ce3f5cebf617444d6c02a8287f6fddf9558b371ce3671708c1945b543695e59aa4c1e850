@@ -1,0 +1,272 @@
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import logger from "./logger.js";
+import Sentry from "@/sentry";
+import { API_BASE_URL } from "@/lib/env";
+/**
+ * Get the browser extension API object, supporting both Chrome and Firefox
+ */
+export function getBrowserAPI() {
+    // Check for chrome first (most common), then browser (Firefox/WebExtensions)
+    if (typeof chrome !== "undefined" &&
+        chrome.runtime &&
+        typeof chrome.runtime.id === "string") {
+        return chrome;
+    }
+    if (typeof browser !== "undefined" &&
+        browser.runtime &&
+        typeof browser.runtime.id === "string") {
+        return browser;
+    }
+    return null;
+}
+/**
+ * Check if browser extension APIs are available
+ */
+export function isBrowserExtension() {
+    return getBrowserAPI() !== null;
+}
+export function cn(...inputs) {
+    return twMerge(clsx(inputs));
+}
+// GitHub repository types moved to lib/github/types.ts
+// Utility function to get the current URL
+export const getCurrentTabUrl = async () => {
+    const browserAPI = getBrowserAPI();
+    if (browserAPI && browserAPI.tabs) {
+        try {
+            const tabs = await browserAPI.tabs.query({
+                active: true,
+                currentWindow: true,
+            });
+            if (tabs[0] && tabs[0].url) {
+                return tabs[0].url;
+            }
+        }
+        catch (error) {
+            logger.error("Error getting current tab URL:", error);
+            Sentry.captureException(error);
+        }
+    }
+    return null;
+};
+// Parse GitHub URL to extract owner and repo
+export const parseGitHubUrl = (url) => {
+    if (!url)
+        return null;
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname !== "github.com")
+            return null;
+        const parts = urlObj.pathname.split("/").filter(Boolean);
+        if (parts.length < 2)
+            return null;
+        return {
+            owner: parts[0],
+            repo: parts[1],
+        };
+    }
+    catch (error) {
+        Sentry.captureException(error);
+        return null;
+    }
+};
+/**
+ * Checks if an element primarily contains text rather than other HTML elements
+ * @param element The HTML element to check
+ * @returns boolean indicating if the element is primarily text
+ */
+export const isPrimarilyTextElement = (element) => {
+    // Skip elements that are already being edited
+    if (element.dataset.cptId === "cp-textarea" ||
+        element.dataset.cptId === "inline-edit-container" ||
+        element.querySelector('[data-cpt-id="inline-edit-container"]')) {
+        return false;
+    }
+    // Skip empty elements
+    if (element.innerText.trim() === "") {
+        return false;
+    }
+    // Skip elements with no child nodes
+    if (element.childNodes.length === 0) {
+        return false;
+    }
+    // Count text nodes vs element nodes
+    let textNodeCount = 0;
+    let elementNodeCount = 0;
+    for (const node of element.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+            textNodeCount++;
+        }
+        else if (node.nodeType === Node.ELEMENT_NODE) {
+            elementNodeCount++;
+        }
+    }
+    // Element is primarily text if it has text nodes and few or no element nodes
+    // or if it has only one child element that contains text
+    return (textNodeCount > 0 ||
+        (elementNodeCount === 1 && element.firstElementChild?.children.length === 0));
+};
+/**
+ * Decodes a hashed value created by the Codepress babel plugin
+ * @param value The Base64 encoded value to decode
+ * @returns The decoded value or null if invalid
+ */
+export const decodeHashedValue = (value) => {
+    if (!value)
+        return null;
+    try {
+        // Decode from base64
+        const decoded = atob(value);
+        // Use the same key from the babel plugin
+        const key = "codepress-identifier-key";
+        const reversedKey = key.split("").reverse().join("");
+        // Extract the value from the pattern key:value:reversedKey
+        const pattern = new RegExp(`^${key}:(.+):${reversedKey}$`);
+        const match = decoded.match(pattern);
+        return match && match[1] ? match[1] : null;
+    }
+    catch (error) {
+        logger.error("Error decoding hashed value:", error);
+        console.error("Error decoding hashed value:", error);
+        return null;
+    }
+};
+/**
+ * Scans the DOM for Codepress repository and branch data attributes
+ * @returns Repository info object or null if not found
+ */
+export const detectRepositoryInfo = () => {
+    // Check root elements first (html, body, head) as these should have the attributes
+    const rootElements = [
+        document.documentElement, // html
+        document.body,
+        document.head,
+    ];
+    // Look for repo attributes in root elements first
+    for (const element of rootElements) {
+        if (!element)
+            continue;
+        const repoName = element.getAttribute("codepress-github-repo-name");
+        const branchName = element.getAttribute("codepress-github-branch");
+        if (repoName) {
+            const repository = repoName;
+            const branch = branchName || "main";
+            return {
+                repository,
+                branch,
+            };
+        }
+    }
+    // Fallback: if not found on root elements, search everywhere (less efficient)
+    const elements = document.querySelectorAll("[codepress-github-repo-name]");
+    if (elements.length === 0) {
+        logger.debug("CodePress: No repository information found in document");
+        return null;
+    }
+    // Get the first element with the data attributes
+    const element = elements[0];
+    const repoName = element.getAttribute("codepress-github-repo-name");
+    const branchName = element.getAttribute("codepress-github-branch");
+    const repository = repoName;
+    if (!repository)
+        return null;
+    const branch = branchName || "main";
+    return {
+        repository,
+        branch,
+    };
+};
+/**
+ * Extracts owner and organization name from a repository string (owner/repo)
+ * @param repoName The repository string in format "owner/repo"
+ * @returns Object with owner and repo properties, or null if invalid
+ */
+export const parseRepositoryName = (repoName) => {
+    if (!repoName)
+        return null;
+    const parts = repoName.split("/");
+    if (parts.length !== 2)
+        return null;
+    return {
+        owner: parts[0],
+        repo: parts[1],
+    };
+};
+/**
+ * Creates a pseudo-organization for API calls when real org data is unavailable
+ * This allows the extension to work with auto-detected repositories without org selection
+ * @param ownerName The owner name from the repository string (owner/repo)
+ * @returns A simplified organization object
+ */
+export const createPseudoOrganization = (ownerName) => {
+    // Create a deterministic numeric ID from the owner name
+    // This is just a hash function to generate a stable ID from the name
+    const hash = ownerName.split("").reduce((acc, char) => {
+        return acc + char.charCodeAt(0);
+    }, 0);
+    return {
+        id: hash, // Use hash of owner name as pseudo-ID
+        name: ownerName,
+    };
+};
+// Repository utilities
+/**
+ * Shared DOM traversal logic for extracting repository name from page
+ * This function is designed to be executed in browser context (either directly or via script injection)
+ */
+export function extractRepositoryNameFromDOM() {
+    // Look for repo attributes in root elements first
+    const rootElements = [
+        document.documentElement,
+        document.body,
+        document.querySelector("main"),
+        document.querySelector("#root"),
+        document.querySelector("#app"),
+    ];
+    for (const element of rootElements) {
+        if (!element)
+            continue;
+        const repoName = element.getAttribute("codepress-github-repo-name");
+        if (repoName) {
+            return repoName;
+        }
+    }
+    // Fallback: search everywhere
+    const element = document.querySelector("[codepress-github-repo-name]");
+    return element ? element.getAttribute("codepress-github-repo-name") : null;
+}
+/**
+ * Shared repository access check logic
+ * Makes API call to check if user has access to a specific repository
+ */
+export async function checkRepositoryAccess(repositoryName) {
+    try {
+        // Dynamic import to avoid circular dependencies
+        const { getAuthToken, POST_CONFIG, apiFetch } = await import("@/fetch");
+        const token = await getAuthToken();
+        if (!token) {
+            logger.info("❌ No token for repo access check");
+            return false;
+        }
+        const config = await POST_CONFIG({
+            data: { repository_name: repositoryName },
+            includeAuth: true,
+            token: token,
+        });
+        const response = await apiFetch(`${API_BASE_URL}/github/check-access`, config);
+        if (response.ok) {
+            const result = await response.json();
+            logger.info(`🔍 Repo access check for ${repositoryName}:`, result.has_access);
+            return result.has_access;
+        }
+        else {
+            logger.info(`❌ Repo access check failed:`, response.status);
+            return false;
+        }
+    }
+    catch (error) {
+        logger.info("❌ Repo access check error:", error);
+        return false;
+    }
+}

@@ -1,0 +1,69 @@
+export interface StyleChange {
+    property: string;
+    oldValue: string;
+    newValue: string;
+    isHoverState?: boolean;
+    /**
+     * When applying style changes to a specific piece of text (e.g. wrapping a
+     * span around a selection), specify the exact text content in `target` and
+     * the HTML tag that should wrap it in `htmlTag` so the backend/engine can
+     * correctly scope the CSS. Both can be null/undefined for normal whole-
+     * element changes.
+     */
+    target?: string | null;
+    htmlTag?: string | null;
+}
+export interface TextChange {
+    oldText: string;
+    newText: string;
+}
+export interface MoveChange {
+    sourceLocation: string;
+    targetLocation: string;
+    position: "before" | "after" | "inside" | "left" | "right";
+    sourceTag?: string;
+    targetTag?: string;
+}
+export interface VisualEditorChange {
+    encodedLocation: string;
+    oldHtml?: string;
+    newHtml?: string;
+    styleChanges?: StyleChange[];
+    textChanges?: TextChange[];
+    moveChanges?: MoveChange[];
+    imageData?: string;
+    filename?: string;
+    githubRepoName?: string;
+    browserWidth?: number;
+    browserHeight?: number;
+}
+export interface AiEditorChange {
+    id: string;
+    old_html?: string;
+    ai_instruction: string;
+    mode?: string;
+}
+/**
+ * Creates a clean version of an HTML element by removing any injected UI components
+ * Used to capture the original state of elements before modification
+ *
+ * @param element The element to clean
+ * @param preserveDataFp Whether to preserve the codepress-data-fp attribute (default: false)
+ */
+export declare const getCleanElementHTML: (element: HTMLElement, preserveDataFp?: boolean) => string;
+export declare const getPreviewLink: (info: {
+    branchName?: string;
+}) => Promise<any>;
+export declare const getBranches: () => Promise<any>;
+export declare const deleteGithubBranch: (info: {
+    branchName?: string;
+}) => Promise<any>;
+export declare const saveVisualEditorChanges: (changes: {
+    changes: VisualEditorChange[];
+    githubRepoName: string;
+    githubBranchName?: string;
+    githubBaseBranchName?: string;
+    commitMessage?: string;
+}) => Promise<boolean>;
+export declare const saveAiChanges: (changes: AiEditorChange) => Promise<any>;
+//# sourceMappingURL=saveChanges.d.ts.map

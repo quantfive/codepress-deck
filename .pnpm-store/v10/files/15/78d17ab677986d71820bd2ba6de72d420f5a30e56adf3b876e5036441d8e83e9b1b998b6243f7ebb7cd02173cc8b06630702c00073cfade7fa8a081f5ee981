@@ -1,0 +1,18 @@
+import { DEBUG_BUILD as p } from "./index208.js";
+import { debug as s } from "./index151.js";
+import { isThenable as c } from "./index132.js";
+import { SyncPromise as d } from "./index130.js";
+function m(t, r, e, i = 0) {
+  return new d((l, f) => {
+    const o = t[i];
+    if (r === null || typeof o != "function")
+      l(r);
+    else {
+      const n = o({ ...r }, e);
+      p && o.id && n === null && s.log(`Event processor "${o.id}" dropped event`), c(n) ? n.then((u) => m(t, u, e, i + 1).then(l)).then(null, f) : m(t, n, e, i + 1).then(l).then(null, f);
+    }
+  });
+}
+export {
+  m as notifyEventProcessors
+};

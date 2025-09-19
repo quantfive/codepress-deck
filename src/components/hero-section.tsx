@@ -27,7 +27,7 @@ export default function HeroSection() {
           <h1 className="text-3xl md:text-5xl lg:text-[64px] font-semibold tracking-[-1.92px] leading-tight lg:leading-[68px] bg-clip-text text-transparent bg-gradient-to-b from-black to-gray-700">
             Edit your code visually.
             <br />
-            Ship without engineering
+            Ship without engineering.
           </h1>
           <p className="text-lg md:text-xl text-[#4b4b4b] max-w-4xl leading-7 max-w-[90%]">
             A CMS & visual editor that integrates seamlessly into your codebase

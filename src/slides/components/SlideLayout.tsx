@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
-import SlideSeo from "./SlideSeo";
 import { slideRoutes } from "../slideRoutes";
+import SlideSeo from "./SlideSeo";
 
 type Direction = "forward" | "backward" | null;
 
@@ -87,8 +87,9 @@ export default function SlideLayout({ children }: PropsWithChildren) {
           <Link
             aria-label="Previous slide"
             href={prevHref}
+            codepress-ignore="true"
             onClick={() => setDirection("backward")}
-            className="group absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
+            className="group z-50 fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -113,7 +114,8 @@ export default function SlideLayout({ children }: PropsWithChildren) {
             aria-label="Next slide"
             href={nextHref}
             onClick={() => setDirection("forward")}
-            className="group absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
+            codepress-ignore="true"
+            className="group z-50 fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

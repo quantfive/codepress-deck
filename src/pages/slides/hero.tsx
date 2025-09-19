@@ -12,7 +12,7 @@ export default function Hero() {
         />
         <H1 className="lg:mt-6">The next-gen publishing layer for the web</H1>
         <P>
-          SquareSpace simplicity, but in your own codebase — so marketers{" "}
+          Squarespace simplicity, but in your own codebase — so marketers{" "}
           <br className="hidden lg:block" /> and designers can ship pages
           instantly while engineers keep control
         </P>

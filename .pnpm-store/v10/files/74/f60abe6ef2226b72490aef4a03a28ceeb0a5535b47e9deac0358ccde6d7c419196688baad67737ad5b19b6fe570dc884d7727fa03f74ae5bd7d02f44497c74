@@ -1,7 +1,0 @@
-import * as React from "react";
-export declare function usePortalContainer(): HTMLElement;
-export declare function PortalProvider({ container, children, }: {
-    container: HTMLElement;
-    children: React.ReactNode;
-}): import("react/jsx-runtime").JSX.Element;
-//# sourceMappingURL=PortalContext.d.ts.map

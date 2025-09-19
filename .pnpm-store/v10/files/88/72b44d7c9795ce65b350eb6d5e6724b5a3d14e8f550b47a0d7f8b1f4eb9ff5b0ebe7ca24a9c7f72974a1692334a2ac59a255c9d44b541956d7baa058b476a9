@@ -1,8 +1,0 @@
-import { Repository } from "@/lib/github";
-interface OrgRepoSelectorProps {
-    onSelectRepository: (repository: Repository) => void;
-    currentUrl: string;
-}
-declare const OrgRepoSelector: import("react").MemoExoticComponent<({ onSelectRepository, currentUrl }: OrgRepoSelectorProps) => import("react/jsx-runtime").JSX.Element>;
-export default OrgRepoSelector;
-//# sourceMappingURL=OrgRepoSelector.d.ts.map

@@ -1,7 +1,0 @@
-import React from "react";
-interface AgentChatOverlayProps {
-    onClose: () => void;
-}
-declare const AgentChatOverlay: React.FC<AgentChatOverlayProps>;
-export default AgentChatOverlay;
-//# sourceMappingURL=AgentChatOverlay.d.ts.map

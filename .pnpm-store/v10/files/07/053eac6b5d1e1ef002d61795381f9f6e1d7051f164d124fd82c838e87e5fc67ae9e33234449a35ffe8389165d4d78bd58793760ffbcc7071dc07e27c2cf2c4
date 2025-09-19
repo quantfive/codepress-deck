@@ -1,7 +1,0 @@
-interface SelectionToolbarProps {
-    range: Range | null;
-    onClose: () => void;
-}
-export default function SelectionToolbar({ range, onClose }: SelectionToolbarProps): import("react/jsx-runtime").JSX.Element;
-export {};
-//# sourceMappingURL=SelectionToolbar.d.ts.map

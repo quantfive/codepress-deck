@@ -1,4 +1,0 @@
-import log from "loglevel";
-export declare const logger: log.RootLogger;
-export default logger;
-//# sourceMappingURL=logger.d.ts.map

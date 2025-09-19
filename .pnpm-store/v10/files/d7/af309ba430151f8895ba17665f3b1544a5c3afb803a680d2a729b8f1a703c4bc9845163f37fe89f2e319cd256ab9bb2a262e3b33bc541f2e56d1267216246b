@@ -1,5 +1,0 @@
-import { jsx as _jsx } from "react/jsx-runtime";
-const StatesMotionGroup = () => {
-    return (_jsx("div", { className: "text-sm text-slate-500 italic", children: "States & Motion controls coming soon..." }));
-};
-export default StatesMotionGroup;

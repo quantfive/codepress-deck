@@ -1,6 +1,0 @@
-interface DeploymentPopoverProps {
-    isEditing: boolean;
-}
-export declare function DeploymentPopover({ isEditing, }: DeploymentPopoverProps): import("react/jsx-runtime").JSX.Element;
-export {};
-//# sourceMappingURL=DeploymentPopover.d.ts.map

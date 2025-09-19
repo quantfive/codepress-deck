@@ -1,4 +1,0 @@
-import React from "react";
-declare const BranchSelector: React.FC;
-export default BranchSelector;
-//# sourceMappingURL=BranchSelector.d.ts.map

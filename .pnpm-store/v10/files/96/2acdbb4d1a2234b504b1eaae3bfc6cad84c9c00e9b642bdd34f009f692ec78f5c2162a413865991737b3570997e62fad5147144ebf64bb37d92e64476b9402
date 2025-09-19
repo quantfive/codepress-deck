@@ -1,1 +1,0 @@
-{"version":3,"file":"GitHubLogin.d.ts","sourceRoot":"","sources":["../../../components/GitHubLogin.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAmB,MAAM,OAAO,CAAC;AASxC,UAAU,gBAAgB;IACxB,SAAS,CAAC,EAAE,MAAM,IAAI,CAAC;IACvB,OAAO,CAAC,EAAE,CAAC,KAAK,EAAE,MAAM,KAAK,IAAI,CAAC;CACnC;AAED,QAAA,MAAM,WAAW,EAAE,KAAK,CAAC,EAAE,CAAC,gBAAgB,CA+F3C,CAAC;AAEF,eAAe,WAAW,CAAC"}

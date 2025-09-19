@@ -1,7 +1,0 @@
-import { getDefaultExportFromCjs as r } from "./index79.js";
-import { __require as t } from "./index34.js";
-var e = t();
-const i = /* @__PURE__ */ r(e);
-export {
-  i as default
-};

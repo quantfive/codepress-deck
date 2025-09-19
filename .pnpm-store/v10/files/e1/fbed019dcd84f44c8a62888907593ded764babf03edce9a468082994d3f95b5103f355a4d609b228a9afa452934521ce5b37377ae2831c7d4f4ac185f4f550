@@ -1,8 +1,0 @@
-import React from "react";
-interface GitHubLoginProps {
-    onSuccess?: () => void;
-    onError?: (error: string) => void;
-}
-declare const GitHubLogin: React.FC<GitHubLoginProps>;
-export default GitHubLogin;
-//# sourceMappingURL=GitHubLogin.d.ts.map

@@ -1,8 +1,0 @@
-import React from "react";
-interface TextGroupProps {
-    popoverContainer?: HTMLElement;
-    onClose: () => void;
-}
-declare const TextGroup: React.FC<TextGroupProps>;
-export default TextGroup;
-//# sourceMappingURL=TextGroup.d.ts.map

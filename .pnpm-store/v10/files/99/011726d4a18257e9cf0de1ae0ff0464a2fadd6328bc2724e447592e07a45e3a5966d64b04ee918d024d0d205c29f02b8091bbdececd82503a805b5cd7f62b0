@@ -1,9 +1,0 @@
-import e from "./index39.js";
-import { IS_DEVELOPMENT as o } from "./index26.js";
-console.log("isDevelopment", o);
-e.setLevel(e.levels.SILENT);
-const r = e;
-export {
-  r as default,
-  r as logger
-};

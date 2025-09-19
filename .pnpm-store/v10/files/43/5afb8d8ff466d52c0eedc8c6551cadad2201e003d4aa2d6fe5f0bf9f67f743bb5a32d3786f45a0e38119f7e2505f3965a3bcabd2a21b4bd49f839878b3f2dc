@@ -1,7 +1,0 @@
-import React from "react";
-interface ContainerGroupProps {
-    popoverContainer?: HTMLElement;
-}
-declare const ContainerGroup: React.FC<ContainerGroupProps>;
-export default ContainerGroup;
-//# sourceMappingURL=ContainerGroup.d.ts.map

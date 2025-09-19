@@ -1,4 +1,0 @@
-import React from "react";
-declare const StatesMotionGroup: React.FC;
-export default StatesMotionGroup;
-//# sourceMappingURL=StatesMotionGroup.d.ts.map

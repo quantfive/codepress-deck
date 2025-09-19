@@ -1,3 +1,0 @@
-export declare function getCurrentRange(): Range | null;
-export declare function clearSelection(): void;
-//# sourceMappingURL=selection.d.ts.map

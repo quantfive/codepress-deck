@@ -1,5 +1,0 @@
-const S = 0, T = 1;
-export {
-  T as SPAN_STATUS_OK,
-  S as SPAN_STATUS_UNSET
-};

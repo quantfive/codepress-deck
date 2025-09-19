@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { PropsWithChildren, useEffect, useMemo, useRef, useState } from "react";
+import SlideSeo from "./SlideSeo";
 import { slideRoutes } from "../slideRoutes";
 
 type Direction = "forward" | "backward" | null;
@@ -76,58 +77,61 @@ export default function SlideLayout({ children }: PropsWithChildren) {
       : "animate-fade-in";
 
   return (
-    <div className="relative min-h-screen">
-      <div className={`transition-all ${animationClass}`}>{children}</div>
+    <>
+      <SlideSeo />
+      <div className="relative min-h-screen">
+        <div className={`transition-all ${animationClass}`}>{children}</div>
 
-      {/* Prev arrow */}
-      {prevHref && (
-        <Link
-          aria-label="Previous slide"
-          href={prevHref}
-          onClick={() => setDirection("backward")}
-          className="group absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-5 h-5 sm:w-6 sm:h-6"
+        {/* Prev arrow */}
+        {prevHref && (
+          <Link
+            aria-label="Previous slide"
+            href={prevHref}
+            onClick={() => setDirection("backward")}
+            className="group absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
           >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </Link>
-      )}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 sm:w-6 sm:h-6"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </Link>
+        )}
 
-      {/* Next arrow */}
-      {nextHref && (
-        <Link
-          aria-label="Next slide"
-          href={nextHref}
-          onClick={() => setDirection("forward")}
-          className="group absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-5 h-5 sm:w-6 sm:h-6"
+        {/* Next arrow */}
+        {nextHref && (
+          <Link
+            aria-label="Next slide"
+            href={nextHref}
+            onClick={() => setDirection("forward")}
+            className="group absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
           >
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </Link>
-      )}
-    </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 sm:w-6 sm:h-6"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </Link>
+        )}
+      </div>
+    </>
   );
 }

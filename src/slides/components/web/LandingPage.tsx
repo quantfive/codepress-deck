@@ -10,7 +10,7 @@ import RoadmapSection from "@/components/roadmap-section";
 
 export default function LandingPage() {
   return (
-    <div className="max-w-[1200px] mx-auto w-full border-4 border-gray-200 rounded-lg">
+    <div className="mx-auto w-full border-4 border-gray-200 rounded-lg">
       <Header />
       <main>
         <HeroSection />

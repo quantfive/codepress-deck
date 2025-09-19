@@ -32,16 +32,16 @@ export default function Demo() {
 
   return (
     <Slide
-      mainClassName="max-w-[1300px] mx-auto"
+      mainClassName="mx-auto"
       sectionClassName="content-start gap-6 p-6 sm:p-8"
     >
       <SlideHeader
         title={"Demo: See for yourself"}
         description={
           <span className="block text-[#555] max-w-[900px]">
-            Go edit anything in the demo site below, maybe mark your name and
-            say Hi! The site below is a landing page, but our app also works
-            with any webapp.
+            Go edit anything in the demo site below. Drag & drop elements,
+            change colors, maybe mark your name and say Hi! The site below is a
+            landing page, but our app also works with any webapp.
           </span>
         }
       />
@@ -78,7 +78,7 @@ export default function Demo() {
       </nav> */}
 
       {/* Panels */}
-      <div className="w-full max-w-[1200px] grid gap-6">
+      <div className="w-full grid gap-6">
         <EmbeddedCodepressEditor
           apiBaseUrl={CODEPRESS_EDITOR_API_BASE_URL}
           autoOpen

@@ -24,18 +24,18 @@ export default function SlideHeader({
 }: SlideHeaderProps) {
   return (
     <div
-      className={`flex gap-4 items-center w-full py-4 lg:py-8 border-b border-[#D3D9DC] lg:mb-8 ${
+      className={`flex gap-4 items-start w-full py-4 lg:py-8 border-b border-[#D3D9DC] mb-4 lg:mb-8 ${
         className ? ` ${className}` : ""
       }`}
     >
       <div>
-        <H1>{title}</H1>
+        <H1 className="text-left">{title}</H1>
         {description && <P className="text-left">{description}</P>}
       </div>
       <Image
         src={logoSrc}
         alt={logoAlt}
-        className="ml-auto"
+        className="ml-auto w-[40px] h-auto desktop:w-[58.886px]"
         width={logoWidth}
         height={logoHeight}
       />

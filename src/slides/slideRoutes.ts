@@ -4,10 +4,10 @@ export const slideRoutes = [
   "/slides/wedge",
   "/slides/takeover",
   "/slides/demo",
+  "/slides/team",
   "/slides/competitive",
-  "/slides/target-market",
   "/slides/ask",
-  "/slides/thank-you",
+  // "/slides/thank-you",
   // add new slides here to include in navigation order
 ] as const;
 

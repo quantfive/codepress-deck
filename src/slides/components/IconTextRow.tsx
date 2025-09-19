@@ -34,15 +34,16 @@ export default function IconTextRow({
       ) : (
         <div className={iconWrapperClassName}>
           <Image
-            src={iconSrc}
-            alt={iconAlt}
+            src={iconSrc ?? ""}
+            alt={iconAlt ?? ""}
+            className="w-[40px] lg:w-[50px]"
             width={iconWidth}
             height={iconHeight}
           />
         </div>
       )}
       <div
-        className={`flex-1 lg:text-[24px] xl:text-[28px] ${
+        className={`flex-1 lg:text-[24px] desktop:text-[28px] ${
           textWrapperClassName ? ` ${textWrapperClassName}` : ""
         }`}
       >

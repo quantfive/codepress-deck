@@ -38,20 +38,20 @@ export default function Demo() {
     >
       <header className="grid gap-3" codepress-ignore="true">
         <H1 className="text-left" codepress-ignore="true">
-          Demo: Multi-App Playground
+          Demo: See for yourself
         </H1>
         <P
           className="text-left text-[#555] max-w-[900px]"
           codepress-ignore="true"
         >
-          Explore three app experiences inside one slide: a marketing landing
-          page, a data dashboard, and a simple Kanban board. Content is
-          placeholder for now and fully HTML for easy targeting.
+          Go edit anything in the demo site below, maybe mark your name and say
+          Hi! The site below is a landing page, but our app also works with any
+          webapp.
         </P>
       </header>
 
       {/* Tabs */}
-      <nav
+      {/* <nav
         role="tablist"
         aria-label="Demo tabs"
         className="flex w-full max-w-[1200px] border-b overflow-x-auto"
@@ -79,7 +79,7 @@ export default function Demo() {
             </button>
           );
         })}
-      </nav>
+      </nav> */}
 
       {/* Panels */}
       <div className="w-full max-w-[1200px] grid gap-6">

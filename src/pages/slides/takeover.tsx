@@ -1,3 +1,4 @@
+import H3 from "@/components/typography/H3";
 import IconTextRow from "@/slides/components/IconTextRow";
 import NumberIcon from "@/slides/components/NumberIcon";
 import Slide from "@/slides/components/Slide";
@@ -12,9 +13,9 @@ export default function Engine() {
       <SlideHeader title={"Then, onboard the next generation of the web"} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
         <div className="flex flex-col justify-between h-full">
-          <h3 className="text-[36px] tracking-[-1.08px] font-semibold mb-8">
+          <H3 className="mb-8">
             Instead of using Squarespace or WordPress, use CodePress
-          </h3>
+          </H3>
           <div className="gap-4 flex flex-col">
             <IconTextRow icon={<NumberIcon value={1} />}>
               <strong>A Platformless platform -- by design</strong>

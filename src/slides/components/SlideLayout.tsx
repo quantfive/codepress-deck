@@ -71,9 +71,9 @@ export default function SlideLayout({ children }: PropsWithChildren) {
 
   const animationClass =
     direction === "forward"
-      ? "animate-slide-in-right"
+      ? "animate-fade-in lg:animate-slide-in-right"
       : direction === "backward"
-      ? "animate-slide-in-left"
+      ? "animate-fade-in lg:animate-slide-in-left"
       : "animate-fade-in";
 
   return (
@@ -89,7 +89,7 @@ export default function SlideLayout({ children }: PropsWithChildren) {
             href={prevHref}
             codepress-ignore="true"
             onClick={() => setDirection("backward")}
-            className="group z-50 fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
+            className="group z-50 fixed left-2 sm:left-4 top-3/4 lg:top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +115,7 @@ export default function SlideLayout({ children }: PropsWithChildren) {
             href={nextHref}
             onClick={() => setDirection("forward")}
             codepress-ignore="true"
-            className="group z-50 fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
+            className="group z-50 fixed right-2 sm:right-4 top-3/4 lg:top-1/2 -translate-y-1/2 rounded-full bg-black/50 hover:bg-black/70 text-white p-2 sm:p-3 backdrop-blur cursor-pointer select-none"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -1,3 +1,4 @@
+import H3 from "@/components/typography/H3";
 import Slide from "@/slides/components/Slide";
 
 export default function TargetMarket() {
@@ -6,7 +7,7 @@ export default function TargetMarket() {
       <h2>Target Market</h2>
       <div className="grid grid-cols-2 gap-6 w-full items-start">
         <div>
-          <h3>Initial Wedge TAM</h3>
+          <H3>Initial Wedge TAM</H3>
           <p>
             CMS + Landing page builder
             <br />
@@ -14,7 +15,7 @@ export default function TargetMarket() {
           </p>
         </div>
         <div>
-          <h3>Future</h3>
+          <H3>Future</H3>
           <p>
             End to end website + App builder
             <br />

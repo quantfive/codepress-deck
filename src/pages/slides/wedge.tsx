@@ -1,3 +1,4 @@
+import H3 from "@/components/typography/H3";
 import IconTextRow from "@/slides/components/IconTextRow";
 import NumberIcon from "@/slides/components/NumberIcon";
 import Slide from "@/slides/components/Slide";
@@ -15,9 +16,9 @@ export default function Engine() {
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
         <div className="flex flex-col justify-between h-full">
-          <h3 className="text-[36px] tracking-[-1.08px] font-semibold mb-8">
+          <H3 className="mb-8">
             We start with Squarespace for your codebase and page gen
-          </h3>
+          </H3>
           <div className="gap-4 flex flex-col">
             <IconTextRow icon={<NumberIcon value={1} />}>
               <strong>CodePress integrates w/ your code</strong>
@@ -46,7 +47,7 @@ export default function Engine() {
           <img
             src="/deck/solution/unicornsonly.webp"
             alt="tickets"
-            className="object-contain rounded-lg lg:absolute right-0 uw:w-[1100px] w-[800px] top-[255px]"
+            className="object-contain rounded-lg lg:absolute right-0 uw:w-[1100px] w-[650px] desktop:w-[800px] top-[255px]"
           />
         </div>
       </div>

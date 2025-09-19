@@ -187,7 +187,9 @@ export default function Header() {
           <NavLinks />
         </nav>
         <div className="flex items-center gap-2">
-          <TrialButton />
+          <div className="hidden lg:block">
+            <TrialButton />
+          </div>
           <Button
             variant="ghost"
             className="md:hidden"

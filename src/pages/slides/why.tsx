@@ -1,3 +1,4 @@
+import H3 from "@/components/typography/H3";
 import IconTextRow from "@/slides/components/IconTextRow";
 import Slide from "@/slides/components/Slide";
 import SlideHeader from "@/slides/components/SlideHeader";
@@ -8,9 +9,9 @@ export default function Why() {
       <SlideHeader title={"Why are we building CodePress?"} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
         <div className="flex flex-col justify-between h-full">
-          <h3 className="text-[36px] tracking-[-1.08px] font-semibold mb-8">
+          <H3 className="mb-4 lg:mb-8">
             Code is so powerful, but still inaccessible to most
-          </h3>
+          </H3>
           <div className="gap-4 flex flex-col">
             <IconTextRow iconSrc="/star.svg" iconAlt="Star">
               <strong>Dev setup is too complex</strong>
@@ -50,10 +51,10 @@ export default function Why() {
               className="object-contain rounded-lg shadow-lg"
             />
           </div>
-          <h3 className="text-[36px] tracking-[-1.08px] font-semibold mt-4">
+          <H3 className="mt-4">
             Gap: non-engineers need the power of code, without the barriers of
             coding
-          </h3>
+          </H3>
         </div>
       </div>
       <div className="rounded-[50%] w-[1200px] h-[1200px] absolute bottom-[-600px] right-[-400px] bg-[#FFEA90] filter blur-[250px] z-[-1]" />

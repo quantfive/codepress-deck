@@ -22,30 +22,31 @@ export const slideMeta: Record<SlideRoute, SlideSeoMeta> = {
       "CodePress delivers Squarespace-like simplicity inside your codebase so marketing and design teams ship updates instantly.",
     image: heroImage,
   },
-  "/slides/problem": {
-    title: "CodePress Deck | The problem we solve",
+  "/slides/why": {
+    title: "CodePress Deck | Why we’re building CodePress",
     description:
-      "Product and marketing teams wait weeks for simple copy or visual tweaks; CodePress removes the bottleneck for iteration.",
+      "Code is powerful but inaccessible to most; we remove the barriers so non‑engineers can ship with confidence.",
   },
-  "/slides/engine": {
-    title: "CodePress Deck | Instant landing page engine",
+  "/slides/wedge": {
+    title: "CodePress Deck | Initial wedge",
     description:
-      "Spin up unlimited, on-brand landing pages with reusable components, campaign-specific offers, and AI-powered flexibility.",
+      "Start with on-brand landing pages powered by your components to unlock iteration speed and control.",
   },
-  "/slides/how-it-works": {
-    title: "CodePress Deck | How CodePress works",
+  "/slides/takeover": {
+    title: "CodePress Deck | Expansion path",
     description:
-      "Connect CodePress to your codebase, edit on live pages with our extension, and commit production-ready updates to GitHub in minutes.",
+      "From landing pages to full site and app experiences, bringing your whole team into the loop.",
+  },
+  "/slides/team": {
+    title: "CodePress Deck | Meet the builders",
+    description:
+      "Founding team with 8 years working together at Q5; $12m+ revenue and multiple senior engineers.",
+    image: heroImage,
   },
   "/slides/competitive": {
     title: "CodePress Deck | Competitive landscape",
     description:
       "CodePress blends no-code ease, AI agents, and real code to combine the best of Webflow, Cursor, and AI page builders.",
-  },
-  "/slides/target-market": {
-    title: "CodePress Deck | Target market",
-    description:
-      "Starting with tech companies that need CMS and landing page velocity today, expanding to a full website and app builder.",
   },
   "/slides/demo": {
     title: "CodePress Deck | Interactive product demo",

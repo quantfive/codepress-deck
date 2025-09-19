@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@quantfive/codepress-browser-extension": "0.1.2-dev.20250919073719",
+    "@quantfive/codepress-browser-extension": "0.1.2-dev.20250919170925",
     "@quantfive/codepress-engine": "^0.3.14",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",

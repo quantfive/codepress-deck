@@ -1,9 +1,8 @@
-import H1 from "@/components/typography/H1";
-import P from "@/components/typography/P";
 import DashboardApp from "@/slides/components/demo/DashboardApp";
 import KanbanApp from "@/slides/components/demo/KanbanApp";
 import EmbeddedCodepressEditor from "@/slides/components/EmbeddedCodepressEditor";
 import Slide from "@/slides/components/Slide";
+import SlideHeader from "@/slides/components/SlideHeader";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 const DynamicLandingPage = dynamic(
@@ -36,19 +35,16 @@ export default function Demo() {
       mainClassName="max-w-[1300px] mx-auto"
       sectionClassName="content-start gap-6 p-6 sm:p-8"
     >
-      <header className="grid gap-3" codepress-ignore="true">
-        <H1 className="text-left" codepress-ignore="true">
-          Demo: See for yourself
-        </H1>
-        <P
-          className="text-left text-[#555] max-w-[900px]"
-          codepress-ignore="true"
-        >
-          Go edit anything in the demo site below, maybe mark your name and say
-          Hi! The site below is a landing page, but our app also works with any
-          webapp.
-        </P>
-      </header>
+      <SlideHeader
+        title={"Demo: See for yourself"}
+        description={
+          <span className="block text-[#555] max-w-[900px]">
+            Go edit anything in the demo site below, maybe mark your name and
+            say Hi! The site below is a landing page, but our app also works
+            with any webapp.
+          </span>
+        }
+      />
 
       {/* Tabs */}
       {/* <nav

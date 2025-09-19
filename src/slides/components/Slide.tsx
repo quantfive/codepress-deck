@@ -14,7 +14,7 @@ export default function Slide({
     "min-h-screen grid place-items-stretch overflow-hidden pb-4 w-full" +
     (mainClassName ? ` ${mainClassName}` : "");
   const sectionClasses =
-    "min-h-screen grid max-w-[1475px] px-4 lg:px-24 mx-auto" +
+    "min-h-screen grid max-w-[1475px] px-4 lg:px-24 mx-auto w-full" +
     (sectionClassName ? ` ${sectionClassName}` : "");
 
   return (

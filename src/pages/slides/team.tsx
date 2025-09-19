@@ -41,15 +41,24 @@ export default function Team() {
     {
       name: "Patrick Lu",
       title: "CEO",
-      bullets: ["UC Berkeley CS", "YC Fellowship", "Ex Apple ML Engineer"],
+      bullets: [
+        "UC Berkeley CS",
+        "YC Fellowship",
+        "Ex Apple ML Engineer",
+        "AIME Scorer",
+        "FL ODP Soccer Player",
+        "Top 32 FIFA Player NA",
+      ],
     },
     {
       name: "Craig Lu",
       title: "Product / Engineering",
       bullets: [
+        "UF CS",
+        "UF SwampHacks Winner",
         "Ex Amazon Engineer",
-        "Frontend / design system expert",
-        "Led 7+ client launches",
+        "FL Boys State Cabinet Member",
+        "1st Team All District Soccer Player",
       ],
     },
     {
@@ -59,6 +68,8 @@ export default function Team() {
         "UC Berkeley CS",
         "Ex Google Engineer",
         "Exited previous company SmileyGo",
+        "Top 10 MathCounts CA / AIME High Scorer",
+        "CA ODP Soccer Player",
       ],
     },
   ];
@@ -72,9 +83,9 @@ export default function Team() {
         title={"Meet the Builders"}
         description={
           <>
-            Worked together for past 8 years building Software Studio Q5, a
-            premiere design + software agency. Over $12m in revenue, at a ~$1.5m
-            - $2.5m run rate.
+            Worked together for past 8 years building Q5, a premiere design +
+            software agency. We've made $12m+ in revenue, and currently operate
+            at a ~$1.5m - $2.5m run rate.
             <br />
             <br />
             Notable projects include{" "}

@@ -59,11 +59,6 @@ export const slideMeta: Record<SlideRoute, SlideSeoMeta> = {
     description:
       "We are raising $3-5M on a ~$30M post-money SAFE to bring the Q5 team aboard, launch CodePress, and reach $1M ARR.",
   },
-  "/slides/thank-you": {
-    title: "CodePress Deck | Thank you",
-    description:
-      "Thanks for exploring CodePress - let's talk about helping your team ship webpages faster than ever.",
-  },
 };
 
 export function resolveSlideMeta(route: string | null | undefined) {

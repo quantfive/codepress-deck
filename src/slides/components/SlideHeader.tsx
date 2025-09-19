@@ -24,18 +24,26 @@ export default function SlideHeader({
 }: SlideHeaderProps) {
   return (
     <div
+      codepress-ignore="true"
       className={`flex gap-4 items-start w-full py-4 lg:py-8 border-b border-[#D3D9DC] mb-4 lg:mb-8 ${
         className ? ` ${className}` : ""
       }`}
     >
       <div>
-        <H1 className="text-left">{title}</H1>
-        {description && <P className="text-left">{description}</P>}
+        <H1 className="text-left" codepress-ignore="true">
+          {title}
+        </H1>
+        {description && (
+          <P className="text-left" codepress-ignore="true">
+            {description}
+          </P>
+        )}
       </div>
       <Image
         src={logoSrc}
         alt={logoAlt}
         className="ml-auto w-[40px] h-auto desktop:w-[58.886px]"
+        codepress-ignore="true"
         width={logoWidth}
         height={logoHeight}
       />

@@ -35,7 +35,7 @@ export default function HeroSection() {
             developers build
             <br />
             <br />
-            Think Squarespace for your custom codebase.
+            Think Squarespace for your custom codebase
           </p>
           <Button
             variant="hero"

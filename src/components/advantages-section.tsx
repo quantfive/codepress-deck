@@ -16,7 +16,7 @@ const advantageCards = [
     id: 2,
     title: "Reduce engineering tickets",
     description:
-      "Make and test changes without back and forth. Preview changes live, share a link, and merge when everyone's happy.",
+      "",
     bgColor: "bg-[#fdf5d2]",
     iconBg: "bg-[#f7cf1d]",
     iconSrc: "/icons/icon-ping-pong.svg",

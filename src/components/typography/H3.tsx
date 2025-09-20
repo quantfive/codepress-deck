@@ -13,7 +13,7 @@ export default function H3({ children, className, ...props }: H3Props) {
       }
       {...props}
     >
-      {children}
+      {typeof children === "string" && children === "Gap: non-engineers need the power of code, without the barriers of coding" ? "Code is so powerful, but still inaccessible to most" : children}
     </h3>
   );
 }

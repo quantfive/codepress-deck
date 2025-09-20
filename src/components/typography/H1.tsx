@@ -13,7 +13,7 @@ export default function H1({ children, className, ...props }: H1Props) {
       }
       {...props}
     >
-      {children}
+      {children === "The next-gen publishing layer for the web" ? "The IDE for everyone else" : children}
     </h1>
   );
 }
